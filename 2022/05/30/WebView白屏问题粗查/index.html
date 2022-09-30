@@ -1,0 +1,323 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>WebView白屏问题粗查 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,Web"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="[TOC] 简介不可避免地愈来愈多的前端页面被嵌入到Android App中，对我们系统稳定性的维护工作和分析工作带来一定的挑战和不小的精力消耗。有时候，具备对WebView的基本排查、分析能力可以很好地缩短问题定位周期，减轻精力消耗和心智负载。本篇从客户端系统层的角度来阐述如何初步地粗略排查Android WebView白屏问题，提供一个定位大概问题的思路。 注意！本文讲的是WebView加载失">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WebView白屏问题粗查">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/05/30/WebView%E7%99%BD%E5%B1%8F%E9%97%AE%E9%A2%98%E7%B2%97%E6%9F%A5/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="[TOC] 简介不可避免地愈来愈多的前端页面被嵌入到Android App中，对我们系统稳定性的维护工作和分析工作带来一定的挑战和不小的精力消耗。有时候，具备对WebView的基本排查、分析能力可以很好地缩短问题定位周期，减轻精力消耗和心智负载。本篇从客户端系统层的角度来阐述如何初步地粗略排查Android WebView白屏问题，提供一个定位大概问题的思路。 注意！本文讲的是WebView加载失">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg">
+<meta property="article:published_time" content="2022-05-30T13:17:48.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.202Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="Web">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/05/30/WebView%E7%99%BD%E5%B1%8F%E9%97%AE%E9%A2%98%E7%B2%97%E6%9F%A5/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'WebView白屏问题粗查',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">WebView白屏问题粗查</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-05-30T13:17:48.000Z" title="发表于 2022-05-30 21:17:48">2022-05-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.202Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Web/">Web</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="WebView白屏问题粗查"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>[TOC]</p>
+<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>不可避免地愈来愈多的前端页面被嵌入到Android App中，对我们系统稳定性的维护工作和分析工作带来一定的挑战和不小的精力消耗。有时候，具备对WebView的基本排查、分析能力可以很好地缩短问题定位周期，减轻精力消耗和心智负载。本篇从客户端系统层的角度来阐述如何初步地粗略排查Android WebView白屏问题，提供一个定位大概问题的思路。</p>
+<p>注意！本文讲的是WebView加载失败、保持白屏的状态，不是短时白屏、短暂白屏的情况（这通常取决于网络和前端实现的性能）。</p>
+<h3 id="白屏原理及成因"><a href="#白屏原理及成因" class="headerlink" title="白屏原理及成因"></a>白屏原理及成因</h3><p>WebView在一块默认的空白的、颜色为白色的画布（Canvas）上绘制网页，当网页绘制工作的前两步——加载、解析等出现问题时，或者在DOM解析、JS执行时，或WebView绘制时出现问题，此时无法绘制网页，仅留下原始的白色画布（也有纯黑色的画布，好像之前在U4内核碰见过）。就是白屏问题的形成原因。除短暂的白屏外，长期保持白屏的状态可能来自于网络、前端、业务逻辑以及WebView兼容性。</p>
+<p>白屏问题总的来说分为两类。一类是网络请求和HTML&#x2F;CSS&#x2F;JS解析的因素，另一类是JS执行、WebView摆放、渲染的因素。</p>
+<p>下图展示HTML基本加载流程。可以看到有一个空白期。<strong>注意，实际上空白期要更大些。因为后面的DOM解析和渲染仍然可能失败，这种情况下仍然是空白的——也就是本文讨论的一种非短时的白屏情况</strong>。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/WebView%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B.png"></p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/WebView%E6%B5%81%E7%A8%8B.png"></p>
+<h3 id="分析白屏原因"><a href="#分析白屏原因" class="headerlink" title="分析白屏原因"></a>分析白屏原因</h3><p>先总结一下白屏的两大原因：</p>
+<ol>
+<li>请求没有发出，或没有成功下载到核心资源<ol>
+<li>应用业务逻辑问题、使用的WebView有bug、网络问题、安全问题（跨域&#x2F;证书&#x2F;认证）、权限问题）</li>
+<li>加载异常（无法打开、加载某个资源，如本地资源无权限、路径不对、没有该资源、远程资源404、核心资源下载失败、网络问题&#x2F;服务器问题&#x2F;cdn问题）</li>
+</ol>
+</li>
+<li>解析和渲染异常（html&#x2F;CSS&#x2F;JS DOM）<ol>
+<li>前端实现有问题，或者客户端WebView版本太老</li>
+<li>渲染异常（兼容性问题导致的无法显示；有时候，硬件加速也可能搞搞震）</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p>其中还有一些少见的、一般属于应用业务逻辑问题的情况：如缓存问题（如应用自身业务逻辑缓存了部分资源，在缓存过程或读取过程中处理不当）</p>
+</blockquote>
+<blockquote>
+<p>从解决问题的角度来说（尤其是解决偶发的、非必现的、单用户的、远程的问题），针对缓存问题（及疑似的缓存问题），清空app缓存或重新安装app，有一定的科学性和有效性（虽然它不根本解决问题）。</p>
+</blockquote>
+<blockquote>
+<p>另外一种情况也有可能出现白屏——但它不是问题，而是正常现象。如打开的url对应的schema是调起其他app或服务来处理的（如一个打开应用商店的schema、调起其他app的schema）等。这时，WebView按照编写的业务逻辑发出Intent（在Android上是这样）启动处理schema的实体。当系统内没有安装或提供能处理该schema的app&#x2F;服务时，就会在用户的手机屏幕上留下空白的看上去像是白屏问题的界面。如果这时应用和系统均没有弹出任何提示，会令用户误解，也会令暂时没有摸清楚情况的开发人员紧张。</p>
+</blockquote>
+<h3 id="定位白屏的触发因素"><a href="#定位白屏的触发因素" class="headerlink" title="定位白屏的触发因素"></a>定位白屏的触发因素</h3><p>分为有调试台和无调试台的情况。它们的基本流程差不多，首先是确认请求以及请求的响应是正常的，接着确认核心资源的加载情况，最后确认js的执行情况以及最后的渲染效果。</p>
+<h4 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h4><p>在Android中，建立adb连接后，可以通过实现了DevTools协议的工具（如Chrome提供的<code>chrome://inspect</code>）对运行于Android设备的WebView进行调试。</p>
+<blockquote>
+<p>部分经过定制的WebView，可能会关闭该协议（或需要特殊操作后），导致无法远程调试。</p>
+</blockquote>
+<h4 id="请求-x2F-响应异常"><a href="#请求-x2F-响应异常" class="headerlink" title="请求&#x2F;响应异常"></a>请求&#x2F;响应异常</h4><p>加载网页的前提是获取对应网页的核心资源。在发出请求、接收响应、下载资源这三大步骤中出现问题，会导致核心资源不能完整获取。</p>
+<blockquote>
+<p>实际上在过去接收到并分析的线上问题中，绝大多数均为网络问题（编程上，是核心资源没有加载成功）。</p>
+</blockquote>
+<ul>
+<li><p>首先是经验法：非群发、本地不能复现、偶现的问题，绝大多数为网络问题（数据表明的）。此外，即使用户声称能稳定复现，那也不能完全排除网络问题——因为部分地区的网络提供商很坑&#x2F;该应用厂商采用的CDN偏偏在这个用户所在的位置抽风。进一步的，大多数WebView画面加载的内容并不复杂，并不是新技术，出问题的概率较低。</p>
+</li>
+<li><p>有调试台的情况：reload页面，查看Network，检查资源加载情况</p>
+</li>
+<li><p>无调试台：</p>
+</li>
+</ul>
+<ol>
+<li>WebView回调<ol>
+<li><code>onPageStarted</code>：没有回调，可断言白屏原因为类型Ⅰ（核心资源未就绪）。请求可能没有成功送达，也可能是服务器没有发回响应，或者是因为网络问题没有接收到响应（丢失或超时）</li>
+<li><code>onReceivedError</code>、<code>onReceivedSslError</code>：加载资源时出现异常、SSL握手异常（<strong>注意我们的业务场景是系统层而非App层，不出问题的情况下不会像App应用层那样关注这个回调</strong>）</li>
+<li><code>onPageFinished</code>：页面加载整体顺利完成，流程结束</li>
+<li><code>onProgressChanged</code>：加载进度回调</li>
+<li><code>shouldOverrideUrlLoading</code>：页面被重定向或加载新的url时回调；返回true时表示该URL由App处理（而不交给WebView去加载），这个回调可以实现对url的拦截、GET的参数组装、实现自定义的schema。可以监测该回调的返回值，返回为false时，可以确认WebView不会做任何工作，理论上留下白屏</li>
+</ol>
+</li>
+<li>加载URL仅包含HTML时，几乎完全可以断言白屏问题不是渲染问题&#x2F;兼容问题。几乎就是网络问题和请求问题（比如请求没有发出，DNS问题，加载本地资源的权限问题，认证问题）</li>
+<li>加载本地资源时：首先排查权限问题。主要是路径存在且正常、scheme正确且支持、SELINUX权限无异常（WebView的架构是被设计为独立的进程。权限问题的报错可能不在应用进程中，而是在WebView的进程中，看日志不能只看应用进程的。）</li>
+<li>业务逻辑问题：没有统一的问题解决思路，特别是（远程的）设备正在运行一个三方应用时，只能排除法和本地调试。曾经碰到一个渣渣应用，它接入某厂商的广告SDK。其业务逻辑是（反编译得知的），首屏GET广告页，并加载出来展示广告。在GET请求中加入了设备IMEI，运行于我们的某台设备（平板，不含IMEI等）中因为获取不到相关信息，因此在广告页加载不出来，傻楞着不动，展示白屏。最初分析为应用兼容性问题导致的卡死，经过深入分析后确认是其没有成功加载广告，按照其本身业务逻辑，广告没有展示就不肯触发展示下一个Activity，看上去是卡死，实质上是资源加载失败导致的WebView白屏。这个加载失败主要原因还是自身业务逻辑的问题。</li>
+<li>安全问题：这个主要是前端本身的问题，但是稳定性KPI是算在背锅端头上的。跨域、防火墙、没有设置usesCleartextTraffic时使用了HTTP、HTTP与HTTPS混用（前端页面问题；有时候，主资源是HTTP时，WebView会安全问题不加载之，导致整个页面缺失主资源而停止加载）、证书验证等。通常用排除法定位、让前端来看，远程客户端基本没有办法处理（除非定制WebView）</li>
+<li>网络问题：DNS没有解析到目标主机的IP或解析得到错误的IP；TCP连接失败、Socket超时、跳数耗尽；弱网：可能因为弱网问题，超时+重试超出了阈值后不再自动重试；</li>
+<li>逻辑问题：部分资源成功加载，但是设置了等待所有资源加载完成再显示（业务逻辑自行设定），因此等待某些慢速资源甚至是已经404的资源</li>
+</ol>
+<blockquote>
+<p>通常偶发的、非群发的白屏问题中，网络问题嫌疑大。此时只要判断问题原因不在解析渲染，请求也发出了，响应也正常（通过WebView回调可以看到，用户远程难以架一个调试台），基本上大多数情况都是网络问题。网络情况复杂，即时远程用户测速称网络没有问题，也不能在没有任何证据的支持下判断远程到服务器的网络情况。</p>
+</blockquote>
+<ul>
+<li>网络问题（无调试台的情况下）</li>
+</ul>
+<ol>
+<li>判断DNS是否正常（结合自身业务和基建提供的能力；也可以直接看下面第二步的有没有发出请求）</li>
+<li>查看是否发出请求（同上，也可以直接看第三步）</li>
+<li>是否返回了HTML（WebView是否回调<code>onPageStarted</code>）</li>
+<li>是否发起了CSS和JS请求（主资源完成加载，查看progress）</li>
+<li>解析H、C等，执行JS、生成DOM，计算、摆放（解析、渲染结束）（主要靠日志收集、环境信息汇总以及本地复现）</li>
+<li>渲染（这里上屏，白屏结束）（如果画面有异常那就是别的问题，跟白屏一点关系都没有。）</li>
+</ol>
+<h4 id="解析与渲染"><a href="#解析与渲染" class="headerlink" title="解析与渲染"></a>解析与渲染</h4><p>兼容性问题比较复杂，一时间难以判断问题属于哪个端或由哪块进行修改。可以确认的是，出现这种问题基本都要调试台才能顺利完成问题定位。</p>
+<ol>
+<li>解析HTML CSS JS，构造DOM（前端页面本身兼容性问题、所使用的WebView兼容性问题）——这个非常简单，直接打开调试台看就行了<ol>
+<li>页面包含不支持的标签</li>
+<li>页面代码有错误</li>
+<li>权限问题（加载本地资源要注意有无权限）</li>
+</ol>
+</li>
+<li>渲染（很少出现因渲染问题导致的白屏）——根据解析构造的DOM对页面布局、绘制（布局阶段为计算位置+摆放，内容没有上屏显示）<ol>
+<li>WebView自身问题（崩溃。可能因漏洞、内存、bug等崩溃）（渲染进程如果崩溃，会回调<code>onRenderProcessGone</code>）</li>
+<li>WebView兼容性问题（不同版本的兼容性问题；前端写的样式和标签太牛皮了也有可能出现兼容性问题）</li>
+</ol>
+</li>
+</ol>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>以最少的精力，相对较科学的定位（非短时的、远程的、没有&#x2F;调试条件的）白屏问题，步骤大概如下</p>
+<ol>
+<li>调试台（如果条件允许，进入调试台也许只需要几秒钟就可以看出问题原因）</li>
+<li>网络、请求问题排查；本地资源排查权限</li>
+<li>WebView回调（需要打日志或者其他跟踪方法），三方WebView本方法失灵</li>
+<li>在不同的WebView中测试</li>
+<li>删除可疑的前端标签和样式；WebView拦截部分可疑资源不要加载。。。。</li>
+<li>回退代码或下架应用</li>
+</ol>
+<h3 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h3><h4 id="回调"><a href="#回调" class="headerlink" title="回调"></a>回调</h4><ol>
+<li>创建页面：onCreate()</li>
+<li>页面加载（收到服务器响应了）：onPageStarted()</li>
+<li>页面加载完成：onPageFinished()</li>
+<li>初始化耗时：从onCreate()到onPageStarted</li>
+<li>加载资源：从onPageStarted()到onPageFinished()</li>
+<li>All：从onCreate()到onPageFinished()</li>
+</ol>
+<h4 id="拦截资源加载"><a href="#拦截资源加载" class="headerlink" title="拦截资源加载"></a>拦截资源加载</h4><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 发生资源加载，拦截顺序</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 此方法添加于API21，调用于非UI线程，拦截资源请求并返回数据，返回null时WebView将继续加载资源</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> view</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> request</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment"> */</span> </span><br><span class="line"><span class="keyword">public</span> WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request)</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/05/30/WebView%E7%99%BD%E5%B1%8F%E9%97%AE%E9%A2%98%E7%B2%97%E6%9F%A5/">https://nasdaqgodzilla.github.io/2022/05/30/WebView%E7%99%BD%E5%B1%8F%E9%97%AE%E9%A2%98%E7%B2%97%E6%9F%A5/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/Web/">Web</a></div><div class="post_share"><div class="social-share" data-image="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/05/31/Docker-as-As-DaaS-%E5%9C%A8Docker%E4%B8%AD%E8%BF%90%E8%A1%8C%E7%9A%84AndroidStudio/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/Latern2022_ZH-CN0112710917_1920x1080.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Docker as As DaaS: 在Docker中运行的AndroidStudio</div></div></a></div><div class="next-post pull-right"><a href="/2022/05/30/%E3%80%8A%E5%91%BD%E8%BF%90%E8%B5%8B%E3%80%8B%E5%90%95%E8%92%99%E6%AD%A3/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">《命运赋》吕蒙正</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 WindowContainer窗口模型详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-03</div><div class="title">Android 11 WindowContainer窗口模型详解</div></div></a></div><div><a href="/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-06</div><div class="title">Android 11 setRequestedOrientation流程详解</div></div></a></div><div><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/" title="Android 11 startActivity之ActivityStarter流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-05</div><div class="title">Android 11 startActivity之ActivityStarter流程</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%99%BD%E5%B1%8F%E5%8E%9F%E7%90%86%E5%8F%8A%E6%88%90%E5%9B%A0"><span class="toc-number">2.</span> <span class="toc-text">白屏原理及成因</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E6%9E%90%E7%99%BD%E5%B1%8F%E5%8E%9F%E5%9B%A0"><span class="toc-number">3.</span> <span class="toc-text">分析白屏原因</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%BD%8D%E7%99%BD%E5%B1%8F%E7%9A%84%E8%A7%A6%E5%8F%91%E5%9B%A0%E7%B4%A0"><span class="toc-number">4.</span> <span class="toc-text">定位白屏的触发因素</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="toc-number">4.1.</span> <span class="toc-text">前置知识</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%B7%E6%B1%82-x2F-%E5%93%8D%E5%BA%94%E5%BC%82%E5%B8%B8"><span class="toc-number">4.2.</span> <span class="toc-text">请求&#x2F;响应异常</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90%E4%B8%8E%E6%B8%B2%E6%9F%93"><span class="toc-number">4.3.</span> <span class="toc-text">解析与渲染</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%99%84%E5%BD%95"><span class="toc-number">6.</span> <span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9B%9E%E8%B0%83"><span class="toc-number">6.1.</span> <span class="toc-text">回调</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8B%A6%E6%88%AA%E8%B5%84%E6%BA%90%E5%8A%A0%E8%BD%BD"><span class="toc-number">6.2.</span> <span class="toc-text">拦截资源加载</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/05/30/WebView%E7%99%BD%E5%B1%8F%E9%97%AE%E9%A2%98%E7%B2%97%E6%9F%A5/'
+    this.page.identifier = '2022/05/30/WebView白屏问题粗查/'
+    this.page.title = 'WebView白屏问题粗查'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

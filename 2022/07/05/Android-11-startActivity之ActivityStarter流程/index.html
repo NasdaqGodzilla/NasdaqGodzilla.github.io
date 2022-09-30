@@ -1,0 +1,597 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android 11 startActivity之ActivityStarter流程 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="11:23 amMonday, 4 July 2022 (HKT)Time in Hong Kong   概述 流程 startActivity ActivityStarter.execute ActivityStack.startActivityLocked RootWindowContainer.resumeFocusedStacksTopActivities ActivityStack.r">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 11 startActivity之ActivityStarter流程">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="11:23 amMonday, 4 July 2022 (HKT)Time in Hong Kong   概述 流程 startActivity ActivityStarter.execute ActivityStack.startActivityLocked RootWindowContainer.resumeFocusedStacksTopActivities ActivityStack.r">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png">
+<meta property="article:published_time" content="2022-07-05T04:31:10.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.190Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android 11 startActivity之ActivityStarter流程',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android 11 startActivity之ActivityStarter流程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-05T04:31:10.000Z" title="发表于 2022-07-05 12:31:10">2022-07-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.190Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android 11 startActivity之ActivityStarter流程"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>11:23 am<br>Monday, 4 July 2022 (HKT)<br>Time in Hong Kong</p>
+<hr>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E6%B5%81%E7%A8%8B">流程</a><ul>
+<li><a href="#startactivity">startActivity</a></li>
+<li><a href="#activitystarter.execute">ActivityStarter.execute</a></li>
+<li><a href="#activitystack.startactivitylocked">ActivityStack.startActivityLocked</a></li>
+<li><a href="#activitystack.resumefocusedstackstopactivities">RootWindowContainer.resumeFocusedStacksTopActivities</a></li>
+<li><a href="#activitySstack.resumetopactivityuncheckedlocked">ActivityStack.resumeTopActivityUncheckedLocked</a></li>
+<li><a href="activitystacksupervisor.startspecificactivity">ActivityStackSupervisor.startSpecificActivity</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>基于Android 11分析<code>startActivity()</code>过程中<code>ActivityStarter</code>的流程。</p>
+<h1 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h1><h2 id="startActivity"><a href="#startActivity" class="headerlink" title="startActivity"></a>startActivity</h2><p><code>startActivity()</code>调用实际上由<code>startActivityForResult()</code>实现，通过<code>Instructmention</code>借助Binder向<code>ATMS</code>发起请求。<code>ATMS</code>根据请求的Intent、参数等信息借助<code>ActivityStarterController</code>和<code>ActivityStarter.Factory</code>创建对应的<code>ActivityStarter</code>，并调用<code>ActivityStarter.execute()</code>完成<strong>解析启动请求的参数并实际启动Activity</strong>。</p>
+<!--
+@startuml
+participant Activity as A
+participant Instrumentation as I
+participant ActivityThread as AT
+participant ActivityTaskManagerService as ATMS
+participant ActivityStartController as ASC
+participant "ActivityStarter.Factory" as F
+participant ActivityStarter as AS
+
+-> A : startActivity()
+A -> A : startActivityForResult()
+alt mParent == null
+A -> I : execStartActivity()
+I -> ATMS : startActivityAsUser()
+ATMS -> ASC : obtainStarter()
+ASC -> F : obtain()
+F -> AS : execute()
+A -> AT : sendActivityResult()
+else
+A -> A : mParent.startActivityFromChild()
+end
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/TOzDQiD038NtFiMGLRje3b18YJ4Ol0YKsZs0QejcwFm4ZIOqjwzarmO7PpC3Uf-UtZic1kBiNN6Ht_Rs0e5DsREzMhuPIAPSAKr8JDbZO60RWmBDvcft9eHXDEYs0KW_9mZmZTGYNMsF4tngD_5MSrOnC4Nda4QshLReRiKYxMleET9jft3zs7LsAugNDrEQLvDqEYDFpqLfjeGwqWUcx5W8S6pyEn2Az-5WGdPkscfa2t-nR-yi6nMrxBrhcJuJaX0g2gGjXObV33QCBfCgKn7hHP9PFU7_5pFZ4htJAnY6-SYI6rt2fTxSOB-kIT5NP-i6nSDG7EN9tlq1" alt="Android 11 ActivityStarter创建流程"></p>
+<h2 id="ActivityStarter-execute"><a href="#ActivityStarter-execute" class="headerlink" title="ActivityStarter.execute"></a>ActivityStarter.execute</h2><p><code>ActivityStarter</code>通过<code>execute()</code>执行Activity启动的准备工作、扫尾工作，并最终返回Result。通过一系列流程完成权限检查、Intent验证&#x2F;拦截，并创建<code>ActivityRecord</code>，通过<code>setInitialState()</code>、compute*等方法完成<code>mLaunchParams</code>的计算（主要是bounds、windowingMode）。最后将<code>ActivityRecord</code>加入到对应的<code>Task</code>中，并调用<code>ActivityStack</code>、<code>RootWindowContainer</code>相关流程。</p>
+<!--
+@startuml
+participant ActivityStarter as AS
+participant ActivityStartInterceptor as ASI
+participant ActivityRecord as AR
+participant ActivityTaskManagerService as ATMS
+participant ActivityStack as AStack
+participant RootWindowContainer as RWC
+
+-> AS : execute()
+AS -> AS : executeRequest()
+note right : Log: START UserId {Intent} from uid
+note right : 解析Intent、查找对应的ActivityStack、Task
+note right : Check permissions, checkStartActivity by IntentFirewall
+AS -> AS : shouldAbortBackgroundActivityStart()
+note right : Check restricted bg Activity
+AS -> ASI : intercept()
+AS -> AR : ActivityRecord::new
+AS -> AS : startActivityUnchecked()
+activate AS
+AS -> ATMS : deferWindowLayout()
+AS -> AS : startActivityInner()
+activate AS
+AS -> AS : setInitialState()
+note right : Calculate mLaunchParams, mBounds
+alt newTask
+AS -> AS : setNewTask()
+else
+AS -> AS : addOrReparentStartingActivity()
+end
+note right : Add ActivityRecord as a child into Task
+alt !mAvoidMoveToFront && mDoResume
+AS -> AStack : mTargetStack.getStack().moveToFront()
+end
+note right : Move task to front
+AS -> AStack : startActivityLocked()
+alt mDoResume
+alt !mTargetStack.isTopActivityFocusable() || topTaskActivity.isTaskOverlay() && mStartActivity != topTaskActivit
+AS -> AStack : ensureActivitiesVisible()
+else
+AS -> RWC : resumeFocusedStacksTopActivities()
+end
+end
+deactivate AS
+AS -> ATMS : continueWindowLayout()
+deactivate AS
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/TLJ1RXCn4BtdAznB1HBq0oA1cXPLYfHIjDdIixEURgrwxMKyJgae4aXSk77Wn04E277a30T-1hNm6OozNHA7v51rr_FUp7lprjdr9952OmOj_zULRgKbCQf8ppLTJcCHK4WlHjFDYB5bK0KjkLleU2ssWCgXIeXYBQ2K_lnGMba3JW7dke84BWytpgxE4o8zPPZ2EJhHLhcBVMT9QjkvA4xs1uFx3vaXXWAUGnK8xjmTyElAOG7F0dZYcdK40dLzHboTk7eefkMeACMn1nmhyIAQj_HIdA9hHD0g9_pv-ldcuxiEy-lLwvjFNsxU_hp-zltwn_lV7zvaJhWS5v3pzy-0FRQ0ZVPUE-llYIeUfRttT36x5Ds80urm8OrPTkJFN31gD7D8UpocHXUiolBBNVP3aVsZhWYKcDMY9_phF6QWxeDVxB3WuppmuT32HIPeMVknJNv0SGiPpoG1mteyPyyC1QU0NPmJUUa2pzlOS6mjODuimmADhIOj3Lid-C-wD5KmaTPCP61jJoJAXhVUxCMr-O4q9DXFIYfl-xWxvOvWF2mNfL97M40h4IobZMjRzteZtgfSnKYfDRT6SlJQgBXr9-Ae96Qh6SsTLeTk3gKxG6T9R6-Bvf4hm8TceIDTbg5eIearK7hTkNrWpJlDWhzEKMmlY6SAddqQKLdZrH0che_Kq9AMf3TJe7tfsfvruAhWvSnmAkBgYYUrqMLVZLX-FPe36ibhIpRpUx3rO8MqAXAi3mYtHGt-gVQQv-MPyOy4Gp59Jf909VwILAPsMqf_2ZP-kPMpf6s0_EDTOUnoaz2Olm00" alt="ActivityStarter.execute流程"></p>
+<h2 id="ActivityStack-startActivityLocked"><a href="#ActivityStack-startActivityLocked" class="headerlink" title="ActivityStack.startActivityLocked"></a>ActivityStack.startActivityLocked</h2><p><code>ActivityStarter.execute()</code>调用了<code>ActivityStack.startActivityLocked()</code>。它主要是将<code>ActivityRecord</code>摆放到对应的<code>Task</code>，并确保<code>Task</code>在对应的<code>ActivityStack</code>中。然后通过<code>DisplayContent</code>准备启动动画。根据<code>Task</code>和<code>ActivityRecord</code>的性质，确定<code>Starting Window</code>的类型（包括Task截图Snapshot、快闪欢迎屏幕SplashScreen等）并进行显示。</p>
+<!--
+@startuml
+participant ActivityStack as AS
+participant ActivityRecord as AR
+participant DisplayContent as DC
+
+-> AS : startActivityLocked()
+AS -> AS : postionChildAtTop()
+note right : Position ActivityRecord and Task at top of their parent
+AS -> DC : prepareAppTransition()
+note left : 准备Activity打开动画
+
+alt activityRecord.mLaunchTaskBehind
+AS -> AR : setVisibility(true)
+AS -> AS : ensureActivitiesVisible()
+AS -> DC : executeAppTransition()
+else SHOW_APP_STARTING_PREVIEW && doShow
+AS -> AR : showStartingWindow()
+AR -> AR : addStartingWindow()
+AR -> AR : getStartingWindowType()
+note right : 获取Starting WinType，包括SnapShot和SplashScreen
+
+alt STARTING_WINDOW_TYPE_SNAPSHOT
+AR -> AR : return createSnapshot()
+end
+
+AR -> AR : scheduleAddStartingWindow()
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/VP51RXCn58RtSmglghA00x107P888bLXD1urOZKozcl6gcDRzXjATcoW0YAG07425YpOiw3NcSAEA_2SC5M6Hbr5a_Vv_Tzl7qKK0TkboJpzQgcziCXoYVgvnXL78S-OY2pdU-SbI1VK1YW7m5X7RyHgv2m2VH8m7cNPtGUqYDrdcyn-nx6JPw0ExsGqwW7l8cfdHuqsAiVAUHfRXy22NZH8GE6YJiGD4wjO9I8v8qFdcJjbs80EZEH8P9j1BYaZGFepzxuAmcxNzJ46JbDAT_6w-thHHroz-THTlkpUVllr-MUM2KEr1k7tbiUYjR99-G-XqLRrbShK6V14H_rC6pfmYA65GMEmiGtmBqf3tB06I6X76Lw0RF66CfW8Z3z-Cg_pegXvbPVLTFQeBih9oNGoPmS7J3dUkFE13drpJ2zc5tDITUSfghoU2wLk6oy0X-DgvU7_H_hz_aVtuKlFCG8JzUTotQrVNRtxpgtmf8NTnpNtHiI6om1WjrTxtM8-dOsfMVMqcDHybXVKizer2O1ji8oE2eIqafeXcG1T_ouNPGEgDP3lANP4SBiqVm40" alt="ActivityStack.startActivityLocked流程"></p>
+<h2 id="RootWindowContainer-resumeFocusedStacksTopActivities"><a href="#RootWindowContainer-resumeFocusedStacksTopActivities" class="headerlink" title="RootWindowContainer.resumeFocusedStacksTopActivities"></a>RootWindowContainer.resumeFocusedStacksTopActivities</h2><p><code>RootWindowContainer.resumeFocusedStacksTopActivities()</code>会调用targetStack的<code>resumeTopActivityUncheckedLocked()</code>。然后会遍历所有<code>DisplayArea</code>内的所有<code>ActivityStack</code>，并resume他们的top activity或Home Activity。</p>
+<!--
+@startuml
+participant RootWindowContainer as RWC
+participant ActivityStack as AS
+
+-> RWC : resumeFocusedStacksTopActivities()
+
+alt targetStack?.isTopStackInDisplayArea() || getTopDisplayFocusedStack() == targetStack
+RWC -> AS : resumeTopActivityUncheckedLocked()
+AS -> AS : resumeTopActivityInnerLocked()
+end
+
+alt foreach DisplayArea.ActivityStack
+RWC -> AS : topRunningActivity().makeActiveIfNeeded()
+note right : 除上面resume的targetStack以外的其他stack遍历执行
+alt No activities resumed. 该ActivityStack没有resumed的activity
+alt focusedStack != null
+RWC -> AS : resumeTopActivityUncheckedLocked()
+else
+RWC -> RWC : resumeHomeActivity()
+end
+end
+end
+
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bPB1IiD0443l-OhnrXxC1mZLXefOa1uQfUSbcRPBazcGtIY5NWGLAkgneEYXqk9Hy212VwUjxL-uIPCsHJnuw3QPUJFxPaXPAXQgoFUCGFzpXmUC5DI5K0rEhhYe25AC4uR09DGRbItCSXG_vwfhA-PqOi2o3MDtF-PW3qAKaOz7meaakWaYJqMGrd2KXQ9XC4-15cYXIe03ayTCybobGou3ZtMj45cX2BqUQ4ndqt2-iKwNIlb6HgoWJInxBRAvktj6JXkT3hed8ZwrY6N_JLU9C5oJIEvAkob2P4uRSfPcLlBRGOcW7X5nQcLCeMZwh8F9ArQRDKGtkO24GWXvgwrqsV9nDFswNRwyhgo-dwvoGquduzbee6Epwy_fP23ZsFBoVlPmC--_BOPtYMPD05klF1tEDM7nFjwIdNyCvy_zDArRiZIPZhfPDUoKW2BF---6qPEOrUI_ZsFXOrQLhZVx6MLzHhxt0m00" alt="RootWindowContainer.resumeFocusedStacksTopActivities流程"></p>
+<h2 id="ActivityStack-resumeTopActivityUncheckedLocked"><a href="#ActivityStack-resumeTopActivityUncheckedLocked" class="headerlink" title="ActivityStack.resumeTopActivityUncheckedLocked"></a>ActivityStack.resumeTopActivityUncheckedLocked</h2><p><code>ActivityStack.resumeTopActivityUncheckedLocked()</code>主要相关流程如下，它主要通过<code>resumeTopActivityInnerLocked()</code>完成对activity的resume（对于已经start的activity）和activity的start（对于没有start的top activity）。</p>
+<p>该方法会分为两种情况进行处理——activity已经启动，只需要回调onResume()、activity没有启动，需要先创建activity。<code>ActivityStack</code>通过<code>ClientTransaction</code>借助Binder回调到应用Activity各生命周期，对于没有start的activity，则借助<code>ActivityStackSupervisor</code>启动，它实际上才是真正启动activity的主要流程。</p>
+<!--
+@startuml
+participant ActivityStack as AS
+participant ActivityRecord as AR
+participant RootWindowContainer as RWC
+participant ActivityTaskManagerService as ATMS
+participant ClientTransaction as CT
+participant ActivityThread as AT
+participant Instrumentation as I
+participant Activity as A
+participant ActivityStackSupervisor as ASS
+
+-> AS : resumeTopActivityUncheckedLocked()
+AS -> AS : resumeTopActivityInnerLocked()
+activate AS
+
+alt !hasRunningActivity
+AS -> AS : return resumeNextFocusableActivityWhenStackIsEmpty()
+note right : No activities left in this stack, look somewhere else
+end
+
+alt mResumedActivity == mTarget && mTarget.isState(RESUMED) && DisplayArea.allResumedActivitiesComplete()
+AS -> AS : executeAppTransition()
+note right : 目标actiivty已经resumed
+<- AS : return false
+end
+
+alt mRootWindowContainer.allPausedActivitiesComplete()
+<- AS : return false;
+note right : 全局范围内有正在执行pause的活动
+end
+
+AS -> AS : getDisplayArea().pauseBackStacks()
+note right : Pause activities in back stack.
+
+alt mResumedActivity != null
+AS -> AS : startPausingLocked()
+note right : 当前stack有resumed activity则pause之
+end
+
+alt 上面操作使一些activity正在pause
+alt resume的目标activity !isProcessRunning()
+AS -> ATMS : startProcessAsync()
+else resume的目标activity已经完成resume
+AS -> AS : executeAppTransition()
+<- AS : return true
+end
+end
+
+alt next.attachedToProcess() resume的目标activity已经start过了
+    AS -> AR : setVisibility(true)
+    AS -> RWC : ensureVisibilityAndConfig()
+    note over CT : ClientTransaction的虚线表示Binder调用，也表示后面调用了scheduleTransaction()时才真正发生的调用
+    alt next pending ActivityResults
+        AS -> CT : addCallback(ActivityResultItem.obtain(next)
+        note right : next有未调度完成的pending ActivityResults
+        CT -\-> AT : handleSendResult()
+        activate AT
+        AT -> I : callActivityOnPause()
+        note right : 回调onActivityResult()之前会触发activity pause
+        I -> A : performPause()
+        A -> A : onPause()
+        AT -> AT : deliverResults()
+        AT -> A : dispatchActivityResult()
+        A -> A : onActivityResult()
+        deactivate
+    end
+    alt next.newIntents != null
+        AS -> CT : addCallback(NewIntentItem.obtain(next.newIntents))
+        note right : next有未调度完成的onNewIntent
+        CT -\-> AT : handleNewIntent()
+        activate AT
+        AT -> AT : deliverNewIntents()
+        AT -> I : callActivityOnNewIntent()
+        I -> I : callActivityOnNewIntent()
+        I -> A : performNewIntent()
+        A -> A : onNewIntent()
+        deactivate
+    end
+    AS -> CT : setLifecycleStateRequest(ResumeActivityItem.obtain())
+    note right : Resume目标activity
+    CT -\-> AT : handleResumeActivity()
+    AT -> AT : performResumeActivity()
+    AT -> A : performResume()
+    A -> A : performRestart()
+    A -> I : callActivityOnResume()
+    I -> A : onResume()
+    AT -> AT : addView()
+    note left : Add window, decor view
+    AT -> ATMS : getLifecycleManager().scheduleTransaction()
+    note right : 真正调度执行transaction
+    AT -> AR : completeResumeLocked()
+else !attachedToProcess() resume的目标activity没有start
+    alt !next.hasBeenLaunched
+        AS -> AR : hasBeenLaunched=true
+    else
+        AS -> AR : showStartingWindow()
+    end
+    AS -> ASS : startSpecificActivity()
+    note left : Activity没有start，通过ActivityStackSupervisor调度启动之
+end
+
+deactivate
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bLVVRXF75xxtKsnka2s17-3tQogCeP8bGf5ju7goUvmTPJsptPcDyHqIvKzeA5GWLIHfAMq5KQNI5g4M0b5UnckRgxv2pynurXvddIXS96ZdE-Tyvpj_Pd9UI9B8j1kLOlnDVHeJ9hsQB-a6bVsM9FwwHuHNQnMUDy7dIQ01JGVGv5pUe2pWlJfdab06YK8rRzGB_RI9M5yXZAn1qe9aW_gWVRPNtB3rY0AJxOGmGT2ICuMgjujTXWaGGyq5D9YGITe5f6LTD0ezQDl5ihJIM54LF342jKgbSv_ZR-z_NW820xHvR0skCJy4Vns2orpzB5TAY5k8RZ2KAqSIzPL8K3KeaKXwIo4HpPGnojQiXUjEfWcRUBq2D-KNt4y5MOt0ec-4m7GA3N6f6yi-1c4S0oHqBPJeuGhtY85I45u47UbHvicG2ayeixDUnFcw9tWNUY4au44ae0GiCFowJHqwo7LSNlQwRPAiWVJEdB7_hLA172IKcvTQrrOkNQoeiujKn17frx1qLH95hYCaK-VTE089he1m4_nKGYsETMjGLTRvd4OxhuS_tLDfqGtPp_vvC_hmA37kIv-TSvJh43UTWbvMvAwIL1HpAtJuVvTFTcSl--lMUEjsjlCsktjdkBiv_FsNR7TlkFbg_68hLhv7sryFttx87knfBhC9etmpIfKhLOs_WANHPHNpoMkgipN5SguYq9Ipkg1iIyiUIwDeDh1U5ieRzbxUe6vU1q-opOVQB-OqKTY6xcVtdscgW_VVJ0KUl7lmwOUVXqyU3Wvs1mU7WtUt1lixriAeeeqqs7X4QMn1BLaghYRS1s57OzeYxPKfTGEfYJxp4Q3wjjYZRP7izTRm_cC3ERdbvWilazGqKfuhmtci4edoX12qkU63zJgUXUO-FhmtsBzRyl3VX4XJfGNoEXLqbKQ8Bgk0bHa8xbj5beaqWIcinWBiv0v5ZJHM5v1lG8Ax5E57jYoo6Z_R7kqVZb_iZNxTlu2p0CdupzkZftl_VjmQl7zklcUFlyKwck_8LAWKqmYi8wtGyFk_XviFHxlFLLqVVJTw-XoT6nDDnMhanIWPLd7cfX5f98K6vVaPlYG8wZYFgg7BBhmXeLlbgsfcoyfh9JTtUbOTgG7S_GsPPFilJT6Hs4aaCFmvtM7e92GiYA255WPLdWQRRl3sb7zRyM-WeO_SRO0lcHxLyWAYsSwFo90p2xUHS9nmw0OVjyUlNgAg-L2OiR6k6hffq4qCIOSdtVbGDNlEBGkNhSapW8XYgqoaE8fH42fY8ltGfLaSQI4c02kR_eIwEWrIPT1hC0bC2hkeJkgDAzR2RGl7L-MqBS9PxlQOjh2OnLsnI6ThwKgze7cAmZHE1NKQn68MbCuzNbmrjo82v6NQ0R_lHw0V04tuAWKXo-RwiGndQsIAuXR4eDrbMIeMttMCP5sbRRR7mUPHzlJ8eTxKzhHOUST3BZcttrrwfeMlK-ZDx6hz9CEJMX1uFVqmEOl2-ppnDX3esEkhRsr6yiah6zyCHVkvG6YpgqtNcyU9d1hCncggJ2Tl89EBUI7OUtRf5DVUyCqBd3OjPZxrItfKGo8k0B3B96NAbplpXiGSP5dVmWgZQ1GPY93tMYeMxdhzqBDYE-sBF_DtH2i6dtQextQBMvoZgU1b-UdMDjxZ2_wEcAoMnt_Wcoz_8SrCr7dya7QZ_m00" alt="ActivityStack.resumeTopActivityUncheckLocked流程"></p>
+<h2 id="ActivityStackSupervisor-startSpecificActivity"><a href="#ActivityStackSupervisor-startSpecificActivity" class="headerlink" title="ActivityStackSupervisor.startSpecificActivity"></a>ActivityStackSupervisor.startSpecificActivity</h2><p>当activity没有start时，<code>ActivityStack</code>会调用<code>ActivityStackSupervisor.startSpecificActivity()</code>启动对应的Activity。</p>
+<p>activity启动时还有一些需要特别处理的情况——启动的activity对应的进程没有启动、对应进程已经启动两大情况。</p>
+<p>编程上，判断对应进程是否启动的条件是对应的<code>WindowProcessController</code>存在且绑定了相应的<code>IApplicationThread</code>。</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">final WindowProcessController wpc =</span><br><span class="line">            mService.get<span class="constructor">ProcessController(<span class="params">ar</span>.<span class="params">processName</span>, <span class="params">ar</span>.<span class="params">info</span>.<span class="params">applicationInfo</span>.<span class="params">uid</span>)</span>;</span><br><span class="line">final boolean up = wpc != null<span class="operator"> &amp;&amp; </span>wpc.has<span class="constructor">Thread()</span>;</span><br></pre></td></tr></table></figure>
+
+<p>在进程已经启动的条件下，<code>ActivityStackSupervisor</code>会创建<code>Configuration</code>，并借助<code>ClientTransaction</code>通过Binder回调到<code>ActivityThread</code>，使用<code>ClassLoader</code>创建activity并处理生命周期，最终完成activity的start。</p>
+<!--
+@startuml
+participant ActivityStackSupervisor as ASS
+participant ActivityRecord as AR
+participant ActivityStack as AS
+participant RootWindowContainer as RWC
+participant WindowProcessController as WPC
+participant ActivityTaskManagerService as ATMS
+participant ClientTransaction as CT
+participant ActivityThread as AT
+participant Activity as A
+participant Instrumentation as I
+participant LoadedApk as L
+
+-> ASS : startSpecificActivity()
+
+alt Activity's application is running
+    ASS -> ASS : realStartActivityLocked()
+    activate ASS
+        note right : 当!allPausedActivitiesComplete()时early exit；暂停新的resume请求、暂停WPC的configuration displatch
+        ASS -> AR : startFreezingScreenLocked()
+        ASS -> AR : setProcess()
+        ASS -> RWC : ensureVisibilityAndConfig()
+        ASS -> AR : setVisibility()
+        ASS -> WPC : prepareConfigurationForLaunchingActivity()
+        ASS -> AR : setLastReportedConfiguration(WPC.conf, AR.getMergedOverConf())
+        ASS -> CT : addCallback(LaunchActivityItem.obtain())
+        alt andResume
+            ASS -> CT : setLifecycleStateRequest(ResumeActivityItem.obtain())
+            note right : 需要resume时Lifecycle加入对应的resume或pause状态
+        else
+            ASS -> CT : setLifecycleStateRequest(PauseActivityItem.obtain())
+        end
+        ASS -> ATMS : getLifecycleManager().scheduleTransaction()
+
+        CT -\-> AT : handleLaunchActivity()
+        activate AT
+            AT -> AT : handleConfigurationChanged(null, null)
+            activate AT
+            note left : 更新Resources，回调组件的conf changed
+            alt Component is Activity
+                AT -> AT : performConfigurationChangedForActivity()
+                AT -> AT : performActivityConfigurationChanged()
+                AT -> AT : handleWindowingModeChangeIfNeeded()
+                note left : 回调Activty的多窗口生命周期事件
+                AT -> A : onConfigurationChanged()
+            else
+                AT -> AT : performConfigurationChanged()
+                note left : 回调四大组件除activity和broadcastreceiver外的onConfigurationChanged()；广播没有这个接口
+            end
+            deactivate
+            AT -> AT : performLaunchActivity()
+            activate AT
+            note left : 创建Context，通过ClassLoader和Instrumentation创建Activity
+            AT -> I : newActivity()
+            note left : 内部实现是通过classloader loadclass后newInstance()创建Activity
+            AT -> L : makeApplication()
+            note left : 创建或获取Application；流程类似，创建Context，通过ClassLoader加载Application
+            AT -> A : attach()
+            activate A
+                A -> A : attachBaseContext()
+                note left : 然后调用mFragments.attachHost()、创建并绑定PhoneWindow、mUiThread、初始化WindowManager
+            deactivate
+            AT -> I : callActivityOnCreate()
+            I -> A : performCreate()
+            A -> A : onCreate()
+            deactivate
+        deactivate
+
+        CT -\-> AT : handleResumeActivity()
+        activate AT
+            AT -> AT : performResumeActivity()
+            activate AT
+                AT -> A : performResume()
+                note left : 在此之前同样会先回调完成所有pending的intents和AcrtivityResults
+                A -> I : callActivityOnResume()
+                I -> A : onResume()
+            deactivate AT
+            note left : resume完成后，如果activty的window不存在（可能是销毁了），则会与start一样，初始化PhoneWindow和DecorView
+        deactivate
+
+        CT -\-> AT : handlePauseActivity()
+        activate AT
+            AT -> AT : performPauseActivity()
+            AT -> AT : callActivityOnSaveInstanceState()
+            activate AT
+                note left : 需要回调Activity.onSaveInstanceState()
+                AT -> I : callActivityOnSaveInstanceState()
+                I -> A : performSaveInstanceState()
+                A -> A : onSaveInstanceState()
+            deactivate
+            AT -> AT : performPauseActivityIfNeeded()
+            activate AT
+                AT -> I : callActivityOnPause()
+                AT -> A : performPause()
+                A -> A : onPause()
+            deactivate
+        deactivate
+
+        alt procConfig.seq > mRootWindowContainer.getConfiguration().seq
+            ASS -> WPC : setLastReportedConfiguration()
+        end
+        ASS -> AS : minimalResumeActivityLocked()
+    deactivate
+else
+    ASS -> ATMS : startProcessAsync()
+end
+
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/dLXTKnD95xxFhyXxzOOgvGViXIMRBMkfWfLAMBrkUWx959FkiRi3ibVWXmk2-B4KAh3grg9ILYcwjOjyGFbZDZq9L_o5FJsTmHbdmYYvI8gPfv_pSPvpkfkBKX6XcWsluEElIrsVC5KSeCgTTDLqLH4wKMtw82PToKMHoE90jPe9hG3bmWaHbTvSbY7nliAvkkeoXq-LELF4PH3QgLmj9s0MCY8u1IaDKd3Fiz2h8-LCYwD4JWmJHceWgYO22g7vqU6a0sNF1QP61M6Iu4hE3AeycarP5q1ibDc0y5NYpI2JIZGRWB55v8C9m10d3ZW3VfYSeKBX_0MJvE9tnR0qLH-eE-xIo42fhr0WtcU3_vT5ulkUIosxAukYoPZBQeKYVWpH2H-wxbKDPxHsYDC9S93HG8bvI1GOC3wm7yRnWN1hTONhzU5l_oEUDqAQ4fmkXmjOZ8RlWO9IN_1u6uZmfejmtLN71sl1wWqzknwil6-ltX8WCGcThO_1Xnl_pipQLrWvV4Kv6tThJM4ZS5pfUqJHkdKY5aGboiab0V0BXbYb0e35eqZZGNKramQWn101J3O5N76bE-Pwc9G1vfH3XtepVWQdCHWIWdm1M68enoExnCKGQJ9QHy-Z2lIsCKIage3FXG8dGLD22_qcPUSGsry3DGoY1ixbIH06L-fBKPP7aP8uJXcBDuPDMB9kH3uCAcZqyp7JUl75HcI4EPMmRlPfYjPwweu3dQOUeBOKLE1Q4wGgsNKvDb8IErgVwRoQjLf1DPrGwxilzEsNUcjNxosVY2cOM_6D5jjtjuEPsHDIyEGP_3MgpdCNc9Cg5quJfAt5QBiZfzJNBsaTdAO7iTc21OyeZ4FdGmeag6EgFR25IOaZtfoZoT2G8iwGL5mPdw4qIgpfUUUAvjiovh3QadWmRYeIhFsD3OpLv4r1GHuVBEgrPvttDzlxjrhxsztkBL9hAScE0ZApWJDWoWocA2wBoex21p7EHICh3EoVM6RoEI9m5bUQ89rAk-DWimvp1-owmV6V09pCvV6SsGo5zjKqfaXlhBRVFDRt_smlFzSF3_N3pM3zUMjl0HFOomrauIpVSolsi-NpguBGQsjwuxKjzj7J3TBDgNwqE2OuSIYHIW055wUFtbZ1M7jvZTk1tlqKF7eR_FL7i3xV-VIqjVCcM7g9MKa6n98gSY1IQU7q45EzywrArtDhUdyFlLTmNQ7EZsPMEvz-BNj4od2B5XZq5vkvNHBPp71m47aPJAMzIbk_S_levgP-zwozz3vuicMDKsFS2uqNpK_ujtwmX9J64y8exhgvJWmXVODCm80z9zWnb9C6dAsTfO_w_afiaTdH_vbjRowqF-ot3WumHRafmxdTEJoCSHIojKwK8hJUisXfXISNVayaTBt8KNNxrZRcpyolvSt69K5gffQotzByo2MknzE9ZKllRhVt7-ftgoDrphhZ05ysVdRjCJ04_gvVB-Z55VksE_hp1HpN1oMU5rNlCYiBG6Wo2eJPS2Ejfq7ndF0KISgHrAFJTYMxbPzfLueSpgJ8eObJVScKDxlMDuEt6wtT1Jr_JpzO35vyR1siwjjptPdsRZ6OUn3Cp-0Sye4vEE9nSBbC6IbWamzGOVqqjZmbqqvbboxbMgfyF1lZmDVC9n4kjSwZXatxlReHF5id9_lCL2Z2riuz_VO9fk3uO4xVt-hSF3JpP7acs9fjxTqvFfWF6_SfPgIrinIUfrixCvWYypYISqpnc90VW79nnOMfRnHETAOwksxI36bqgWvLCWdHU0pFUFbwoqouFOnQpKJi_VmK-lpkpb-RRlRyDOdUpuJdpwESt4Sdd_nKvkOWvErz04iwa1EiXPnXpjdZgIyujSULVWdNYXUAZOp_HfWxLl86rcVGbYXr-SkxlPr-cwYQhTfbReDuTbAah-h9SEpvBtKVCMqTNNm7v3IZkDBOArp4xsR3-my0" alt="ActivityStackSupervisor.startSpercificActivity流程"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p><code>startActivity()</code>主要通过<code>ActivityStarter</code>实现检查、计算，对<code>ActivityRecord</code>、<code>Task</code>、<code>ActivityStack</code>的管理，最后通过<code>DisplayContent</code>、<code>WindowManagerService</code>、<code>RootWindowContainer</code>等完成<code>Starting Window</code>、<code>Activity</code>的创建。过程中会涉及activity是否已经start过、进程是否已经启动等条件执行不同的业务逻辑。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/">https://nasdaqgodzilla.github.io/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android 11 setRequestedOrientation流程详解</div></div></a></div><div class="next-post pull-right"><a href="/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android 11 WindowContainer窗口模型详解</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 WindowContainer窗口模型详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-03</div><div class="title">Android 11 WindowContainer窗口模型详解</div></div></a></div><div><a href="/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-06</div><div class="title">Android 11 setRequestedOrientation流程详解</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B"><span class="toc-number">2.</span> <span class="toc-text">流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#startActivity"><span class="toc-number">2.1.</span> <span class="toc-text">startActivity</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ActivityStarter-execute"><span class="toc-number">2.2.</span> <span class="toc-text">ActivityStarter.execute</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ActivityStack-startActivityLocked"><span class="toc-number">2.3.</span> <span class="toc-text">ActivityStack.startActivityLocked</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RootWindowContainer-resumeFocusedStacksTopActivities"><span class="toc-number">2.4.</span> <span class="toc-text">RootWindowContainer.resumeFocusedStacksTopActivities</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ActivityStack-resumeTopActivityUncheckedLocked"><span class="toc-number">2.5.</span> <span class="toc-text">ActivityStack.resumeTopActivityUncheckedLocked</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ActivityStackSupervisor-startSpecificActivity"><span class="toc-number">2.6.</span> <span class="toc-text">ActivityStackSupervisor.startSpecificActivity</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/'
+    this.page.identifier = '2022/07/05/Android-11-startActivity之ActivityStarter流程/'
+    this.page.title = 'Android 11 startActivity之ActivityStarter流程'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

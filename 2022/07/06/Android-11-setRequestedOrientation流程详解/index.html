@@ -1,0 +1,826 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android 11 setRequestedOrientation流程详解 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="7:30 pmTuesday, 5 July 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   概述 流程 ActivityRecord.setRequestedOrientation onDescendantOrientationChanged DisplayContent.onDescendantOrientationCha">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 11 setRequestedOrientation流程详解">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="7:30 pmTuesday, 5 July 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   概述 流程 ActivityRecord.setRequestedOrientation onDescendantOrientationChanged DisplayContent.onDescendantOrientationCha">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png">
+<meta property="article:published_time" content="2022-07-06T13:05:50.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.190Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android 11 setRequestedOrientation流程详解',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android 11 setRequestedOrientation流程详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-06T13:05:50.000Z" title="发表于 2022-07-06 21:05:50">2022-07-06</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.190Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android 11 setRequestedOrientation流程详解"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>7:30 pm<br>Tuesday, 5 July 2022 (GMT+8)<br>Time in Guangzhou, Guangdong Province, China</p>
+<hr>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E6%B5%81%E7%A8%8B">流程</a><ul>
+<li><a href="#activityrecord.setrequestedorientation">ActivityRecord.setRequestedOrientation</a></li>
+<li><a href="#ondescendantorientationchanged">onDescendantOrientationChanged</a></li>
+<li><a href="#displaycontent.ondscendantorientationchanged">DisplayContent.onDescendantOrientationChanged</a></li>
+<li><a href="#atms.updateglobalconfigurationlocked">ATMS.updateGlobalConfigurationLocked</a><ul>
+<li><a href="#rootwindowcontainer.onconfigurationchanged">RootWindowContainer.onConfigurationChanged</a></li>
+<li><a href="#windowprocesscontroller.onconfigurationchanged">WindowProcessController.onConfigurationChanged</a></li>
+<li><a href="#displaycontent.performdisplayoverrideconfigupdate">DisplayContent.performDisplayOverrideConfigUpdate</a></li>
+</ul>
+</li>
+<li><a href="#atms.ensureconfigandvisibilityafterupdate">ATMS.ensureConfigAndVisibilityAfterUpdate</a></li>
+<li><a href="#atms.continuewindowlayout">ATMS.continueWindowLayout</a><ul>
+<li><a href="#viewrootimpl.dispatchresized">ViewRootImpl.dispatchResized</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>分析Android 11 <code>setRequestedOrientation</code>流程。</p>
+<h1 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h1><p><code>setRequestedOrientation()</code>会触发<code>ActivityRecord</code>进入新的orientation及Configuraion，并触发Window Tree hierarchy整体变化，然后Binder回调新的configuration到<code>ActivityThread</code>，由<code>ActivityThread</code>内部完成<code>Activity</code>的<code>onConfigurationChanged()</code>回调，并借助<code>ViewRootImpl</code>触发<code>DecorView</code>进行绘制。</p>
+<h2 id="ActivityRecord-setRequestedOrientation"><a href="#ActivityRecord-setRequestedOrientation" class="headerlink" title="ActivityRecord.setRequestedOrientation"></a>ActivityRecord.setRequestedOrientation</h2><p><code>Activity</code>发起<code>setRequestedOrientation()</code>，实际上是通过Binder调用<code>ATMS</code>，并实际上调用了<code>ActivityRecord.setRequestedOrientation()</code>。</p>
+<p><code>ActivityRecord</code>更新了自己的orientation，并通过<code>onConfigurationChanged()</code>、<code>resolveOverrideConfiguraion()</code>更新Configuration，借助<code>onDescendantOrientationChanged()</code>更新Window Tree hirerarchy。</p>
+<p>在<code>onConfigurationChanged()</code>时更新了merged conf，并调整Surface Position，调度Animation。</p>
+<p>在Window Tree hierarchy完成处理后，<code>ActivityRecord</code>调用<code>ensureActivityConfiguration()</code>，更新last reported configuration，并判断是否需要重启Activity。通过<code>ClientTransaction</code>借助Binder调度App configuration changed。</p>
+<p>在App侧，会收到multi window mode change的回调（若有）、<code>onConfigurationChanged()</code>的回调，并回调<code>ViewRootImpl</code>的<code>updateConfiguration()</code>。<code>ViewRootImpl</code>会对<code>DecorView</code>的Children回调<code>dispatchConfigurationChanged()</code>，触发View Tree中各View的<code>onConfiguraionChanged()</code>。并接着<code>requestLayout()</code>-&gt;<code>scheduleTraversal()</code>跟随<code>ChoreoGrapher</code>的节奏进行一轮绘制流程。</p>
+<blockquote>
+<p>ViewRootImpl、DecorView、PhoneWindow是在onCreate()时setContentView()中完成创建的。其中ViewRootImpl.mView即DecorView。</p>
+</blockquote>
+<!--
+@startuml
+participant ActivityRecord as AR
+participant WindowToken as WT
+participant WindowContainer as WC
+participant ConfigurationContainer as CC
+participant Task as T
+participant RootWindowContainer as RWC
+participant WindowManagerService as WMS
+participant ActivityTaskManagerService as ATMS
+participant ClientTransaction as CT
+participant ActivityThread as AT
+participant ViewRootImpl as VRI
+participant Activity as A
+participant DecorView as DV
+
+-> AR : setRequestedOrientation()
+activate AR
+    AR -> AR : setOrientation()
+    activate AR
+        AR -> AR : mOrientation = newOri
+        AR -> WC : onConfigurationChanged()
+        activate WC
+            WC -> CC : onConfigurationChanged()
+            note right : 调用的参数是parent.getConfiguration()而不是自己的conf
+            deactivate WC
+            activate CC
+                CC -> AR : resolveOverrideConfiguration()
+                deactivate CC
+                activate AR
+                    AR -> WT : resolveOverrideConfiguration()
+                    WT -> CC : resolveOverrideConfiguration()
+                    note right : ConfContainer.resolveOverrideConfiguration()将mResolvedOverConf.setTo(mReqOverConf)
+                    alt inMultiWindowMode()
+                        AR -> AR : unset orientation as ORIENTATIN_UNDEFINED
+                        note right : 忽略窗口模式下应用申请的方向
+                        AR -> T : computeConfigResourceOverrides()
+                    else fullscreen mode
+                        AR -> AR : resolveFullscreenConfiguration()
+                    end
+                    ' deactivate AR
+                    ' done AR.resolveOverrideConfiguration
+                    return
+                activate CC
+                CC -> CC : onMergedOverrideConfigurationChanged()
+                note left : Set mMergedOverConf to parent and update from mResolvedOverConf
+            deactivate CC
+            ' done CC.onConfigurationChanged
+            CC -\-> WC
+
+            activate WC
+            WC -> WC : updateSurfacePosition()
+            note right : 更新Surface Position
+            WC -> RWC : scheduleAnimation()
+            RWC -> WMS : scheduleAnimationLocked()
+        deactivate WC
+        AR -> WC : onDescendantOrientationChanged()
+        note right : 向上触发WinContainer tree hierarchy
+        WC -> T : onDescendantOrientationChanged()
+    deactivate
+    ' done AR.setOrientation
+    AR -> AR : ensureActivityConfiguration()
+    activate AR
+        AR -> AR : setLastReportedConfiguration(getProcessGlobalConfiguration(), newMergedOverConf)
+        alt No conf changed
+            AR -> AR : scheduleConfigurationChanged()
+            AR -> AR : return
+        end
+
+        alt Should relaunch activity
+            AR -> AR : relaunchActivityLocked()
+            note right : 可能需要重启Activity
+        end
+
+        AR -> AR : scheduleConfigurationChanged()
+        AR -> ATMS : getLifecycleManager().scheduleTransaction(ActivityConfigurationChangeItem)
+    deactivate
+    ' done AR.ensureActivityConfiguration
+deactivate
+' done AR.setOrientation
+
+ATMS -> CT : schedule()
+CT -> AT : handleActivityConfigurationChanged()
+activate AT
+    AT -> AT : performConfigurationChangedForActivity()
+    activate AT
+        AT -> AT : performActivityConfigurationChanged()
+        AT -> AT : handleWindowingModeChangeIfNeeded()
+        AT -> A : dispatchMultiWindowModeChanged()
+        A -> A : onMultiWindowModeChanged()
+        alt shouldReportChange
+            AT -> A : onConfigurationChanged()
+        end
+    return
+    AT -> VRI : updateConfiguration()
+    VRI -> DV : dispatchConfigurationChanged()
+    note left : 为所有Children dispatchConfigurationChanged，默认回调onConfigurationChanged
+    VRI -> VRI : requestLayout()
+    activate VRI
+        VRI -> VRI : scheduleTraversals()
+        note left : 发出同步屏障，通过Choreographer回调调度Traversal
+    return
+deactivate AT
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/dLVTQXj75BxNKynT7MZz08MMc5LI1B4ILblxiantZhH3LZFApAo3xzocrAHDa0DE6XnJA6tS46Zjq49SDo4luvNbgxv2PxGhPSzwB9ii1iFC-RxpSxuvCxgg3LKcwwUDWVtFOpwWmf2bsF0rRjP3YALYX6go52A3LIwOl1l9so3SxchasGsaC9GBK1EB05dOlIxlPOeQBWKo3B1XHFLjjumTX58QZvEmvgKmMQQ2za1rGAtn62R1B7UywJfdPwsNeffva78G9b9KQ1gx12PnHtxAH04jAeWDLZZSTMcq-eFKRQ-4BI_118fscguf3kwscYkDnYUVs_QGJua64yAT3BG1TbEv62VbNRZIe8wC6d1j9FQpvXKGjdNxTViQfbz1aC-8WBjseMQu6bX3AN2Z4ofwm4edo97j7Aby5cqvWajnk4z8ow5uBp4MCJwuTxBzucJdktpuxUZnmUZflYqV2BFO0rFbijcEDnuS7pwq5kFDb_dhLnOJMmD4pS0J90u-SElu2u9PjHHecQx1pJLGYZEeHN06oM0UB-eC-b3neylxHMMFYh9_61ermG5cXtDnFbj-y7q_B2oOCt7RYnfC91Vi-ftfajyhJGtXOZbB3I_FksJWZx2kuqnO9qHMn4mrkHcshhMZfQZL_khBTlFQzLRxMjDFLayvV_VsvF7pavS_vSDVHoz-oTyCZmz_p8-sdHYt_nhllxRo6Ztv9zzwT45mhdknx0yoKrRA5ITJyQn--fpy8DL0kbcQwbW12DAN3ERxGXAzFaDUfjqWc7Vz8yB0BrDa8uNRdQiCBrI1oHJUkl0mLgV9CgWUCEpFFrlgVKwXwzhS0KFwxraS0p6I53E6KC58Dc0kagwIVN96s8svXnrNoAqk-WTWevxWPEOsqFBywUecT1bg9rDT6iCjgRcduKZaesT_ZvuSb00oHNZemmc_ZXDWMGfBWlTzOWhBM9OxFkCRChwD-e67iVV6QOAEGJ0godlDtrcSb3sInuS_Z7_VouUFLddbGM8K04auAAhYPBs1Cumkumz7tS3YnvTl_Me6eJC5quS04i7bxcbBVuDg4y90AWCCC_J0t58o1gs_IENNDAtnV-okTQnowxCoSzkIn4xwCT8ZZg7IquiE6aBXGrwC6kIyayWiPTOifPc84qBB8ftFLnXEYuc5vPN4S7zyx-tfxiPuxvlJpOVvrluKYwFwa9GH8ff8lsTRnRiGhySfb4_GXIkBKwRAMtC1wm6njmpqBr3S74qrAg1p9TgOnEkcQLJ9r6OLH4KsTjN6mbAO4oT3JzAeqFrx_01KLwg-3tXTgYblMSawZvzhVZ08Y98eNXHSzDoZeYnojmt0V32BObmFg8cJsdF4uscAaE92MoTuFH5ySP8BYs8RHp3dkOnKY-_H4hqIjcONWc_Ok7rhrbofv7ckBtnb7XyUZUvlZ7Rl1mbFcG8nb-2_DmzE_tqw_lEt_DdFzYtlpwWQKX6vAdxxtA3hCZDrTLYJQGKmgdB4ra1fckeIMi_1NWtvvb6-zM3qn_FyrV1qPzV5kR4pVhSP95A1x2awI40LGTk__6XlHbgjE8EgPg-2OExdz_y0" alt="Android 11 ActivityRecord.setRequestedOrientation流程"></p>
+<h2 id="onDescendantOrientationChanged"><a href="#onDescendantOrientationChanged" class="headerlink" title="onDescendantOrientationChanged"></a>onDescendantOrientationChanged</h2><p>作为Window Tree Hierarchy中的一员，<code>ActivityRecord</code>在<code>Orientation</code>变化时，会通过<code>onDescendantOrientationChanged()</code>向层级中的Family Parents发出回调。对于<code>Task</code>、<code>TaskDisplayArea</code>该方法实现均是默认的父类实现，即回调parent的同名方法。最终处理该方法的是<code>DisplayContent.onDescendantOrientationChanged()</code>。</p>
+<!--
+@startuml
+participant ActivityRecord as AR
+participant Task as T
+participant TaskDisplayArea as TDA
+participant DisplayContent as DC
+
+AR -> T : onDescendantOrientationChanged()
+activate T
+    T -> TDA : onDescendantOrientationChanged()
+    activate TDA
+        TDA -> DC : onDescendantOrientationChanged()
+        activate DC
+        return
+        ' done DC.onDescendantOrientationChanged
+        alt parent.onDescendantOrientationChanged false
+            TDA -> TDA : onConfigurationChanged(getParent().getConfiguration())
+        end
+    return
+    ' done TaskDisplayArea.onDescendantOrientationChanged
+    alt parent.onDescendantOrientationChanged false
+        T -> T : onConfigurationChanged(getParent().getConfiguration())
+    end
+return
+' done Task.onDescendantOrientationChanged
+' done onDescendantOrientationChanged
+
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/fPF1JiGW48RlFCNSR0_k0tWmIyfTq_G59kri9LPeO6goR--mGH5DxCRbKc3--MU-8Jr6ni3Rsw9M-ThHhkWOzCZstVAvfz672J22xYl1WF4rNG-_ResDwu9d7GWl0gChIGvttZ79KHIcKqhtSFy80po0TuRYI6uIyLEmea6stdKlw6QQcbPXQWsPf3J86YGn5RacDUbBkZG6USa-sPZkMfVAIG0Whq2y1VTrl8F9koGu_ErQF1S6cPQ4TpBWX4kapxm2KMOX4pxPUGjLzpFnyyM-QG-ohpHDMzYahAfvCilF9zu7-pTKVjhRO198XlW6iDTrbkwer552wS_v0000" alt="Android11onDescentantOrientationChanged流程详解"></p>
+<h2 id="DisplayContent-onDescendantOrientationChanged"><a href="#DisplayContent-onDescendantOrientationChanged" class="headerlink" title="DisplayContent.onDescendantOrientationChanged"></a>DisplayContent.onDescendantOrientationChanged</h2><p><code>DisplayContent</code>调用<code>updateOrientation()</code>更新方向并返回对应的<code>Configuration</code>（Conf不变则返回null，提前退出到上一级，返回值取决于用户有没有设置固定屏幕方向）。该过程中，通过<code>handleTopActivityLaunchingInDifferentOrientation()</code>来根据条件检查是否会响应本次方向申请。</p>
+<p>确定执行方向切换后，<code>updateOrientation()</code>实际上是由<code>DisplayRotation</code>的同名方法来实现的。它更新内部维护的rotation信息，并触发屏幕旋转动画。</p>
+<p>然后，调用<code>computeScreenConfiguration()</code>计算得到新的Configuration。接着调用<code>updateDisplayOverrideConfigurationLocked()</code>更新<code>DisplayContent</code>的override conf。该方法调用ATMS的<code>updateDisplayOverrideConfigurationLocked()</code>和<code>ensureConfigAndVisibilityAfterUpdate()</code>，最终调度完成<code>ActivityRecord</code>和<code>Activity</code>的conf更新。</p>
+<blockquote>
+<p>DisplayRotation.updateRotationUnchecked()决定了屏幕方向并调度触发屏幕旋转动画。</p>
+</blockquote>
+<!--
+@startuml
+participant DisplayContent as DC
+participant DisplayRotation as DR
+participant ActivityTaskManagerService as ATMS
+
+-\-> DC : onDescendantOrientationChanged()
+activate DC
+    DC -> DC : updateOrientation()
+    activate DC
+        alt orientationSource is ActivityRecord
+            DC -> DC : handleTopActivityLaunchingInDifferentOrientation()
+            note right : 如果当前方向是ActivityRecord设置的，检查一些条件确认是否要推迟Orientation带来的Rotation变化
+            alt handleTopActivityLaunchingInDifferentOrientation()
+                DC -> DC : return false
+                note right : 该方法返回false表示暂时不切换到申请的方向，会让updateOrientation()提前返回false，表示不切换方向
+            else
+                DC -> DR : updateOrientation()
+                DR -> DR : updateRotationUnchecked()
+                note right : 更新DisplayContent的方向，触发屏幕旋转动画；当DC.sendNewConfiguration()时触发DC.applyRotationLocked()进行旋转
+            end
+        end
+        DC -> DC : computeScreenConfiguration()
+    return
+    ' done DC.updateOrientation
+    DC -> DC : updateDisplayOverrideConfigurationLocked()
+    activate DC
+        DC -> ATMS : deferWindowLayout()
+        DC -> ATMS : updateGlobalConfigurationLocked()
+        DC -> ATMS : ensureConfigAndVisibilityAfterUpdate()
+        DC -> ATMS : continueWindowLayout()
+    return
+    ' done DC.updateDisplayOverrideConfigurationLocked
+return
+note right : 返回值表示DC有没有响应本次方向申请（当用户设置固定方向、某些临界过程中暂停转方向时不会响应申请）
+' done DC.onDescendantOrientationChanged
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/fLLVJof777tVJx5lRH_i1-X38u6aQQ8r0MsVnzq19wwpczbTZMzeceWL2aRy4q0DhLAQMBHNeuXu-J2NcTqtlyBziGF88fARt7s09NlEcJDdVcUPjHt477VDK2pu9Xgn47NK6B4j0sr6JUfW-8biDHQT18YR3dA8IGD4F8I8Q0vP9yxc8h9Nvn55ASmIcAqJ3VV0aSNvXABCpFm8mkeFgabZsDOmrO6vm0YcKZQwWcWAwzz-fw2U6d9mpuSA5x06NDVIuS482-0zI9WYBsGuglcAJ9Wk0p_47hgDOyra-X0_jXJOqGsyQ5e3-1nogRP2QEfd6YF996QW_DR9uA8ck64ajUA05gzjYxCAVpxWkpbnzCWB--BaEcp3RtpqdXjUwVUNTbRydHRdbzrckjigYzDgz-dUgpRynWMGUA7crxR4dtM_SpwoE6_MnEabi0U7nFCdF7iKSWHvVEscnY9Ys74PLPF8iF4uBXo0Vtq9-nQtXtwdoCjd0SElrhsBbYXjY-FxRZF7CpiYznVFt7Z5M__w0VOYau8ykksIt_XtmjcBV04I7T44i9GT2agHa3iCmFUs5PyoP25uV0m-27u9uiJQQZ38KoCHvJjnT1Ckt-Yc_NzgFB_F_y_pnqDnlES_N_4_wbxnwQLTXa6AHR-teKA_u0sW9adAPNsd4APa0W9PbZ6ixPmfNVcTib_DIiLmB5HNGlTl3rmpropNmGcDOKp75WxmSYA2sszKtQHO1HjlyfpSwduK2-kOCQBZaBmq_txPfLhmfW4z7SCW_qQeRcxCeKtJTO0u4IWN_iambv4nSRt9D4njb_KDHgZ-Ax79CZ6WJP6aWzbI8FeULuEJ9jJ5ONlJm_kIR9G-Eroxe1aytPQbY4L5PLTygC8dFyZnLb5KhiHLLOwShDrBEmFJvHNh8lCWNqcytEADaiHyIc-9ymAybRhDE-ymwtTslFfUj_aVb9XlLM2W94mM6behLnaexoglsvh-9w0ei_38NJC-0m00" alt="Android11DisplayContent.onDescendantOrientationChanged流程"></p>
+<h2 id="ATMS-updateGlobalConfigurationLocked"><a href="#ATMS-updateGlobalConfigurationLocked" class="headerlink" title="ATMS.updateGlobalConfigurationLocked"></a>ATMS.updateGlobalConfigurationLocked</h2><p><code>DisplayContent.onDescendantOrientationChanged()</code>流程中，通过<code>DisplayRotation</code>完成屏幕旋转后，就会借助ATMS来更新Configuration。</p>
+<p>调用ATMS的<code>updateGlobalConfigurationLocked()</code>更新Global Conf。该流程计算configuration，并回调<code>RootWindowContainer.onConfigurationChanged()</code>——触发整个Window Tree Hierarchy的更新，</p>
+<p>接着触发ATMS所在进程的ActivityThread内的资源更新、AttributeCache更新。</p>
+<p>然后遍历系统全局所有的<code>WindowProcessController</code>并回调<code>onConfigurationChanged()</code>。</p>
+<p>通过Handler调度AMS发出Configuration changed的广播。</p>
+<p>最后调用Default <code>DisplayContent.performDisplayOverrideConfigUpdate()</code>最后完成更新。</p>
+<!--
+@startuml
+participant ActivityTaskManagerService as ATMS
+participant RootWindowContainer as RWC
+participant WindowProcessController as WPC
+participant DisplayContent as DC
+
+-\-> ATMS : updateGlobalConfigurationLocked()
+activate ATMS
+    ATMS -> RWC : onConfigurationChanged()
+    note right : 将新的Conf分发到RootWindowContainer
+    ATMS -> ATMS : 触发AttributeCache.updateConfiguration()、mSystemThread.applyConfigurationToResources()
+    ATMS -> WPC : onConfigurationChanged()
+    note right : 遍历系统内所有的WPC进行回调
+    ATMS -> ATMS : broadcastGlobalConfigurationChanged()
+    note right : 发送Msg到Handler，通过AMS触发configuration changed广播
+    ATMS -> DC : performDisplayOverrideConfigUpdate()
+    note right : 对Default DisplayContent调用
+return
+' done ATMS.updateGlobalConfigurationLocked
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bP8_YnD16CRx_HJJcHIN3s0X5pQWXS6GH5A_cNsp6MvsPdbdDf8kGOrtS2gAMDo9OgCsOi3gE24VHZRPL7u5PxCf70aSLqtpUvy_3tDiB93D4XcaxXLSfA0iQt8h9i9E-s1Esg0WHkeXJGH71eOr--sUXtUrjWEX8lqarCg2K4Wbrns47bOX7T8SZIb9qb9MwA3ZeorXKWdJ4a9bIw8L1i7HqRsTERlBiZG2Y_Ub7e9qr4Z46O4LMZtK_0IZMZs0ieDZghYCiUhKIRXSJa4hxouSWuhBmnsgj3ia4O-j8_FbOlr-kRbuLXxafulyzPlyT7cWjEUo3rfy_UBufhKaXfd54FWO6rLwpxzM_psR9xsfiPZqnuGGDI1DvTI3-hgBHcV4qTJgdjkWSxjEs_dB_DLYy_DwS_qfNpnVdytM7yvSHQTJh2wBp-VvvSTY-VHGeo5fY3WOwwz_awDROJkRjqtijdi0Af98VtwTRsSNnUf5izshTkB_YZ5UgULNg_NRxrwKLjasHHffIlP_vT44YKIqN_NnRk63ENvSjN04cVp_bxcwctVV0aARaGhki4YhwlCqRlXimJ6gA4laNm00" alt="Android ATMS.updateGlobalConfigurationLocked流程"></p>
+<h3 id="RootWindowContainer-onConfigurationChanged"><a href="#RootWindowContainer-onConfigurationChanged" class="headerlink" title="RootWindowContainer.onConfigurationChanged"></a>RootWindowContainer.onConfigurationChanged</h3><p><code>RootWindowContainer</code>是全局Window Tree Hierarchy的根节点。它的<code>onConfigurationChanged()</code>属于深度优先搜索，向层级叶子节点回调<code>onConfigurationChanged()</code>。</p>
+<p>整体流程主要完成更新Window Tree Configuration、更新WindowToken（ActivityRecord）、WindowContainer（WindowState）的MergedConfiguration、更新Surface Position、更新Resources等工作。</p>
+<p>经过<code>RootWindowContainer.onConfiguraionChanged()</code>完整流程后，系统内各个<code>ConfiguraionContainer</code>、<code>WindowContainer</code>、<code>WindowToken</code>均计算并应用了对应的Configuration了。</p>
+<blockquote>
+<p>这个时候，仅仅是完成了WMS内部的Configuration更新，还没有完成应用侧的更新，以及绘制流程使用的Configuration之更新（ViewRootImpl）</p>
+</blockquote>
+<!--
+@startuml
+participant RootWindowContainer as RWC
+participant DisplayContent as DC
+participant WindowContainers as WCS
+participant "DisplayArea.Root" as R
+participant TaskDisplayArea as TDA
+participant ActivityStack as AS
+participant Task as T
+participant ActivityRecord as AR
+participant WindowState as W
+participant IWindowToken as IWT
+
+-> RWC : onConfigurationChanged()
+activate RWC
+    RWC -> DC : onConfigurationChanged()
+    activate DC
+        DC -> WCS : onConfigurationChanged()
+        activate WCS
+            WCS -> R : onConfigurationChanged()
+            activate R
+                R -> TDA : onConfigurationChanged()
+                activate TDA
+                    TDA -> AS : onConfigurationChanged()
+                    activate AS
+                        AS -> T : onConfigurationChanged()
+                        note left : ActivityStack对Task的调用不是Window Tree Hierarchy的parent调用，而是对父类的调用
+                        activate T
+                            T -> AR : onConfigurationChanged()
+                            activate AR
+                                AR -> W : onConfigurationChanged()
+                                activate W
+                                    W -> W : onConfigurationChanged()
+                                return
+                                ' done W.onConfigurationChanged
+                                AR -> AR : onMergedOverrideConfigurationChanged()
+                                AR -> W : onMergedOverrideConfigurationChanged()
+                                activate W
+                                    W -> W : onMergedOverrideConfigurationChanged
+                                return
+                                ' done W.onMergedOverrideConfigurationChanged
+                                AR -> IWT : reportConfigToWindowTokenClient()
+                                note left : IWindowToken从ActivityRecord.super(WidnowToken).token（实际上是ActivityRecord.Token(Intent).asBinder()）创建而来，
+                                activate IWT
+                                    IWT -\-> WindowTokenClient : onConfigurationChanged()
+                                    note left : 主要作用是updateResourcesForActivity
+                                return
+                                ' done IWT.reportConfigToWindowTokenClient
+                            return
+                            ' done AR.onConfigurationChanged
+                            T -> T : updateSurfaceSize()
+                            note left : 设置了Surface crop
+                            alt inMultiWindowMode
+                                T -> T : mStackSupervisor.scheduleUpdateMultiWindowMode()
+                                note left : 进入多窗口模式则会借助ActivityStackSupervisor调度回调对应Activity.onMultiWindowModeChanged()
+                            end
+                        return
+                        ' done T.onConfigurationChanged
+                        AS -> AS : resize()
+                        note left : 对于设置了override bounds且不是PINNED mode时，调用resize()
+                    return
+                    ' done AS.onConfigurationChanged
+                return
+                ' done TDA.onConfigurationChanged
+            return
+            ' done Root.onConfigurationChanged
+        return
+        ' done WindowContainers.onConfigurationChanged
+    return
+    ' done DC.onConfigurationChanged
+return
+' done RWC.onConfigurationChanged
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/lLT1R-j44BxdLrZlGdDu_W4Sq3CnY1pwGBPHpiRUlgxgx4RhTL4vFGGFXQgqbqgbBHGXQ5Kuj72fqYI5FsCtuTI_m8mTHrsJT4sfs4iQ-Vk-cVbcEkkyYAKlPDAD6Ztuf07j-KmQ3kUoGrd8Fsrn9dtAY33ys70wBGLcqxWN-Lk88KmYmbO15OqO8PsMgs2UpLGiGNmJ0p_BGoaOpuytxi4GuDcM0h42IJUft7Ab7smWm7B_8P7p5h8S4d0HvZHdGGKWAacUlFAmNJpr-0PXy1I-Uut6ytVG9-DjWpCeV8s-IeGlANnPzzah4guq6pu6HK7qqu23UA3P3x8GE6VQI2oEZLnqLKTM1B0Bnhs3VCnSBr8HSXf6vJWWXEsfAQN88KzvM1xK0rbBN-KoPKifM3cWYYdNarOFuo0TaJK9P6K4iyjh7Bd9qPVJtxwOx9-dWszklxqi1iRm12761vG8NmJhMu21gI9C5iYxySxqzGw0GMBIlvhyFfgBB4v3yQyAKLtCFQpTvELUGjSr1wBWM3usb3giMYYUpdyEA8XC1DF2tZ92pY0hSt6WUjQKRLWb0ZWVRX8XQ4ZqYMlDLWN_T-lruP--3VM3wYniTt0B2DBZGXOo7h-tv5iH9Kng_LFMWd9BfADTzSenuwH7n4g7Xcm6QPeIF-x6_UpYvA_3D-bW6tP1XPKZLzhvlTiq_VXT204opRlnrrd_E1iDSODyVmghf7QhiVPQpKQFdcE_gxxK_zVJcvOEHjEppzERxs3hGVb9BuGK7HBpH0GaVf-Bqf2ddIOipjIqlr4pcYQIvJncVtZbJLKuuYPYpG-8IpyZQ79DSwSNVqnkBjBXLpEw4GZUUv3jHzAWR3M992tyMEKXAHdwPBlvbUZYg6_Ic0ip3jP9c4JauxmALRTQYRQQFu-pDwVPpqUJNm-olPzkpt_CndjP_p0T7sMlVyYsVob7fP84NAdPy2mxFi4_Bg-puNu9D7crr7g3J5ZOq0o6PYYyVpiJbZj_BH8aBiT0RneKd0vtvuF0PwlJ-8GdB8pJmNxnll9H--NBzsoZ2nRS7bp1EYdUGwgXz9Mge-_gojHebMxPbbv85L45yEU6Ja5bbypgBvkbAef2oRPRo_0pR9bVPodm1M5Xqet-1W00" alt="Android11RootWindowContainer.onConfigurationChanged流程"></p>
+<h3 id="WindowProcessController-onConfigurationChanged"><a href="#WindowProcessController-onConfigurationChanged" class="headerlink" title="WindowProcessController.onConfigurationChanged"></a>WindowProcessController.onConfigurationChanged</h3><p><code>ATMS.updateGlobalConfigurationLocked()</code>在<code>RootWindowContainer</code>完成整个Hierarchy的更新后，会回调系统全局所有<code>WindowProcessController</code>的<code>onConfigurationChanged()</code>。</p>
+<blockquote>
+<p>ATMS.mProcessMap: WindowProcessControllerMap记录了所有正在运行的Android应用进程。</p>
+</blockquote>
+<p><code>WindowProcessController.onConfigurationChanged()</code>的流程相对<code>RootWindowContainer</code>比较简单些。它的主要工作是将新的<code>Configuration</code>通过<code>ClientTransaction</code>借助Binder发回<code>ActivityThread</code>，其中触发App侧的Resource更新、<code>onConfiguraionChanged()</code>的回调。</p>
+<!--
+@startuml
+participant WindowProcessController as WPC
+participant ConfigurationContainer as CC
+participant ActivityTaskManagerService as ATMS
+participant ClientTransaction as CT
+participant ActivityThread as AT
+
+-> WPC : onConfigurationChanged()
+activate WPC
+    WPC -> CC : onConfigurationChanged()
+    CC -> WPC : resolveOverrideConfiguration()
+    CC -> WPC : onMergedOverrideConfigurationChanged
+    WPC -> CC : onRequestedOverrideConfigurationChanged()
+
+    WPC -> WPC : updateConfiguration()
+    activate WPC
+        WPC -> WPC : dispatchConfigurationChange()
+            WPC -> ATMS : scheduleTransaction(ConfigurationChangeItem)
+            activate ATMS
+                ATMS -> CT : schedule()
+                CT -\-> AT : handleConfigurationChanged()
+                activate AT
+                    AT -> AT : ResourceManager.applyConfigurationToResourcesLocked(DisplayAdjustments)
+                    alt instanceof Activity
+                        AT -> AT : performConfigurationChangedForActivity()
+                    else
+                        AT -> AT : performConfigurationChanged()
+                    end
+                return
+                ' done AT.handleConfigurationChanged
+            return
+            ' done ATMS.scheduleTransaction
+        WPC -> WPC : setLastReportedConfiguration()
+    return
+    ' domne WPC.updateConfiguration
+return
+' done WPC.onConfigurationChanged
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/fPD1Rzim38Nl_XMwBJqqFs27eK660GCQh4WCz4n8JA9LfZoIpf1_FxD9Z0fMUfcEzdlVUpBf9r5W7RhKzC0QVUo1rBr62ldl2sUF8kjCoZabP0VYNb_MXNHyku-7WK5Z9fD2f8joNGfNNkCfwha5UTi0mG5vXtoA7asyQZUxafiYahOC9E2D_OviwyWZ8uGBfcaUlrb9zzLbAiiTWGuO5WyDc0yKJTUuyPX-jAq_SvdG51EUKN8wuQyJCiU0XQiYpxH17acblaofbDdYdm55Ir-btMIT0eS-W5PhpUu_yuOeFQW_LiAkZDBsFh_H9_w8OKZuOMwB2kEdObTYfae6QbnvBdJx9ks732jI7dl_Q6LCDWQ5X9_Cyavyu-R7Y3Vk5YKFxF6wmqle-tGkOjfyqyXpzczZuFSeVOBpAlmUH3iabOTg32HraKI1FERzjD-bjbwhHzvdxcht_P7vHbhKSp49_cV8FJA5sND67PXcZx-uaCaciBm_kgRAgJ0sksLb5-lBBgZF8Bh5FhDYcFynHPH5T8JcNLP-iUOgDTbLbQbwbIUaC7Jf7m00" alt="Android11WindowProcessController.onConfigurationChanged流程"></p>
+<h3 id="DisplayContent-performDisplayOverrideConfigUpdate"><a href="#DisplayContent-performDisplayOverrideConfigUpdate" class="headerlink" title="DisplayContent.performDisplayOverrideConfigUpdate"></a>DisplayContent.performDisplayOverrideConfigUpdate</h3><p>紧接着，调用<code>performDisplayOverrideConfigUpdate()</code>来更新<code>DisplayContent</code>及Window Tree Hierarchy的<code>DisplayInfo</code>、<code>Configuration</code>，并作为Global Configuration设置到<code>RootWindowContainer</code>。</p>
+<!--
+@startuml
+participant DisplayContent as DC
+participant WindowContainer as WC
+participant WindowManagerService as WMS
+participant RootWindowContainer as RWC
+
+-> DC : performDisplayOverrideConfigUpdate()
+activate DC
+    DC -> DC : onRequestedOverrideConfigurationChanged()
+    activate DC
+        DC -> DC : applyRotationAndFinishFixedRotation()
+        activate DC
+            DC -> DC : applyRotation()
+            activate DC
+                DC -> DC : updateDisplayAndOrientation()
+                note right : 更新DisplayContent内的DisplayInfo，使DisplayInfo匹配新的、方向切换的屏幕信息
+                DC -> DC : scheduleAnimation()
+                note right : 触发转屏动画
+            return
+            ' done DC.applyRotation
+        return
+        ' done DC.applyRotationAndFinishFixedRotation
+
+        DC -> WC : onRequestedOverrideConfigurationChanged()
+        activate WC
+            WC -> WC : onConfigurationChanged()
+            WC -> WC : onDescendantOverrideConfigurationChanged()
+            note right : 触发一波configuration changed
+        return
+        ' done WC.onRequestedOverrideConfigurationChanged
+
+        DC -> WMS : setNewDisplayOverrideConfiguration()
+        activate WMS
+            WMS -> RWC : setDisplayOverrideConfigurationIfNeeded()
+            note left : 更新global conf和override conf
+            activate RWC
+                RWC -> RWC : setGlobalConfigurationIfNeeded()
+                RWC -> RWC : onConfigurationChanged()
+                note left : 如果configuration有差异还会再来一次回到原点的RWC.onConfigurationChanged()
+            return
+            ' done RWC.setDisplayOverrideConfigurationIfNeeded
+        return
+        ' done WMS.setNewDisplayOverrideConfiguration
+    return
+    ' done DC.onRequestedOverrideConfigurationChanged
+return
+' done DC.performDisplayOverrideConfigUpdate
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bPL1JnD15CVl-odsfXxi1_1W82KO3eLa6xFdSUUrdMGxiyxEWjoW4KJJYXWb1X03YUY1A4OJRIpfXx6phIU_WZDrIJljXgbxQUVr_N_p-d_lPUTYWRX8wg4JgKyIa0XHuIwGE0hHUf5H0Ug8OdUXQ2JuX6Asfdz7X0BN6NvUHWbHL0LU1hvA0XYcbSf6diUOoA5v2kVSlglkTU-u4V0Au_MigfLLu9nWKFaLKhqVOIJWvYq71OAigg-wL5SzIdcbPzI3Xmd40h0fJZWIXD5Y3T4gO0NHmadG10n5KRZkCJ5KpbEyI2Y9Qula4U2hQ0RAWzc0cTGYdqGaGnCoVrHDAvm0pGNgXp85vAHQ4qgQ7dvBzo_CXiljhVx1uoosH2liJwVPk-oE1MIp_NkhfOGgxzV6PhhVbY_svCwJj7Mg8lBBhco_xdLFqitFrvKT1pN0IGZpbDHdAdRmuKpkxWqkp_KDppxsN_qqyZc8X5CZTCF5Z6hx2eRDJhx4JBUrsPaO3_-_PytiiM_ss1-7MXXJ-GiG1q0nei9IXSNhte-DzEjfCAvrWtzYYuT-iJ2Z5rC-bifwE40imvgvywOypqEbDKrHB8Nqj2qQUHrlgR8CWFDT2Q4osfPgo1wWqDMko9TDbh66v_pjzVpfzLKnex9xGwYze4crVJpo_ueyQwJ7HqPdqwEdylidsMaCkczwdGEvtKhVljSJS7uY3u_bpeLy_gxVQAiDL_SMBBVQLb8ZPco8RT9AvO9zMXm3C5hrsSSq4u-4zlUICmSK9_NmBm00" alt="Android11DisplayContent.performDisplayOverrideConfigUpdate流程"></p>
+<h2 id="ATMS-ensureConfigAndVisibilityAfterUpdate"><a href="#ATMS-ensureConfigAndVisibilityAfterUpdate" class="headerlink" title="ATMS.ensureConfigAndVisibilityAfterUpdate"></a>ATMS.ensureConfigAndVisibilityAfterUpdate</h2><p><code>ATMS.updateGlobalConfiguraionLocked()</code>完成后，紧接着<code>DisplayContent.onDescendantOrientationChanged()</code>会调用<code>ATMS.ensureConfigAndVisibilityAfterUpdate()</code>来检查所有Activity的可见性并更新它们的状态（包括Configuration、生命周期、可见性）。</p>
+<!--
+@startuml
+@startuml
+participant ActivityTaskManagerService as ATMS
+participant ActivityRecord as AR
+participant RootWindowContainer as RWC
+participant DisplayContent as DC
+participant TaskDisplayArea as TDA
+participant ActivityStack as AS
+participant ClientTransaction as CT
+participant ActivityThread as AT
+
+-> ATMS : ensureConfigAndVisibilityAfterUpdate()
+activate ATMS
+    ATMS -> AR : ensureActivityConfiguration()
+    activate AR
+        AR -> AR : setLastReportedConfiguration(getProcessGlobalConfiguration(), newMergedOverrideConfig)
+        AR -> AR : scheduleConfigurationChanged()
+        note right : 在此之前会判断是否需要relunch activity
+        AR -> CT : scheduleTransaction(ActivityConfigurationChangeItem)
+        CT -\-> AT : handleActivityConfigurationChanged()
+        note left : 回调onConfigurationChanged()、回调ViewRootImpl.updateConfiguration()
+    return
+    ' done AR.ensureActivityConfiguration()
+
+    ATMS -> RWC : ensureActivitiesVisible()
+    note right : 确认所有可见的Activity使用了正确的Configuration
+    activate RWC
+        RWC -> DC : ensureActivitiesVisible()
+        activate DC
+            DC -> TDA : ensureActivitiesVisible()
+            activate TDA
+                TDA -> AS : ensureActivitiesVisible()
+                activate AS
+                    AS -> AR : ensureActivityConfiguration()
+                    note left : for visible activity
+                    AS -> AR : makeVisibleIfNeeded()
+                return
+                ' done AS.ensureActivitiesVisible
+            return
+            ' done TDA.ensureActivitiesVisible
+        return
+        ' done DC.ensureActivitiesVisible
+    return
+    ' done RWC.ensureActivitiesVisible
+return
+' done ATMS.ensureConfigAndVisibilityAfterUpdate
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bLH1QnD15BxlhvYRBTZy00_I9GjIi2gRs9wdEo_9qCbCc9bDwQr54Ok87aIa5a4ijPUsNXN57sEInd_XlCt6z9LjZE-IWVs-xtrlvdjPTPvRdtTLD3lrmg_CP8zhp-BCoxxqkqtkjjUvvcsm3R1zcG7ZZiNDzKObF8NCM550KW98ZV6RKWkpKpVQSwd18YhTh1DO8brFyLt4WFQ8I2W0_PIWs097H3E9AxqqFC-s2olKQrt9eDsqN3iUe4OZfjwi7hyJceZ9o56qShUOdDrXe5rk8TXioNQinOPqSakgG8XR7kpZdk0UbfOZZZBXEBam5ghWeqxwLsNQQwAMMuwU0XdXCu4qOcK5wbJ0WR_FdK-XPwm7GHNQu1zPau5pzvJPukgQ_cscOMSTR1l4mpvOAqKvpt9bfwm38bT0HEeThWDzQSRGnWEpijtnWJCyEXsT7G--lXWUl1nyFnm-FnwzFHkzknY-Flbzj3S-sRUWSfrr62zlW3OERtAbyPNtMY8tHisiUUZEx0I55Pm0XS9deO1Ivy-Xe5MCyVx3-CiJewifl_Rs9u0D2JkOyhLkJzNo8W5LBsh1vrONnrjC68rFMviV11ASi37NaoF15G5KKFOWht3vyNnyVZmws1iT7GnVNOm_xryUFfss6lpuUVdcTF3jsUZiKm26BwGvoI2sdbuGdj5DycypH2APAM0bA88Bl8WAKK8I-O25GlZSZONbw8w55Qse-7yMbXODKijOrf_Oe96Vqx7Bjw6qljPw0218JB58g6XD0zQetN0RqNoHKW3lTQu2OHDcKfz3h5g6TFDcHeakaRWGjKN-XwDLq2BlgZy0" alt="AMTS.ensureConfigAndVisibilityAfterUpdate"></p>
+<h2 id="ATMS-continueWindowLayout"><a href="#ATMS-continueWindowLayout" class="headerlink" title="ATMS.continueWindowLayout"></a>ATMS.continueWindowLayout</h2><p>当上面所有工作完成后，即可解除一开始就暂停的layout，调用<code>ATMS.continueWindowLayout()</code>将上面configuration changed后的变化应用起来，并继续窗口系统的绘制和显示。</p>
+<p>在执行Traversal的过程中，对于Configuration改变导致的边界、大小发生变化的窗口即<code>mResizingWindows</code>内的窗口，会通过<code>IWindow</code>这个Binder回调到应用(<code>ViewRootImpl.W</code>)，并最终回调到<code>ViewRootImpl.dispatchResized()</code>。该方法内部会更新传入的<code>MergedOverrideConfiguration</code>，并根据新的frame，通过<code>setFrame()</code>流程中的<code>requestLayout()</code>完成一次绘制，在应用界面上展现新的适配Configuration的画面。</p>
+<!--
+@startuml
+participant ActivityTaskManagerService as ATMS
+participant WindowSurfacePlacer as WSP
+participant RootWindowContainer as RWC
+participant DisplayContent as DC
+participant WindowState as WS
+participant IWindow as IW
+participant W as W
+participant ViewRootImpl as VRI
+
+-> ATMS : continueWindowLayout()
+activate ATMS
+    ATMS -> WSP : continueLayout()
+    activate WSP
+        WSP -> WSP : performSurfacePlacement()
+        activate WSP
+            WSP -> WSP : performSurfacePlacementLoop()
+            activate WSP
+                WSP -> RWC : performSurfacePlacement()
+                activate RWC
+                    RWC -> RWC : performSurfacePlacementNoTrace()
+                    activate RWC
+                        RWC -> RWC : applySurfaceChangesTransaction()
+                        RWC -> RWC : handleResizingWindows()
+                        activate RWC
+                            RWC -> WS : reportResized()
+                            note left : For mResizingWindows
+                            WS -> IW : reportResized()
+                            IW -\-> W : resized()
+                            W -> VRI : dispatchResized()
+                        return
+                        ' done RWC.handleResizingWindows
+                        RWC -> DC : setLayoutNeeded()
+                        note left : For pending layout changes
+                    return
+                    ' done RWC.performSurfacePlacementNoTrace
+                return
+                ' done RWC.performSurfacePlacement
+
+                alt RootWindowContainer.isLayoutNeeded && mLayoutRepeatCount < 6
+                    WSP -> WSP : requestTraversal()
+                    note right : 仅layout needed时调用
+                    activate WSP
+                        WSP -> WSP : mService.mAnimationHandler.post(mPerformSurfacePlacement)
+                        note right : 向Animation线程发出Msg，调度mPerformSurfacePlacement也就是上面刚刚执行过一次的SurfacePlacement
+                    return
+                    ' done WSP.requestTraversal
+                end
+            return
+            ' done WSP.performSurfacePlacementLoop
+        return
+        ' done WSP.performSurfacePlacement
+    return
+    ' done WSP.continueLayout
+return
+' done ATMS.continueWindowLayout
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/dLLDQnGn6BxdL-HKww5xz20YBLl4XRQKtT8vXvcts-1C4fDCoteILEf7GGk2KX2f1-r1i5waLg5_PcUtdlmB9fDnQThPINLOTfV9y_6-JpuohpIHEizI9CmlZQaWJEE5MDCjgWThHDrR9epqGVP0Rj4OC55uOMsvvy4ZoXA-tSlb1ebXDJLVqkAYtge7wtAk7RJDcIQKELWtQdkmHQf4IWOM0qnRn6AxpauJ3Sx66-suOJlIYNnUYVPUhLFOjcLrCf7QqVLk1w6vssMB-2QEJGsKvU0abyY0vthsEY8s7kFkai0OExpXcPRFqIO42vcGR2ouUYn-GXCWDxZCpkUO0VlBdwfnLPqbpaMb5T3pDCtqX6khqxJpYciUAnZINU5hqlojvCCM8HiYH3geJDgRXFL16GEch19dpYQiOeX92brGz05bVRSeb4SEr1bmYUoQao2urAK990tYzc7SYAUmeGtl3fSukr1R8pagLsmd-aTFGvWpF4Ux2Y6oDcPZ6K92bI0wtWmxIT2vP5E7h-64ipBNLksaXEPpqKwd0krsw0f0ubKJoba0IumPJaiwZjsAGWsD19fetWOe87frGNI9GzBQWxb5rVbiyCmCpjoBBWWWkirpfl4jVCCJh3sE9DpFGMdJoHP8HL8_PpzZIVkRDkJXZoTLjgpq7xtvTdRqQFpwS48D76E1chBgEcjb2uncn1u2Tyjr95k2ApsRhTRdvqeFbb-ysfleZazEnuSlYfTxnSx9ikh__hbhEYbEFawp67v_Nnnz7RtzCZn-_klTX-BfllcCddqwEzWzEzqP7ZySVJuOxp--IFlFnMVYQ5sSe4juO0bgalNb6guVD4KXp4OUosFujosgG1N0NiojkciSpPkkyYpz0m00" alt="Android11ATMS.continueWindowLayout流程"></p>
+<h3 id="ViewRootImpl-dispatchResized"><a href="#ViewRootImpl-dispatchResized" class="headerlink" title="ViewRootImpl.dispatchResized"></a>ViewRootImpl.dispatchResized</h3><p>当一次Configuration Changed后，窗口大小或位置发生变化的<code>ViewRootImpl</code>会在Window Layout过程中被从Binder回调<code>dispatchResized()</code>。该方法实际上发送Message到Handler。</p>
+<p>在对应Message处理流程中，会通过<code>sConfigCallbacks</code>回调到<code>ActivityThread</code>，主要更新<code>ResourcesManager</code>的Config，并回调<code>ActivityThread.handleConfigurationChanged()</code>。</p>
+<p>接着<code>ViewRootImpl</code>记录自身的Last Reported Merged Config，并调用<code>updateConfiguration()</code>来更新<code>DecorView</code>及其Children的Config。</p>
+<p>最后，<code>ViewRootImpl</code>将Frame更新为<code>dispatchResized()</code>传入的frame，并通过<code>requestLayout</code>触发Traversal。</p>
+<p>Traversal依赖Handler + <code>Choreographer</code>的回调，最终在帧回调触发时通过<code>relayoutWindow</code>重新测量、摆放、绘制控件，将应用画面刷新，以新的MergedConfiguration来展示新的应用画面。</p>
+<!--
+@startuml
+participant ViewRootImpl as VRI
+participant ActivityThread as AT
+participant Choreographer as C
+
+-> VRI : dispatchResized()
+activate VRI
+    note right : Binder传递过来一些信息，主要是MergedConfig和Frames
+    VRI -> VRI : Handler().post(MSG_RESIZED_REPORT)
+    note right : MSG_RESIZED和MSG_RESIZED_REPORT的差异是，前者发现信息没有更新时会skip，后者则不
+    VRI -> VRI : handleMessage()
+    activate VRI
+        VRI -> VRI : performConfigurationChange()
+        activate VRI
+            VRI -> AT : sConfigCallbacks.get(i).onConfigurationChanged()
+            AT -> AT : mResourcesManager.applyConfigurationToResourcesLocke()
+            AT -> AT : Handler.sendMessage(CONFIGURATION_CHANGED)
+            activate AT
+                AT -> AT : handleMessage(CONFIGURATION_CHANGED)
+                AT -> AT : handleConfigurationChanged()
+            return
+            ' done AT.CONFIGURATION_CHANGED
+        VRI -> VRI : mLastReportedMergedConfiguration.setConfiguration()
+        VRI -> VRI : updateConfiguration()
+        note right : 内部会回调DecorView及其Children的onConfigurationChanged、requestLayout()
+        return
+        ' done VRI.performConfigurationChange
+
+        VRI -> VRI : setFrame()
+
+        alt frameChanged || configChanged
+            VRI -> VRI : forceLayout()
+        end
+
+        VRI -> VRI : requestLayout()
+        activate VRI
+            VRI -> VRI : scheduleTraversals()
+            VRI -> C : postCallback(CALLBACK_TRAVERSAL, mTraversalRunnable)
+        return
+        ' done VRI.requestLayout
+    return
+    ' done VRI.handleMessage
+return
+' done VRI.dispatchResized
+
+C -\-> VRI : onFrame
+activate VRI
+    VRI -> VRI : doTraversal()
+    VRI -> VRI : performTraversals()
+    VRI -> VRI : relayoutWindow()
+return
+' done VRI.onFrame
+@enduml
+-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/ZPHFJzH06CRl_HIzkPl8VW0FXb8MsBWBfbHCl92Xyx9jQ6Vgp1I2uR28g1Z-A0V_W1evQ3m9CGQ9RiA7SLkMar_1wIvCg2t9xgNPwTFV-xpFp3l3N20cei3NGldq72z4HEWp7YnPb8fQ4FewulgCLSkyDnpXBNfYsNOP89mg33iZC5tAW3OP2brWwNjJquPkfnpzbeuz7YBXk1Pmxn7WKbb3AGy9w1NIvOzG-OTvJLT8_OX7CB1E-zDvQxTx-YpvyBbpqkhysk-S7YIhXt_RcvsJtzqlgydRmmQm9c2Jadcl6UzkZZ4K04-1lShAm0GYs0TMAbT2oaMfCJq-QrMdQm-ge_9vTygootaJLqIIdF_aREz9_FDRt7uiRKXBySPMjxKUxxmwspxg-qo-7oJlDvBz7ydhe-JDSQUznnUyC9M-t4wbpzzrJhRoNjsUrmPmZffGwXlBnPNxAWGsJrdGJo9YI7YKc1Ab4CMOBCgm9Odt6IRo_JdaBF1A4qJ9ArSeAO3ZFbtz35jn0WiuZPW3l868R8LLK1Zwonc8JPMeJfq5k8wcTh32WU3BRCofoR7Q-3tBi6jJaxFcX34vNXtD45J74gBMStIL-S3Suky7o8U1Y1Z9BDtGCIMfmKfXtUBj3kg82mj2oWJW_X1agikSH6QXL2u6HI560egakO68dwwVhtsLnpZU_zWzMXi5XxBqteXtNiJhnwRh-PW1aMDHV5B-j5OPF8o0YpfQff6GPGfJKOb8WvNhZxLMt8_iktS9IBeI85_ey-dYXHDzPKLtUiIB1QNCuMHn1t9-WU1hokSx76Job7d71HpvO3Eq28mZdwU8lDgKslGYkvpHacdKwoE6UMVMjeoPgZLjr6_gWQ9O4I5epeT10iyqe6Mq6LrcOhGBpPNt_rtvccRgGwfFIdfxf6LIoQM1gUgW7qFXZPVDAhyVVg-J-nx1T4agyaulpGm3mL7W_mC0" alt="Android11ViewRootImpl.dispatchResized流程"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>Android 11在<code>setRequestedOrientation()</code>相关流程中，对比Android 10，整体大框架改动不大。其中在App侧则近乎是0改动。但是由于<strong>Android 11将原Android 10分散在AMS、WMS的Window Container模型做了很大修改，仅剩下WMS相关逻辑，做了许多对象的修改并引入DisplayArea，从而实现为一个全新的模型</strong>，因此集中在WMS内的流程仍然有比较大的差异。</p>
+<p>结构来看，整体流程分为三步。第一步，<code>ActivityRecord</code>触发Window Tree Hierarchy向上的Config changed，再由<code>DisplayContent</code>调度<code>ATMS</code>应用新的Config，并接着调度<code>RootWindowContainer</code>将新的Config向下应用到整个Window Tree Hierarchy。</p>
+<p>第二步，通过<code>WindowProcessController</code>将新的Configuration先发回到App侧，异步地更新App的Resource，并回调<code>onConfigurationChanged()</code>。在WMS完成Config的计算、应用和分发后，让应用进程能根据新的Config做适配和准备。</p>
+<p>最后，在Window Layout流程中，对发生了边界、大小变化的窗口，触发其View Tree的重新绘制逻辑（Traversal），最终使应用以新的Merged Config绘制控件，展示新的画面。</p>
+<p>整个过程可以抽象为三步：1. WMS完成新的Config计算、应用并分发；2. 新的Config通知应用，目的是为了在第三步绘制之前让应用先更新好Resource、更新内部信息以正确绘制View；3. 触发Traversal，重绘View Tree。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/">https://nasdaqgodzilla.github.io/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E7%AE%80%E4%BB%8B%E5%92%8C%E4%BD%BF%E7%94%A8/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/6FF2C0ADC53B2A714B62C8F3D816B9D5.JPG" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android动态日志ProtoLog简介和使用</div></div></a></div><div class="next-post pull-right"><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android 11 startActivity之ActivityStarter流程</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 WindowContainer窗口模型详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-03</div><div class="title">Android 11 WindowContainer窗口模型详解</div></div></a></div><div><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/" title="Android 11 startActivity之ActivityStarter流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-05</div><div class="title">Android 11 startActivity之ActivityStarter流程</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B"><span class="toc-number">2.</span> <span class="toc-text">流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#ActivityRecord-setRequestedOrientation"><span class="toc-number">2.1.</span> <span class="toc-text">ActivityRecord.setRequestedOrientation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#onDescendantOrientationChanged"><span class="toc-number">2.2.</span> <span class="toc-text">onDescendantOrientationChanged</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DisplayContent-onDescendantOrientationChanged"><span class="toc-number">2.3.</span> <span class="toc-text">DisplayContent.onDescendantOrientationChanged</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ATMS-updateGlobalConfigurationLocked"><span class="toc-number">2.4.</span> <span class="toc-text">ATMS.updateGlobalConfigurationLocked</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#RootWindowContainer-onConfigurationChanged"><span class="toc-number">2.4.1.</span> <span class="toc-text">RootWindowContainer.onConfigurationChanged</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#WindowProcessController-onConfigurationChanged"><span class="toc-number">2.4.2.</span> <span class="toc-text">WindowProcessController.onConfigurationChanged</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#DisplayContent-performDisplayOverrideConfigUpdate"><span class="toc-number">2.4.3.</span> <span class="toc-text">DisplayContent.performDisplayOverrideConfigUpdate</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ATMS-ensureConfigAndVisibilityAfterUpdate"><span class="toc-number">2.5.</span> <span class="toc-text">ATMS.ensureConfigAndVisibilityAfterUpdate</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ATMS-continueWindowLayout"><span class="toc-number">2.6.</span> <span class="toc-text">ATMS.continueWindowLayout</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ViewRootImpl-dispatchResized"><span class="toc-number">2.6.1.</span> <span class="toc-text">ViewRootImpl.dispatchResized</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/'
+    this.page.identifier = '2022/07/06/Android-11-setRequestedOrientation流程详解/'
+    this.page.title = 'Android 11 setRequestedOrientation流程详解'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

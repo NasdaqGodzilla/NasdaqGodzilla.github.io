@@ -1,0 +1,495 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android startService启动流程详解 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,性能优化"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="概述基于Android 10.0源码(AOSP-10.0.0-r1)分析startService流程，剖析相关流程的关键点和framework核心机制。 过程service的启动过程主要分为三大部分，包括发出startService调用的机制、system_server中对service的处理、应用进程中对service的创建流程和生命周期回调。 Context.startService">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android startService启动流程详解">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/06/07/Android-startService%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="概述基于Android 10.0源码(AOSP-10.0.0-r1)分析startService流程，剖析相关流程的关键点和framework核心机制。 过程service的启动过程主要分为三大部分，包括发出startService调用的机制、system_server中对service的处理、应用进程中对service的创建流程和生命周期回调。 Context.startService">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png">
+<meta property="article:published_time" content="2022-06-07T07:51:54.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.197Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="性能优化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/06/07/Android-startService%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android startService启动流程详解',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android startService启动流程详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-06-07T07:51:54.000Z" title="发表于 2022-06-07 15:51:54">2022-06-07</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.197Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android startService启动流程详解"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>基于Android 10.0源码(AOSP-10.0.0-r1)分析<code>startService</code>流程，剖析相关流程的关键点和framework核心机制。</p>
+<h1 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h1><p>service的启动过程主要分为三大部分，包括发出<code>startService</code>调用的机制、<code>system_server</code>中对service的处理、应用进程中对service的创建流程和生命周期回调。</p>
+<h2 id="Context-startService"><a href="#Context-startService" class="headerlink" title="Context.startService"></a>Context.startService</h2><p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Context%E7%B1%BB%E5%9B%BE.jpg"></p>
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/RO_1IWCn48RlUOeSzU0BU926W933Wh27FSeOnpAGJC9akhPlRngri6tFtvVvl-oQWkWX9_DHZjRLcYY2Kc5JGPGYLM2rlh3YKIqqw--1HQ1MbC6NUqB8DGqQ3FAdxLjZhvsQOdvlA2lAvbrmKMabFKt0iFyz7ToqSQwK6MMbY6VJJVDbntZxzDApdktuwf_ry6ZyCa2u1U4VV8Dm-FAG4l7-LKgUH_2Rb8YjNTGUjZtYIyw5E--a2-UUcvLT3ppaz0C0"></p>
+<!--```uml
+@startuml
+box Application
+participant Context as C
+participant ContextWrapper as CW
+participant ContextImpl as CI
+end box
+box system_server
+participant IActivityManager as IAM
+participant ActivityManagerService as AMS
+end box
+
+C -> CW: startService()
+CW -> CI: startService()
+CI -> CI: warnIfCallingFromSystemProcess()
+CI -> IAM: startServiceCommon()
+IAM -> AMS: startService()
+@enduml
+```-->
+
+<ol>
+<li><code>Context</code>是Abstract类，它是由<code>ContextImpl</code>实现的，并通常以装饰器模式被<code>ContextWrapper</code>包装。App中<code>Context.startService()</code>调用实质上是由<code>ContextWrapper.mBase</code>即<code>ContextImpl.startService()</code>实现的。</li>
+<li><code>ContextImpl.startService()</code>首先会调用<code> warnIfCallingFromSystemProcess()</code>来检查调用者是否为系统进程。日志中的警告信息就是这里打印店额。</li>
+<li><code>ContextImpl.startService()</code>关键实现是<code>ContextImpl.startServiceCommon</code>，它在完成对Intent的检查后（高版本SDK检查Intent是否是不被允许的隐式intent），调用<code> ActivityManager.getService().startService()</code>通过Binder向AMS申请启动服务，并对该调用的结果做检查，其中<code>startService</code>相关的permission异常就是在这里抛出。</li>
+<li><code>ActivityManager.getService()</code>获取了<code>IActivityManager.Stub</code>的Binder Proxy实例，它的Server端实现就是<code>ActivityManagerService</code>。</li>
+<li>通过Binder调用的<code>startService()</code>方法中有几个关键参数。<code>IApplicationThread</code>是一个Binder，服务端为<code>ActivityThread</code>，Proxy通过<code>startService()</code>传递到<code>system_server</code>，方便<code>AMS</code>处理完成后通过该Binder回调到应用进程。另外两个重要参数是启动服务的Intent和确定是否为前台服务的<code>requireForeground</code>。</li>
+</ol>
+<h2 id="SystemServer"><a href="#SystemServer" class="headerlink" title="SystemServer"></a>SystemServer</h2><p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/dLLHRzii57tthq3wNhwjJNw05KLjqsQDr5PJlEvred13KJ3N0rmjslRV1pN1nNPMQNsep3s7S-5mxys5TTIujbQ5r0xCZZ8WcykcKP9H9r5_UJP0UJ4EaSMl-PoCcMFYR8RaaZdv8jqXah9a4RgdcWemv6T1_DyPUJrO1UP5ClZ_GmfYqyT-5mLJr5eoq8YCAFKVgMF0alAL2SVrlwPA0gCKzxJnIOoXXqKVMKxakKEs1nwppJ9eepMO0Vvaf1QFpVHc0rHLfxNRXbC74LkZ0M6mrNnu0lOCl5MmCj2pUnGqZx5B8spQcto9u1OO6fvieOstuxD11jPsK0IaHKKTy81DCpWeUW1EoYT41LJ7y4viuNihpHXHrBfZ8P1IeHOTq7aRTe5rusqnJ-Mm6KBm0rZhO2s607lrYAyDraFmZ3HetGCwkOjja2fAW5jXtQ06xHvexSqbPHOOkNc7k6-RBTXMkUHfn3Ap6Z2rjDPd8sNbGgtqMfcvIKNg7PBoJRTkVE2ejXTtqZh_BfJjgO2mY91DdLI1MsH7MMQkIIsgzxaCjGOMqaVMAWKyqM0YFgCDal4IvUtRPRINSXxFczTbwilKguyMpCQhIEs64-BgiD7MKSqWF0Wf_Rv5zaRd9B_8b83pt6vhzprVI-N011rgf4LzIkJwM8lKkEu5ml_5D3cmWWbN_j9TH_-LtWsklltzqzlka5t1d9C9nZ8OUKirLs2wYT_xUMBuNiDJArQeTrAaMNvzS_NuwLjri_swMTsaVWdQW_4VaqpFys8wJERpvTGFqMboFiFVOqxVhIXo5V9nDdjhJlz9C29zqsQha2WrwHI-cC-d1a9HN83cRQt-0000"></p>
+<!--```uml
+@startuml
+interface IApplicationThread
+IApplicationThread <|.. ApplicationThread
+ApplicationThread --o ActivityThread
+
+interface IActivityManager {
+    + startService()
+    + stopService()
+}
+
+class ActivityManagerService {
+    # mServices :ActiveServices
+    + startService()
+    + stopService()
+}
+
+class ActiveServices {
+    # mServiceMap :Array<ServiceMap>
+    + startServiceLocked()
+    - startServiceInnerLocked()
+    - bringUpServiceLocked()
+    - realStartServiceLocked()
+    - updateServiceForegroundLocked()
+    - scheduleCreateService()
+    - sendServiceArgsLocked()
+}
+
+class ServiceRecord {
+    # app :ProcessRecord
+    # isolatedProc :ProcessRecord
+    # delayed :boolean
+    # fgRequired :boolean
+    # lastActivity :long
+    # startRequested :boolean
+    # delayedStop :boolean
+    # executeFg :boolean
+    # createdFromFg :boolean
+    + postNotification()
+    + getComponentName() :ComponentName
+}
+
+class ServiceLookupResult {
+    # ServiceRecord
+    # permission :String
+}
+
+class ProcessRecord {
+    # info :ApplicationInfo
+    # pkgList :PackageList
+    # services :Set<ServiceRecord>
+    # executingServices :Set<ServiceRecord>
+    # connections :Set<ConnectionRecrod>
+    # hostingRecord :HostingRecord
+    + addPackage()
+}
+
+class ServiceMap {
+    # mUserId :int
+    # mServicesByInstanceName :Map<ComponentName, ServiceRecord>
+    # mServicesByIntent :Map<Intent.FilterComparison, ServiceRecord>
+    # mDelayedStartList :List<ServiceRecord>
+    # mStartingBackground :List<ServiceRecord>
+    # mActiveForegroundApps :Map<String, ActiveForegroundApp>
+}
+
+Handler <|.. ServiceMap
+
+class ActivityManagerDebugConfig {
+    + DEBUG_SERVICE :boolean
+}
+
+IActivityManager <|.. ActivityManagerService
+ActivityManagerService ..> ApplicationThread
+ActivityManagerService ..> ActiveServices
+ActivityManagerService ..> ActivityManagerDebugConfig
+
+ActiveServices *-- ServiceMap
+ServiceMap o-- ServiceRecord
+ServiceRecord ..> ProcessRecord
+ServiceRecord <.. ServiceLookupResult
+
+@enduml
+```-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/ZP7HIiKm38RlznIzF5xu0bx86O8WU6GmV83OXXdiIKkQ3dnxkrdKTIhdefIIx___93qc1T5yzbqiDrcAm6fwgpIJlf-0OK8PKMQoQ22P_ZJkIQn0Mea6YD6J1QN0QtKOkkxwTl6vCMjsrHwkEbYyG74DASSiN8Cz1lk6RWCNzWiLL26SiQNxnkoYyWCpoY_CYn1Fpt7NaLUJwgOe6Gvg93CNzl24CugnuBq9V2S8MkRzUmRmu_zTvkX0iTRlW-0a8RDhoM4e0zbNTDdZP-htiXt-J4Ts6r5vLxINALNVLkHmysF78ifd_m40"></p>
+<!--```uml
+@startuml
+participant ActivityManagerService as AMS
+participant ActiveServices as AS
+participant Application as APP
+
+-> AMS: startService()
+activate AMS
+AMS -> AS: startServiceLocked()
+activate AS
+AS -> AS: retrieveServiceLocked()
+AS -> AS: startServiceLocked()
+AS -> AS: startServiceInnerLocked()
+AS -> AS: bringUpServiceLocked()
+alt service is not running(Never call onCreate())
+activate AS
+AS -> AS: realStartServiceLocked()
+AS -> AS: updateServiceForegroundLocked()
+AS -> APP: scheduleCreateService()
+deactivate AS
+end
+AS -> APP: sendServiceArgsLocked()
+deactivate AS
+deactivate AMS
+@enduml
+```-->
+
+<h3 id="ActivityManagerService-startService"><a href="#ActivityManagerService-startService" class="headerlink" title="ActivityManagerService.startService"></a>ActivityManagerService.startService</h3><ol>
+<li><code>AMS.startService()</code><ol>
+<li>经过Binder调用，<code>startService</code>会处理App的请求。该方法的第一步就是检查用户有没有启动服务的权限（检查调用者是否是isolated uid，不是常规的Android Manifest内的权限）</li>
+<li>调用<code>mServices.startServiceLocked()</code>，其中<code>mServices</code>是<code>ActiveServices</code>。启动服务的所有逻辑都是在这个方法实现的。</li>
+</ol>
+</li>
+</ol>
+<h3 id="ActiveServices"><a href="#ActiveServices" class="headerlink" title="ActiveServices"></a>ActiveServices</h3><ol>
+<li><p><code>ActiveServices.startServiceLocked()</code></p>
+<ol>
+<li>首先通过<code>retrieveServiceLocked()</code>检索服务信息（<code>ServiceLookupResult</code>）。<code>ServiceLookupResult</code>是<code>ActiveiServices</code>的内部类，它仅包含<code>ServiceRecord</code>和表示权限的String两个成员。</li>
+<li><code>retrieveServiceLocked</code>的作用是返回service对应的<code>ServiceRecord</code>。会从<code>ServiceMap</code>中查找是否已有该<code>ServiceRecord</code>（service已经启动的情况），否则就通过<code>PackageManager</code>（<code>mAm.getPackageManagerInternalLocked().resolveService</code>）查找已安装的应用是否有匹配该service intent的服务(<code>ServiceInfo</code>)。如果<code>ServiceMap</code>和<code>PackageManager</code>都不能提供对应的<code>ServiceRecrod</code>或<code>ServiceInfo</code>，那么就是<code>Service not found</code>的情况，无法启动服务。</li>
+<li>在<code>ServiceMap</code>不包含该<code>ServiceRecord</code>时，<code>ActiveServices</code>会从<code>PackageManager</code>获取已安装应用中解析出来的<code>ServiceInfo</code>，并根据此来生成返回给调用者的<code>ComponentName</code>。<strong>这里可以看出，<code>ServiceMap</code>是一个运行时缓冲状态表，维护一个已有的Record，减少访问PMS。但是实际上从PMS解析出来的<code>ServiceInfo</code>对应的<code>ServiceRecord</code>不一定会加入到这个Map中，对应的package必须相互允许集成对方包的情况下才会加入(<code>mAm.validateAssociationAllowedLocked()</code>)</strong></li>
+<li><code>validateAssociationAllowedLocked()</code>返回true时，在<code>BIND_EXTERNAL_SERVICE</code>的情况下，<code>ActiveServices</code>不仅会将创建的<code>ComponentName</code>（这个对象返回给AMS时，AMS用这个来启动service，返回给App时，App根据返回值直到自己的启动情况和结果）修改为自身的包名（即bind的external service的包名改为发起<code>startService</code>的包名，还会将内部使用的<code>ServiceInfo</code>和方法外部入参<code>Intent</code>都做对应的修改。</li>
+<li>最后，从PMS成功解析后，创建<code>ServiceRecord</code>并放入<code>ServiceMap</code>。到这里找到了目标service，创建了<code>ServiceRecord</code>，实际上<code>retrieveServiceLocked()</code>的关键流程就已经完成了，但是还有一些额外的功能在最后可能影响服务的启动。</li>
+<li>在最后时刻，<code>ActiveServices</code>会最后确定解析的<code>ServiceLookupResult</code>是否真的应该返回。最后有三道检测关卡，包括<code>IntentFirewall</code>、<code>Permission</code>机制和<code>AppOps</code>机制。其中通过<code>mAm.mIntentFirewall.checkService()</code>调用<code>IntentFirewall</code>来检查是否应该<code>&quot;blocked by firewall&quot;</code>。<code>IntentFirewall</code>的机制是，它读取<code>/data/system/ifw</code>内的xml配置文件创建Firewall rules，当Intent被rules匹配时阻止Intent启动四大组件。另外两个<code>Permission</code>和<code>AppOps</code>是Android常规的权限机制。</li>
+<li>最后，<code>retrieveServiceLocked()</code>检查一下权限后返回包装了<code>ServiceRecord</code>的<code>ServiceLookupResult</code>到<code>ActiveServices.startServiceLocked()</code>。</li>
+</ol>
+</li>
+<li><p>fgRequired</p>
+<ol>
+<li>返回的<code>ServiceLookupResult</code>内的<code>ServiceRecord</code>有效时，当调用的是<code>startForegroundService</code>时，会通过<code>AppOps</code>机制检查是否允许启动前台service，否则会退出，并从Binder返回<code>foreground not allowed</code>。</li>
+<li>接下来处理一下延时启动相关的东西（后台进程申请启动的后台服务可能会被延迟启动）</li>
+</ol>
+</li>
+<li><p>startServiceInnerLocked</p>
+<ol>
+<li>将上面的<code>ServiceMap</code>、<code>Intent</code>、<code>ServiceRecord</code>等作为参数调用<code>startServiceInnerLocked()</code>。它首先将<code>ServiceRecord.ServiceState</code>标记为STARTED、启动<code>StatsLog</code>统计使用信息。</li>
+<li>然后调用<code>bringUpServiceLocked()</code>方法启动服务。该方法开头检查<code>ServiceRecord</code>的<code>ProcessRecord</code>和<code>IApplicationThread</code>是否存在，如果存在则表明该<code>Service</code>在之前就已经启动了（被其他<code>startService</code>调用创建过，<code>onCreate()</code>流程已经调用过了）。这种情况下不需要再次创建服务，只需要回调服务的<code>onStartCommand()</code>即可——调用<code>sendServiceArgsLocked()</code>并提前return。它通过<code>IApplicationThread</code>这个Binder回调到应用进程，调用对应service的<code>onStartCommand()</code>。具体流程是，该方法内部调用了<code>r.app.thread.scheduleServiceArgs()</code>，这个方法定义于<code>IApplicationThread.aidl</code>，system_server的AMS调用这个Binder的Proxy，对应server即App内的<code>scheduleServiceArgs()</code>方法。与启动Activity一样，这个方法向<code>ActivityThread</code>的Handler发送了一个Message，Handler内回调<code>onServiceArgs()</code>，最终调用了service的<code>onStartCommand()</code>。</li>
+<li><code>bringUpServiceLocked()</code>在service没有创建的情况下往下运行。有一个细节，首先它通过<code>AppGlobals.getPackageManager().setPackageStoppedState()</code>的调用，短暂地阻止<code>ServiceRecord</code>对应的package不能被stop，然后再执行启动service的流程。</li>
+<li>在启动service之前，需要先确保service对应的进程已经存在。否则需要进行创建。而创建service的时候又要分两种情况：service运行于调用者同一个进程、运行于另一个进程。</li>
+</ol>
+</li>
+<li><p>startServiceInnerLocked创建进程</p>
+<ol>
+<li>接下来区分service是否为独立的进程（isolated）来进行启动。当service运行于同一个进程时，通过<code>mAm.getProcessRecordLocked()</code>获取<code>ProcessRecord</code>，调用<code>realStartServiceLocked()</code>启动服务。否则先启动对应的进程。</li>
+<li>如果目标进程还没有启动，则启动进程。调用<code>AMS.startProcessLocked()</code>来启动目标进程。该方法可以接收一个<code>HostingRecord</code>可以携带Service的ComponentName，AMS在启动进程时会启动该服务，再次回到本方法的已创建进程的流程里面来启动服务。</li>
+</ol>
+</li>
+<li><p>realStartServiceLocked</p>
+<ol>
+<li><code>realStartServiceLocked()</code>做了一些准备工作。其中通过<code>bumpServiceExecutingLocked()</code>调用<code>scheduleServiceTimeoutLocke()</code>向AMS发送一个Message，该Message的目的是，监控service的启动耗时。service启动完成后会清除该Message，而超时没有清除时，就会触发该Message，会让AMS认为该服务启动异常，做出响应。（<code>ActivityThread.handleServiceCreate()</code>完成后，通过Binder调用AMS，AMS再调用<code>ActiveServices</code>移除掉该Message）</li>
+<li>调用<code>ProcessRecord.IApplicationThread.scheduleCreateService()</code>回调到应用进程。在<code>ActivityThread</code>中发送Message到Handler，回调<code>handleCreateService()</code>方法。这个方法内部加载目标service，并回调<code>onCreate()</code>。并调用<code>AMS</code>的<code>serviceDoneExecuting()</code>移除<code>ActiveServices</code>发出的服务启动超时信息。</li>
+<li><code>scheduleCreateService()</code>调用完成后，紧接着会调用<code>ServiceRecord.postNotification()</code>在标题栏展示前台服务必备的Notification。直到这一步，通知栏的通知就可见了。</li>
+<li>下一步就是触发App进程的Service的<code>onStartCommand()</code>了。接着调用<code>sendServiceArgsLocked()</code>通过<code>IApplicationThread</code>发送Message到<code>ActivityThread.H</code>，在对应的<code>ActivityThread.handleServiceArgs()</code>调用service的<code>onStartCommand()</code>。</li>
+<li>到这里，整个Service的启动流程已经完成了。最后一步会通过检查<code>ServiceRecord.delayedStop</code>标志，如果它为true则表示服务启动过程中收到了停止该服务的请求。该flag表示该服务已经被请求关闭，只是它已经处于<code>delayed</code>队列了，需要等当前动作完成后再处理stop请求。因此再start流程的最后一步发现这个关闭请求则会响应这个stop，将服务关闭。</li>
+</ol>
+</li>
+</ol>
+<h2 id="ActivityThread"><a href="#ActivityThread" class="headerlink" title="ActivityThread"></a>ActivityThread</h2><p><code>ActivityThread</code>主要是作为客户端使用<code>ActivityManagerProxy</code>与AMS通信，主要是发出<code>startService()</code>的API调用。<code>ActivityThread</code>提供<code>IApplicationThread</code>到AMS，用以接收四大组件的生命周期的回调。回调的处理函数全部都是向Handler发送Message，各个Message的处理函数创建对应的四大组件、调用四大组件的生命周期回调。</p>
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/TPBHJiCW68NlUGekDGOVeF5Yh3Qs5qxJTjuk2Byh2QCDi2L6VNSx1pE5jfVV-JdbSFwLTSouuq4XgHsO3yO1LtGObEJCoLwtdG4cy1V2utU7BUz071Na8tNGW3b93ZUtKpLmQlOsrLm_B9rRIosMjAr-dwW_2775hCLBboMOSYTFqdrUyBthfCNP55vjuk7o6dbTRHvtJL6_LNdXKLuNj2tECF-7VcH7wwSceFRbDJgwtSpuTKmB1SzWBTjFieLBHIqSnimUPKdyC5FYhFGFSV5FNpSeQPj1IxiCIjfaK6QxcjcfXsz2qlPGEaX8ZwFQoh__6EyHLOTYCEUm0YtEQ_yB"></p>
+<!--```uml
+@startuml
+interface IApplicationThread {
+    + scheduleCreateService()
+    + scheduleServiceArgs()
+    + scheduleStopService()
+    + scheduleBindService()
+    + scheduleUnbindService()
+}
+
+class ApplicationThread {
+    - ActivityThread.this :ActivityThread
+}
+
+class ActivityThread.H {
+    + BIND_SERVICE
+    + CREATE_SERCICE
+    + SERVICE_ARGS
+    + STOP_SERVICE
+    + UNBIND_SERVICE
+    + handleMessage()
+}
+
+class ActivityThread {
+    + mAppThread :ApplicationThread
+    + mH :H
+    - handleBindService()
+    - handleCreateService()
+    - handleServiceArgs()
+    - handleStopService()
+    - handleUnbindService()
+}
+
+IApplicationThread <|-- ApplicationThread
+ApplicationThread --o ActivityThread
+Handler <|-- ActivityThread.H
+ActivityThread.H --o ActivityThread
+@enduml
+```-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/jP31JiCm38RlVOeSuS0Bx81MJKATnAH97MVa9LONqJgHaqxRs-EqWMsbWnDNVv_jtrw621pxhYtsxgJ2EKJitWFo4RdmGgos7YYgKaTxjF6y0O86kHR3QbGGLBcfVvgOXJ0OjyAwzBwr6g9rj3imWjcoEvt55BJR5aX6IPWXq9NwnupSVcDLgLZDtd5fclHSNLP_HodaIFNqB9SirF2mR3qy5kKiU7Nw0yrTl2P2dd7sRAbvy_U7C49R_xwdzmOYPlxY61jsFPc9cJujcVG1JT_YYl7I8qwYsLgeo401T1phgLn9fxncWo50a_mgLPDx038jNi3errzWkgVErD58fl5aIPPBRi9umZ_6kzfr4sxu-CfrdLW2baYcxzfF"></p>
+<!--```uml
+@startuml
+box system_server
+participant ActivityManagerService as AMS
+participant ActiveServices as AS
+participant IApplicationThreadProxy as IATP
+end box
+box Application
+participant IApplicationThread as IAT
+participant H as H
+participant ActivityThread as AT
+participant Service as S
+end box
+
+AMS -> AS: startService()
+AS -> AS: startServiceLocked()
+AS -> AS: startServiceInnerLocked()
+AS -> AS: bringUpServiceLocked()
+AS -> AS: realStartServiceLocked()
+AS -> AS: updateServiceForegroundLocked()
+AS -> IATP: scheduleCreateService()
+IATP -> IAT: transact()
+IAT -> H: sendMessage()
+H -> AT: handleMessage()
+AT -> S: handleCreateService()
+S -> S: onCreate()
+AS -> IATP: sendServiceArgsLocked()
+IATP -> IAT: transact()
+IAT -> H: sendMessage()
+H -> AT: handleMessage()
+AT -> S: handleServiceArgs()
+S -> S: onStartCommand()
+@enduml
+```-->
+
+<p>TODO: ActivityThread创建service的流程。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>AMS通过<code>ActiveServices</code>以及<code>ServiceMap</code>、<code>ServiceRecord</code>来管理service，并基于它们来执行权限检查，通过<code>IApplicationThread</code>回调到应用进程，并通过<code>H</code>这个Handler来在主线程完成对Service的创建和关键生命周期方法的回调。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://cs.android.com/android/platform/superproject/+/android-10.0.0_r1:frameworks/base/core/java/android/app/ContextImpl.java;drc=d4a22d861ddb5490ad0ea83c4acd69c4cbbae789;bpv=1;bpt=1;l=1864?gsn=startServiceCommon&gs=kythe://android.googlesource.com/platform/superproject?lang=java?path=android.app.ContextImpl%2385c0d7b87900cd729e25aa74f60f7f14da824a922194052866a6482988de6292">ContextImpl.startServiceCommon</a></li>
+<li><a target="_blank" rel="noopener" href="https://cs.android.com/android/platform/superproject/+/android-10.0.0_r1:frameworks/base/services/core/java/com/android/server/am/ActiveServices.java;l=2035">ActiveServices</a></li>
+<li><a target="_blank" rel="noopener" href="https://cs.android.com/android/platform/superproject/+/android-10.0.0_r1:frameworks/base/services/core/java/com/android/server/firewall/IntentFirewall.java">IntentFirewall</a></li>
+<li><a target="_blank" rel="noopener" href="https://web.archive.org/web/20180621163836/http://www.cis.syr.edu/~wedu/android/IntentFirewall/">IntentFirewall</a></li>
+<li><a target="_blank" rel="noopener" href="https://selinuxproject.org/page/NB_SEforAndroid_2#ifw.xml">NBSEIntentFirewall</a></li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/06/07/Android-startService%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/">https://nasdaqgodzilla.github.io/2022/06/07/Android-startService%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/06/13/Android-startForegroundService%E8%AF%A6%E8%A7%A3/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://images.viblo.asia/2370c6a3-6499-44f1-8701-be440160b6a8.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android startForegroundService详解</div></div></a></div><div class="next-post pull-right"><a href="/2022/06/04/UML%E5%9F%BA%E7%A1%80%E9%80%9F%E6%9F%A5%E6%89%8B%E5%86%8C/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://github.com/NasdaqGodzilla/PeacePicture/raw/pictures/800px-UML_logo.svg.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">UML基础速查手册</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div><div><a href="/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setTaskWindowingMode流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidFileTransfer.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android setTaskWindowingMode流程详解</div></div></a></div><div><a href="/2022/06/16/Android-unbindService%E6%B5%81%E7%A8%8B%E4%B8%8EBIND-AUTO-CREATE%E8%AF%A6%E8%A7%A3/" title="Android unbindService流程与BIND_AUTO_CREATE详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/56d107c769401b79f1a427e6.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-16</div><div class="title">Android unbindService流程与BIND_AUTO_CREATE详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%87%E7%A8%8B"><span class="toc-number">2.</span> <span class="toc-text">过程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Context-startService"><span class="toc-number">2.1.</span> <span class="toc-text">Context.startService</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SystemServer"><span class="toc-number">2.2.</span> <span class="toc-text">SystemServer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ActivityManagerService-startService"><span class="toc-number">2.2.1.</span> <span class="toc-text">ActivityManagerService.startService</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ActiveServices"><span class="toc-number">2.2.2.</span> <span class="toc-text">ActiveServices</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ActivityThread"><span class="toc-number">2.3.</span> <span class="toc-text">ActivityThread</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/06/07/Android-startService%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/'
+    this.page.identifier = '2022/06/07/Android-startService启动流程详解/'
+    this.page.title = 'Android startService启动流程详解'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

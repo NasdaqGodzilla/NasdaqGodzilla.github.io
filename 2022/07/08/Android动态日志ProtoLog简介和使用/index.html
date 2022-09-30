@@ -1,0 +1,399 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android动态日志ProtoLog简介和使用 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="11:12 amThursday, 7 July 2022 (GMT+8)Time in Guangdong Province, China   概述 使用 定义(TAG&#x2F;Group) 命令&#x2F;工具 数据量压缩原理 动态启停 查看Config 查看日志     总结 参考  概述本文是对ProtoLog的基本说明，包括对ProtoLog的使用、Group的定制，以及ProtoL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android动态日志ProtoLog简介和使用">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E7%AE%80%E4%BB%8B%E5%92%8C%E4%BD%BF%E7%94%A8/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="11:12 amThursday, 7 July 2022 (GMT+8)Time in Guangdong Province, China   概述 使用 定义(TAG&#x2F;Group) 命令&#x2F;工具 数据量压缩原理 动态启停 查看Config 查看日志     总结 参考  概述本文是对ProtoLog的基本说明，包括对ProtoLog的使用、Group的定制，以及ProtoL">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nasdaqgodzilla.github.io/gallery/cover/6FF2C0ADC53B2A714B62C8F3D816B9D5.JPG">
+<meta property="article:published_time" content="2022-07-08T03:33:44.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.198Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nasdaqgodzilla.github.io/gallery/cover/6FF2C0ADC53B2A714B62C8F3D816B9D5.JPG"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E7%AE%80%E4%BB%8B%E5%92%8C%E4%BD%BF%E7%94%A8/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android动态日志ProtoLog简介和使用',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://nasdaqgodzilla.github.io/gallery/cover/6FF2C0ADC53B2A714B62C8F3D816B9D5.JPG')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android动态日志ProtoLog简介和使用</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-08T03:33:44.000Z" title="发表于 2022-07-08 11:33:44">2022-07-08</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.198Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android动态日志ProtoLog简介和使用"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>11:12 am<br>Thursday, 7 July 2022 (GMT+8)<br>Time in Guangdong Province, China</p>
+<hr>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8">使用</a><ul>
+<li><a href="#%E5%AE%9A%E4%B9%89(tag/group)">定义(TAG&#x2F;Group)</a></li>
+<li><a href="#%E5%91%BD%E4%BB%A4/%E5%B7%A5%E5%85%B7">命令&#x2F;工具</a><ul>
+<li><a href="#%E6%95%B0%E6%8D%AE%E9%87%8F%E5%8E%8B%E7%BC%A9%E5%8E%9F%E7%90%86">数据量压缩原理</a></li>
+<li><a href="#%E5%8A%A8%E6%80%81%E5%90%AF%E5%81%9C">动态启停</a></li>
+<li><a href="#%E6%9F%A5%E7%9C%8BConfig">查看Config</a></li>
+<li><a href="#%E6%9F%A5%E7%9C%8B%E6%97%A5%E5%BF%97">查看日志</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>本文是对<code>ProtoLog</code>的基本说明，包括对<code>ProtoLog</code>的使用、Group的定制，以及<code>ProtoLog</code>框架的结构。</p>
+<p><code>ProtoLog</code>是Android R(Android 11)开始引入的全新的日志框架，它在性能、开销和灵活程度上有明显的提升，是一套全新流程的日志框架，它主要在WindowManager体系中使用，并有可能推广到Android系统层的其他部分。</p>
+<p>它的一大特点是能够根据Group分类来<strong>动态启停指定类别的日志打印</strong>，这使系统层初步具备了<strong>动态日志</strong>的能力（动态日志的另一大能力是打印没有预埋的日志、动态执行没有预置的调试代码）。另外还有<strong>精妙绝伦的日志数据量压缩机制</strong>（虽然并不是什么新技术）。<strong>利用对日志字符串的哈希引用减少了App内字符串数量和大小</strong>，给应用和Framework大小、内存占用带来一定的减少<code>ProtoLog</code>会将二进制日志以<code>Protocol Buffer</code>的形式存储，这是<code>ProtoLog</code>命名的由来。<code>Protocol Buffer</code>的使用也使序列化数据更加紧凑，是<code>Protocol Buffer</code>在Android日志框架中的落地（在此之前，一些窗口系统、Surface系统已经在使用<code>Protocol Buffer</code>来存储Trace、日志了）。</p>
+<p><code>ProtoLog</code>不仅像<code>android.util.Log</code>一样能够输出日志到<code>logcat</code>，还能够根据配置以二进制的形式（Protocol Buffer格式）将日志输出到DB中（同步地提供了一个将二进制日志转换为常规日志的工具）。</p>
+<p><code>ProtoLog</code>带来了全新的三大Feature，这些Features为系统日志带来了实用的动态能力，减少了日志的开销（包括包大小、内存占用、日志打印的开销）：</p>
+<ul>
+<li>动态启停(Tunable in runtime)、支持分类</li>
+<li>暴露的接口简洁、从android.util.Log几乎0成本迁移</li>
+<li>数据量压缩</li>
+</ul>
+<blockquote>
+<p>ProtoLog提供了简洁的、类似android.util.Log的接口，它是一个空实现的Stub，实际上通过ProtoLogTool实现其功能，在编译期间做出大量工作（涉及词法分析及代码生成）。参考《Android动态日志ProtoLog原理与架构：How ProtoLogTool works》。</p>
+</blockquote>
+<blockquote>
+<p>ProtoLog框架具有三大子模块：实现日志功能的运行时模块、解析和阅读二进制日志的工具、在编译期工作的负责处理和转换的工具。参考《Android动态日志ProtoLog原理与架构：How ProtoLogTool works》。</p>
+</blockquote>
+<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><p>本节介绍<code>ProtoLog</code>的使用。说明一下，<code>ProtoLog</code><strong>是为WindowManager设计的</strong>（至少Android 11是这样。WindowManager太复杂了，没有强劲的调试手段和日志会让原本困难的WMS开发雪上加霜）。如果想要将<code>ProtoLog</code>用在其他地方，需要根据实际情况做配套工作，如编译、实现和插桩等。</p>
+<p><code>ProtoLog</code>的基本用法分三步走。</p>
+<ol>
+<li>新增自己定义的Group，或者使用已有的Group，在代码中通过<code>ProtoLog.i()</code>等方法打印日志</li>
+<li>打开Group对应的动态日志</li>
+<li>解析、阅读日志</li>
+</ol>
+<p>下面首先介绍如何找到系统内一些预定义的Groups，以及如何定义Groups。然后展示adb shell如何动态打开日志，以及专门用于阅读二进制Protocol Buffer格式的日志的工具。</p>
+<h2 id="定义-TAG-x2F-Group"><a href="#定义-TAG-x2F-Group" class="headerlink" title="定义(TAG&#x2F;Group)"></a>定义(TAG&#x2F;Group)</h2><p><code>Group</code>是新引入的概念，它用于对<code>ProtoLog</code>进行分类。常规的日志通常会带有<code>TAG</code>，TAG可以用于过滤日志，像是日志的标签。而<code>Group</code>在<code>ProtoLog</code>中用于分类日志，**动态启停的的控制范围正是一个个的<code>Group</code>**。动态日志的启停、以及对应的启停命令，都是以<code>Group</code>作为颗粒度的。</p>
+<p>从<code>ProtocolLog</code>提供的方法的签名来看，日志方法已经不再要求提供TAG了，而仅要求提供<code>Group</code>（实际上是另一个位置将TAG和Group绑定起来了，每个Group都能确定对应的TAG）。下面是方法签名，可以看到它像普通日志方法一样接收日志格式串，但是不接受TAG而要求传递Group。</p>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">package</span> <span class="selector-tag">com</span><span class="selector-class">.android</span><span class="selector-class">.server</span><span class="selector-class">.protolog</span><span class="selector-class">.common</span>;</span><br><span class="line"></span><br><span class="line"><span class="selector-tag">public</span> <span class="selector-tag">class</span> <span class="selector-tag">ProtoLog</span> &#123;</span><br><span class="line">    <span class="selector-tag">public</span> <span class="selector-tag">static</span> <span class="selector-tag">void</span> <span class="selector-tag">d</span>(IProtoLogGroup group, String messageString, Object... args) &#123;</span><br><span class="line">        <span class="comment">// Stub, replaced by the ProtoLogTool.</span></span><br><span class="line">        <span class="selector-tag">throw</span> <span class="selector-tag">new</span> <span class="selector-tag">UnsupportedOperationException</span>(<span class="string">&quot;ProtoLog calls MUST be processed with ProtoLogTool&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 对比android.util.Log:</span></span><br><span class="line">    <span class="selector-tag">public</span> <span class="selector-tag">static</span> <span class="selector-tag">int</span> <span class="selector-tag">d</span>(<span class="variable">@Nullable</span> String tag, <span class="variable">@NonNull</span> String msg) &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>不论是LogCat还是<code>ProtoLog</code>打印日志，均会带上TAG。<code>ProtoLog</code>的TAG是在<code>ProtoLogGroup</code>中定义的，而不需要调用者传递的。如下，为WindowManager定义的Groups，以及Groups对应的TAGs。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">package com.android.server.wm;</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> ProtoLogGroup <span class="keyword">implements</span> IProtoLogGroup &#123;</span><br><span class="line">    WM_ERROR(<span class="literal">true</span>, <span class="literal">true</span>, <span class="literal">true</span>, Consts.TAG_WM),</span><br><span class="line">    WM_DEBUG_ORIENTATION(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    WM_DEBUG_FOCUS_LIGHT(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    WM_DEBUG_BOOT(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    WM_DEBUG_RESIZE(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    WM_DEBUG_ADD_REMOVE(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    WM_DEBUG_FOCUS(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>, Consts.TAG_WM),</span><br><span class="line">    WM_DEBUG_STARTING_WINDOW(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    WM_SHOW_TRANSACTIONS(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    WM_SHOW_SURFACE_ALLOC(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    WM_DEBUG_APP_TRANSITIONS(Consts.ENABLE_DEBUG, Consts.ENABLE_LOG_TO_PROTO_DEBUG, <span class="literal">false</span>,</span><br><span class="line">            Consts.TAG_WM),</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="title">ProtoLogGroup</span>(<span class="params"><span class="built_in">boolean</span> enabled, <span class="built_in">boolean</span> logToProto, <span class="built_in">boolean</span> logToLogcat, <span class="built_in">String</span> tag</span>)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.mEnabled = enabled;</span><br><span class="line">        <span class="built_in">this</span>.mLogToProto = logToProto;</span><br><span class="line">        <span class="built_in">this</span>.mLogToLogcat = logToLogcat;</span><br><span class="line">        <span class="built_in">this</span>.mTag = tag;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从<code>ProtoLogGroup</code>的定义我们可以看到，**<code>Group</code>实际上是<code>ProtoLogGroup</code>中定义的enum，每个<code>Group</code>在定义时就制定了对应的TAG，并通过两个Boolean控制是否输出到ProtoLog或Logcat**。</p>
+<p>总结一下，<strong>对比android.util.Log接收<code>TAG</code>，<code>ProtoLog</code>接收<code>Group</code><strong>。</strong><code>Group</code>不像<code>TAG</code>一样想咋写咋写，随便写一个String都行，而是要预先进行定义</strong>。**<code>Group</code>在<code>ProtoLogGroup</code>中定义，在定义的时候需要提供一个TAG**。定义完成后，才能在代码中使用该<code>Group</code>打印<code>ProtoLog</code>。</p>
+<h2 id="命令-x2F-工具"><a href="#命令-x2F-工具" class="headerlink" title="命令&#x2F;工具"></a>命令&#x2F;工具</h2><p>本小节介绍<code>ProtoLog</code>的一些机制及对应的命令。其中，日志输出到DB时（Proto Log）在enable后需要start——start专门用于控制开始写入到数据库。</p>
+<table>
+<thead>
+<tr>
+<th>名称&#x2F;命令</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>wm logging start</td>
+<td>start proto logging 开始Proto log输出，让你enable的Group生效；输出到Logcat时不需要start</td>
+</tr>
+<tr>
+<td>wm logging stop</td>
+<td>stop proto logging</td>
+</tr>
+<tr>
+<td>wm logging enable&#x2F;disable [group…]</td>
+<td>按照groups启停ProtoLog，真正启动是start命令，调用start命令之后才输出</td>
+</tr>
+<tr>
+<td>wm logging enable-text&#x2F;disable-text [group…]</td>
+<td>启停动态日志，输出到logcat，不需要调用start命令就会开始输出</td>
+</tr>
+</tbody></table>
+<p>上面讲到，<code>ProtoLog</code>是为<code>WindowManager</code>设计的，<code>ProtoLog</code>的命令也集成在内。</p>
+<blockquote>
+<p>wm logging与cmd window logging，这两个指令等价。</p>
+</blockquote>
+<h3 id="数据量压缩原理"><a href="#数据量压缩原理" class="headerlink" title="数据量压缩原理"></a>数据量压缩原理</h3><ul>
+<li>查看已经定义好的Group以及其对应的日志</li>
+<li>以及数据量压缩原理</li>
+</ul>
+<p><code>ProtoLog</code>具有一定的日志数据量压缩能力（以ProtoBuf二进制形式输出时）。它的基本原理是，<strong>将原本需要进行存储的日志转换为存储日志对应的哈希，这样原本需要存储一段较长的字符串就转为了仅存储定长的哈希即可</strong>。这也是ProtoLog需要专用工具才能解析查看的原因。</p>
+<p>举个例子：<code>ProtoLog.i(WM_DEBUG_ORIENTATION, &quot;Performing post-rotate rotation after seamless rotation&quot;);</code>这是<code>DisplayRotation</code>内部的动态日志打印，它可能在运行时打印成千上万次，每次都会打印对应的字符串日志——这会让我们的日志文件存储成千上万条冗余的重复的字符串。<strong>对于冗余和重复，很容易就能想到归一化管理的方法——仅存储一处，其他位置采用引用即可</strong>。**<code>ProtoLog</code>将被引用的源字符串放到一个文件中（可见下文），将其哈希作为引用，并将日志打印过程替换为打印哈希。解析工具解析时再将哈希替换为源字符串即可。**</p>
+<blockquote>
+<p>这个过程是在编译期实现的、源码级实现。也就是说，编译完成后，日志打印的调用会被替换掉。相关的工作在编译配置中实现，涉及Java词法分析、代码生成等——这一块，ProtoLog采用JavaParser实现。</p>
+</blockquote>
+<p>除了可以在源码中查看已经定义好的<code>Group</code>外（<code>ProtoLogGroup.java</code>），还可以在Android设备中直接在线查看<code>/system/etc/protolog.conf.json.gz</code>（实际上<code>ProtoLog</code>就是使用这个东西来进行<code>Group</code>管理和日志数据量压缩的）。</p>
+<p><code>/system/etc/protolog.conf.json.gz</code>是一个打包文件，内部仅包含一个<code>Group</code>配置信息的Json。因为只有一个文件，直接peek它即可，甚至不需要解压。（ADB内可能没有下面这个命令，pull出来再执行）</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zmore protolog<span class="selector-class">.conf</span><span class="selector-class">.json</span>.gz</span><br></pre></td></tr></table></figure>
+
+<p>其内容如下，可以看到第一个<code>Group</code>就是我们刚刚上面动态启停指令使用过的。</p>
+<figure class="highlight clojure"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;version&quot;</span>: <span class="string">&quot;1.0.0&quot;</span>,</span><br><span class="line">  <span class="string">&quot;messages&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;-2146181682&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;message&quot;</span>: <span class="string">&quot;Releasing screen wakelock, obscured by %s&quot;</span>,</span><br><span class="line">      <span class="string">&quot;level&quot;</span>: <span class="string">&quot;DEBUG&quot;</span>,</span><br><span class="line">      <span class="string">&quot;group&quot;</span>: <span class="string">&quot;WM_DEBUG_KEEP_SCREEN_ON&quot;</span>,</span><br><span class="line">      <span class="string">&quot;at&quot;</span>: <span class="string">&quot;com\/android\/server\/wm\/WindowManagerService.java&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;-2127842445&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;message&quot;</span>: <span class="string">&quot;Clearing startingData for token=%s&quot;</span>,</span><br><span class="line">      <span class="string">&quot;level&quot;</span>: <span class="string">&quot;VERBOSE&quot;</span>,</span><br><span class="line">      <span class="string">&quot;group&quot;</span>: <span class="string">&quot;WM_DEBUG_STARTING_WINDOW&quot;</span>,</span><br><span class="line">      <span class="string">&quot;at&quot;</span>: <span class="string">&quot;com\/android\/server\/wm\/ActivityRecord.java&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;-2109936758&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;message&quot;</span>: <span class="string">&quot;removeAppToken make exiting: %s&quot;</span>,</span><br><span class="line">      <span class="string">&quot;level&quot;</span>: <span class="string">&quot;VERBOSE&quot;</span>,</span><br><span class="line">      <span class="string">&quot;group&quot;</span>: <span class="string">&quot;WM_DEBUG_ADD_REMOVE&quot;</span>,</span><br><span class="line">      <span class="string">&quot;at&quot;</span>: <span class="string">&quot;com\/android\/server\/wm\/ActivityRecord.java&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;-2109864870&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;message&quot;</span>: <span class="string">&quot;app-release(): mOuter=%s&quot;</span>,</span><br><span class="line">      <span class="string">&quot;level&quot;</span>: <span class="string">&quot;DEBUG&quot;</span>,</span><br><span class="line">      <span class="string">&quot;group&quot;</span>: <span class="string">&quot;WM_DEBUG_REMOTE_ANIMATIONS&quot;</span>,</span><br><span class="line">      <span class="string">&quot;at&quot;</span>: <span class="string">&quot;com\/android\/server\/wm\/RemoteAnimationController.java&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    ...</span><br><span class="line">  </span><br><span class="line">  <span class="string">&quot;groups&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;TEST_GROUP&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;tag&quot;</span>: <span class="string">&quot;WindowManagetProtoLogTest&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;WM_DEBUG_ADD_REMOVE&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;tag&quot;</span>: <span class="string">&quot;WindowManager&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;WM_DEBUG_APP_TRANSITIONS&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;tag&quot;</span>: <span class="string">&quot;WindowManager&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;WM_DEBUG_APP_TRANSITIONS_ANIM&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;tag&quot;</span>: <span class="string">&quot;WindowManager&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;WM_DEBUG_BOOT&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;tag&quot;</span>: <span class="string">&quot;WindowManager&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;WM_DEBUG_DRAW&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;tag&quot;</span>: <span class="string">&quot;WindowManager&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;WM_DEBUG_FOCUS&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;tag&quot;</span>: <span class="string">&quot;WindowManager&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，<code>Group</code>们都在这里，还可以看到日志的源信息（因为<strong>日志压缩的原理是将字符串做哈希，打印出来的日志仅包含哈希，日志查看工具根据哈希在这里索引拿到源信息即可。由于避免存储字符串，而仅存储定长哈希，这是<code>ProtoLog</code>数据量压缩的核心原理</strong>。）一行日志该有的TAG、Message、日志等级都齐了。</p>
+<h3 id="动态启停"><a href="#动态启停" class="headerlink" title="动态启停"></a>动态启停</h3><ul>
+<li>启动某个Group，并输出到Logcat:</li>
+</ul>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wm logging <span class="keyword">enable</span>-<span class="type">text</span> WM_DEBUG_SCREEN_ON</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>启动某个Group，并输出到DB</li>
+</ul>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">generic_x86_64:/ <span class="comment"># wm logging enable WM_DEBUG_SCREEN_ON</span></span><br><span class="line">generic_x86_64:/ <span class="comment"># wm logging start          </span></span><br><span class="line">Start logging to <span class="regexp">/data/mi</span>sc<span class="regexp">/wmtrace/</span>wm_log.pb.</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>如上所述，输出到LogCat不需要start，输出到DB需要start</p>
+</blockquote>
+<ul>
+<li>停止</li>
+</ul>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">generic_x86_64:/ <span class="comment"># wm logging stop </span></span><br><span class="line">Stop logging to <span class="regexp">/data/mi</span>sc<span class="regexp">/wmtrace/</span>wm_log.pb. Waiting <span class="keyword">for</span> log to flush.</span><br><span class="line">Log written to <span class="regexp">/data/mi</span>sc<span class="regexp">/wmtrace/</span>wm_log.pb.</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看Config"><a href="#查看Config" class="headerlink" title="查看Config"></a>查看Config</h3><p>这里Connfig是指<code>Group</code>的集合，以及<code>Group</code>的内容。其中内容是包含了TAG、哈希、日志等级和日志源Message。Config的内容、相关作用和原理在上面“数据量压缩原理”一节介绍过了。</p>
+<p>由于<code>ProtoLog</code>的压缩原理是仅存储哈希，避免直接存储字符串的开销。那么最终阅读日志时，当然得用哈希来找到源Message。这个寻找的基础就是Config文件：<code>/system/etc/protolog.conf.json.gz</code>。</p>
+<blockquote>
+<p>Config的主要作用是存储Group、Tag、以及源字符串本身及其哈希。没有这个信息，无法从ProtoLog中解析出真正的日志文件。</p>
+</blockquote>
+<h3 id="查看日志"><a href="#查看日志" class="headerlink" title="查看日志"></a>查看日志</h3><p><code>ProtoLog</code>提供了专门的日志查看工具。如下操作可以在浏览器中查看日志和事件：</p>
+<blockquote>
+<p>如果配置为输出到Logcat，那么直接看Logcat即可。</p>
+</blockquote>
+<ul>
+<li>获取对应的页面并用浏览器打开：</li>
+</ul>
+<figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl &#x27;https://android.googlesource.com/platform/prebuilts/misc/+/master/common/winscope/winscope.html?format=TEXT&#x27; <span class="string">| base64 -d &gt; winscope.html</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>打开后导入抓取的文件即可查看日志</li>
+</ul>
+<p>首先导入<code>ProtoLog</code>对应的<code>pb</code>文件。在导入时会自动识别其文件类型，也可以手动指定类型为<code>ProtoLog</code>。</p>
+<img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/WM动态日志Demo1.png" align="right">
+
+<p>接着即可查看日志。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/WM%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97Demo2.png"></p>
+<blockquote>
+<p>对于日常调试和开发时建议使用更简便的输出到logcat的方案，这样能够直接查看Raw text，而不需要解析ProtoBuf。</p>
+</blockquote>
+<ul>
+<li>使用<code>Winscope.html</code>查看日志有时候也不太方便，还可以使用<code>ProtoLogTool</code>将pb文件解析并直接输出日志。</li>
+</ul>
+<p>命令如下，通过<code>ProtoLogTool</code>解析并输出日志。需要通过<code>--viewer-conf</code>指定Config，它提供给<code>ProtoLogTool</code>用于解析数据库。Config是上文介绍过的那个Config，它可以从Android设备的<code>/system/etc/protolog.conf.json.gz</code>解包得到。</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.<span class="regexp">/out/</span>host<span class="regexp">/linux-x86/</span>bin<span class="regexp">/protologtool read-log --viewer-conf /</span>ssd_d<span class="regexp">/niko/</span>protolog.conf.json <span class="regexp">/ssd_d/</span>niko/wm_log.pb</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意该命令在PC中执行而非Android设备中执行，目录是以AOSP源码目录为根目录。protolog.conf.json是设备对应的Config，自行获取并传入到命令。</p>
+</blockquote>
+<p>一下是输出示例。可以看到动态日志正常运行，日志文件也正常解析。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">8-&gt; ./host/linux-x86/bin/protologtool read-log --viewer-conf /ssd_d/niko/protolog.conf.json /ssd_d/niko/wm_log.pb                                                                              07-07 16:18:26.361 VERBOSE WindowManager: <span class="attribute">screenOnEarly</span>=<span class="literal">false</span>, <span class="attribute">awake</span>=<span class="literal">true</span>, <span class="attribute">currentAppOrientation</span>=0, <span class="attribute">orientationSensorEnabled</span>=<span class="literal">true</span>, <span class="attribute">keyguardDrawComplete</span>=<span class="literal">false</span>, <span class="attribute">windowManagerDrawComplete</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.370 VERBOSE WindowManager: Disabling listeners                                                                                                                                  07-07 16:18:26.374 VERBOSE WindowManager: Clear freezing of Token&#123;93e49a0 ActivityRecord&#123;bb44959 u0 com.android.launcher3/.uioverrides.QuickstepLauncher t117&#125;&#125;: <span class="attribute">visible</span>=<span class="literal">true</span> <span class="attribute">freezing</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.387 VERBOSE WindowManager: setAppVisibility(Token&#123;93e49a0 ActivityRecord&#123;bb44959 u0 com.android.launcher3/.uioverrides.QuickstepLauncher t117&#125;&#125;, <span class="attribute">visible</span>=<span class="literal">false</span>): mNextAppTransit</span><br><span class="line"><span class="attribute">ion</span>=TRANSIT_UNSET <span class="attribute">visible</span>=<span class="literal">true</span> <span class="attribute">mVisibleRequested</span>=<span class="literal">true</span> <span class="attribute">Callers</span>=com.android.server.wm.ActivityRecord.setVisibility:4120 com.android.server.wm.ActivityRecord.makeInvisible:4723 com.android.serve</span><br><span class="line">r.wm.EnsureActivitiesVisibleHelper.setActivityVisibilityState:171 com.android.server.wm.EnsureActivitiesVisibleHelper.lambda<span class="variable">$Bbb3nMFa3F8er_OBuKA7</span>-SpeSKo:0 com.android.server.wm.-$<span class="variable">$Lambda</span><span class="variable">$Ensu</span></span><br><span class="line">reActivitiesVisibleHelper<span class="variable">$Bbb3nMFa3F8er_OBuKA7</span>-SpeSKo.accept:12 com.android.internal.util.function.pooled.PooledLambdaImpl.doInvoke:307                                                        07-07 16:18:26.387 VERBOSE WindowManager: commitVisibility: ActivityRecord&#123;bb44959 u0 com.android.launcher3/.uioverrides.QuickstepLauncher t117&#125;: <span class="attribute">visible</span>=<span class="literal">false</span> <span class="attribute">mVisibleRequested</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.387 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;196f26a u0 SecondaryHomeHandle0&#125;, <span class="attribute">flags</span>=562037032, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;e151cc8 u0 EdgeBackGestureHandler0&#125;, <span class="attribute">flags</span>=25166120, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;bee3810 u0 pip-dismiss-overlay&#125;, <span class="attribute">flags</span>=280, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;db7dd37 u0 NavigationBar0&#125;, <span class="attribute">flags</span>=25428072, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;72d19c3 u0 NotificationShade&#125;, <span class="attribute">flags</span>=-2122055608, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;74b926c u0 StatusBar&#125;, <span class="attribute">flags</span>=-2122317816, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;d75da1f u0 AssistPreviewPanel&#125;, <span class="attribute">flags</span>=16777496, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;d0f6ea2 u0 InputMethod&#125;, <span class="attribute">flags</span>=-2122317560, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;97f4a86 u0 com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher&#125;, <span class="attribute">flags</span>=-2121203456, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: Looking <span class="keyword">for</span> focus: Window&#123;dd9f002 u0 com.android.systemui.ImageWallpaper&#125;, <span class="attribute">flags</span>=82712, <span class="attribute">canReceive</span>=<span class="literal">false</span></span><br><span class="line">07-07 16:18:26.399 VERBOSE WindowManager: findFocusedWindow: <span class="literal">No</span> focusable windows.</span><br><span class="line">07-07 16:18:26.400 <span class="builtin-name">INFO</span> WindowManager: setInputMethodTarget <span class="literal">null</span></span><br><span class="line"><span class="built_in">..</span>.</span><br></pre></td></tr></table></figure>
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>对比<code>android.util.Log</code>，<code>ProtoLog</code>带来了包括动态启停、数据量压缩等方面的优势，总结如下。</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>原理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据量压缩</td>
+<td>日志打印时引用字符串的Hash，避免字符串冗余</td>
+</tr>
+<tr>
+<td>包体积</td>
+<td>同样是字符串Hash带来的，代码中硬编码的日志字符串替换为哈希，减少了代码Code的大小，对包体积有一定的减少</td>
+</tr>
+<tr>
+<td>动态启停</td>
+<td>内置支持动态启停</td>
+</tr>
+<tr>
+<td>允许输出到DB</td>
+<td>由于LogCat本身不支持ProtoBuf，因此ProtoLog输出到二进制文件中，这实际上避免了频繁调用LogCat带来的开销（一些系统服务日志全开的情况下日志量是很大的，大量的Log会显著影响性能）</td>
+</tr>
+<tr>
+<td>相似的接口</td>
+<td>提供了与android.util.Log非常相似的接口。该接口在编译期会通过Transform工具真正生成动态日志的代码</td>
+</tr>
+</tbody></table>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/prebuilts/misc/+/master/common/winscope/winscope.html">查看ProtoLog的工具</a></li>
+<li><a target="_blank" rel="noopener" href="https://cs.android.com/android/platform/superproject/+/master:frameworks/base/tools/protologtool/src/com/android/protolog/">ProtoLogTool</a></li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E7%AE%80%E4%BB%8B%E5%92%8C%E4%BD%BF%E7%94%A8/">https://nasdaqgodzilla.github.io/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E7%AE%80%E4%BB%8B%E5%92%8C%E4%BD%BF%E7%94%A8/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a></div><div class="post_share"><div class="social-share" data-image="https://nasdaqgodzilla.github.io/gallery/cover/6FF2C0ADC53B2A714B62C8F3D816B9D5.JPG" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</div></div></a></div><div class="next-post pull-right"><a href="/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android 11 setRequestedOrientation流程详解</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 WindowContainer窗口模型详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-03</div><div class="title">Android 11 WindowContainer窗口模型详解</div></div></a></div><div><a href="/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-06</div><div class="title">Android 11 setRequestedOrientation流程详解</div></div></a></div><div><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/" title="Android 11 startActivity之ActivityStarter流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-05</div><div class="title">Android 11 startActivity之ActivityStarter流程</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">使用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89-TAG-x2F-Group"><span class="toc-number">2.1.</span> <span class="toc-text">定义(TAG&#x2F;Group)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4-x2F-%E5%B7%A5%E5%85%B7"><span class="toc-number">2.2.</span> <span class="toc-text">命令&#x2F;工具</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E9%87%8F%E5%8E%8B%E7%BC%A9%E5%8E%9F%E7%90%86"><span class="toc-number">2.2.1.</span> <span class="toc-text">数据量压缩原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E5%90%AF%E5%81%9C"><span class="toc-number">2.2.2.</span> <span class="toc-text">动态启停</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8BConfig"><span class="toc-number">2.2.3.</span> <span class="toc-text">查看Config</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E6%97%A5%E5%BF%97"><span class="toc-number">2.2.4.</span> <span class="toc-text">查看日志</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E7%AE%80%E4%BB%8B%E5%92%8C%E4%BD%BF%E7%94%A8/'
+    this.page.identifier = '2022/07/08/Android动态日志ProtoLog简介和使用/'
+    this.page.title = 'Android动态日志ProtoLog简介和使用'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

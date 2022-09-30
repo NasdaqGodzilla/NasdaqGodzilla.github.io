@@ -1,0 +1,317 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android图形层垂直同步虚拟VSYNC机制 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,性能优化,Graphics"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="20:12 Wednesday, April 20, 2022 (GMT+8) Time in Guangdong Province, China   简介 跟不上旋律节奏的VSYNC 严重异常耗时的dequeueBuffer   参考  简介某次调图形性能的时候（启动后台录屏，下(或)称case）发现Android SurfaceFlinger Vsync机制并没有以前想的这么简单粗糙，特别是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android图形层垂直同步虚拟VSYNC机制">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="20:12 Wednesday, April 20, 2022 (GMT+8) Time in Guangdong Province, China   简介 跟不上旋律节奏的VSYNC 严重异常耗时的dequeueBuffer   参考  简介某次调图形性能的时候（启动后台录屏，下(或)称case）发现Android SurfaceFlinger Vsync机制并没有以前想的这么简单粗糙，特别是">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC偏移.jpg">
+<meta property="article:published_time" content="2022-04-20T12:39:28.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.198Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="性能优化">
+<meta property="article:tag" content="Graphics">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC偏移.jpg"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android图形层垂直同步虚拟VSYNC机制',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC偏移.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android图形层垂直同步虚拟VSYNC机制</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-04-20T12:39:28.000Z" title="发表于 2022-04-20 20:39:28">2022-04-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.198Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Graphics/">Graphics</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android图形层垂直同步虚拟VSYNC机制"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>20:12</p>
+<p>Wednesday, April 20, 2022 (GMT+8)</p>
+<p>Time in Guangdong Province, China</p>
+<hr>
+<ul>
+<li><a href="#%E7%AE%80%E4%BB%8B">简介</a></li>
+<li><a href="#%E8%B7%9F%E4%B8%8D%E4%B8%8A%E6%97%8B%E5%BE%8B%E8%8A%82%E5%A5%8F%E7%9A%84vsync">跟不上旋律节奏的VSYNC</a><ul>
+<li><a href="#%E4%B8%A5%E9%87%8D%E5%BC%82%E5%B8%B8%E8%80%97%E6%97%B6%E7%9A%84dequeueBuffer">严重异常耗时的dequeueBuffer</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+<h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>某次调图形性能的时候（启动后台录屏，下(或)称case）发现Android SurfaceFlinger Vsync机制并没有以前想的这么简单粗糙，特别是这次调图形性能发现一些跟Vsync有关联，因此做个总结详解。</p>
+<h1 id="跟不上旋律节奏的VSYNC"><a href="#跟不上旋律节奏的VSYNC" class="headerlink" title="跟不上旋律节奏的VSYNC"></a>跟不上旋律节奏的VSYNC</h1><p>一份追踪报告，发现Vsync信号非常不规律，于是从这里入手分析、总结Vsync。</p>
+<p>如下图，As we can see，VSYNC-sf出现严重的漂移（见图，第二行的VSYNC-sf残次不齐、跟不上规律、难看且混乱），这导致了丢帧。（但VSYNC-sf的失控<strong>仅表示与丢帧的相关性，并不直接表明因果性</strong>。）</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E6%8E%89%E5%B8%A7%E9%97%AE%E9%A2%98%EF%BC%9ASurfaceFlinger%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E5%AF%BC%E8%87%B4%E7%9A%84VSYNC%E4%BF%A1%E5%8F%B7%E9%94%99%E4%B9%B1.png"></p>
+<p>从VSYNC信号看，后台录屏RUNNING的情况下，带来的额外工作负载直接压垮了SurfaceFlinger，导致其提交屏幕刷新的<strong>VSYNC-sf都出现了严重缺失、错位、延期等——总之是非常不正常的工况</strong>。</p>
+<blockquote>
+<p>VSYNC信号从全局来看就是触发屏幕刷新的信号。事实上，图形层（SurfaceFlinger）的处理比应用层（App）更加复杂一步——应用层只会看到一个16ms触发（60Hz）的信号，而在图形层，由于图形栈的实现事实上是生产者-消费者模型的流水线，且图形缓冲区大小是编程固定的。这就意味着，VSYNC-sf与VSYNC-app应该是交替出现、规律且稳定的。正常情况下，它们的节拍应该是由App首先完成绘图，然后图形栈（主要是SurfaceFlinger那块）提交到Framebuffer，因此VSYNC-sf和VSYNC-app交替出现，且间隔、每次持续时间都是稳定的。当其中一个信号大幅漂移时，显然有难受的情况发生了。</p>
+</blockquote>
+<ul>
+<li><p>VSYNC-app<br>这里简单解释一下VSYNC-sf和VSYNC-app，如下图。As we all known，<strong>VSYNC信号由硬件产生（或软件模拟），经过SurfaceFlinger与编舞者（Choreographer）的机制，回调到ViewRootImpl，由ViewRootImpl从根View开始逐层绘制，实现应用层绘图</strong>。但实际上，<strong>回调Choreographer的VSYNC并不是直接来自底层，而是经过图形层处理后，虚拟的一个VSYNC，标称为VSYNC-app</strong>。</p>
+</li>
+<li><p>两个独立的VSYNC<br><strong>VSYNC-sf和VSYNC-app是相互独立、互不影响的</strong>。系统内并没有限制VSYNC-sf或VSYNC-app之间需要以间隔运行的方式交替发出。其中<strong>两条VSYNC都分别有各自固定的节拍——即时间间隔，这个节拍是VSYNC-app和VSYNC-sf都各自拥有一个独立的，可调的时间间隔</strong>。VSYNC信号（其中的VSYNC-sf）被设计用于保障图形栈与底层Framebuffer的同步，而另一个VSYNC-app则是用于触发应用绘图（触发渲染线程工作）并与SurfaceFlinger同步。从流水线模型角度看，VSYNC-app和VSYNC-sf机制让应用首先完成绘图，然后由SurfaceFlinger合成、渲染并提交显示。</p>
+</li>
+</ul>
+<blockquote>
+<p>如下图，Hardware VSync被虚拟分出两个VSYNC，它们有各自独立的节拍（图中用两个Phase offset表示）。</p>
+</blockquote>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Vsync%E8%99%9A%E6%8B%9F%E5%8C%96%EF%BC%9ASurfaceFlinger%E5%92%8CApp%E4%B9%8B%E9%97%B4%E5%88%86%E7%A6%BB%E7%8B%AC%E7%AB%8B%E7%9A%84VSYNC.png"></p>
+<ul>
+<li>VSYNC垂直同步框架<br><code>DispSyncThread</code>将Hardware vsync(<code>HW_VSYNC_0</code>)虚拟地分为VSYNC-app(<code>VSYNC</code>)和VSYNC-sf(<code>SF-VSYNC</code>)，分别由两个对应地EventThread处理。其中处理VSYNC-app的EventThread会按照编程的间隔时间回调App进行绘制和渲染（<strong>在开动硬件加速的情况下，绘制在主线程亦即UI Thread发生，渲染在Render Thread通过Display List调用GPU发生</strong>），而另一个处理VSYNC-sf的EventThread以相同的原理（但是不是取同一个时间间隔对象，虽然这个对象数值上可以等于VSYNC-app的间隔）触发SurfaceFlinger进行合成。合成完成后，图像就被送往Framebuffer或其Flip buffer&#x2F;OffScreen Buffer，即将显示到屏幕。</li>
+</ul>
+<blockquote>
+<p><code>VSYNC_EVENT_PHASE_OFFSET_NS</code>和<code>SF_VSYNC_EVENT_PHASE_OFFSET_NS</code>可以分别设置VSYNC-app和VSYNC-sf的间隔。</p>
+</blockquote>
+<p>Android的显示流水线（Render Pipeline）由应用层绘图、SurfaceFlinger合成、处理屏幕显示的硬件混合渲染器（HWC）三大流程&#x2F;组织组成的（HWC合成HWC_OVERLAY，SF合成HWC_FRAMEBUFFER）。这三part分别由VSYNC-app、VSYNC-sf和HW_VSYNC_0控制。图形层虚拟出来的VSYNC编程上是从HW_VSYNC中经过偏移后产生的，相关机制下文简述。</p>
+<ul>
+<li>VSYNC如何实现？为什么需要虚拟出两个VSYNC信号？<br>下图从应用层的角度展示了最简单的垂直同步机制——也就是仅考虑HW_VSYNC的情景（<em>忽略虚拟化的VSYNC-app和VSYNC-sf，装作应用层绘图和SurfaceFlinger合成的触发信号</em>）。它将整个流水线(Pipeline)简化为：VSync刷新屏幕（<code>HW_VSYNC</code>），而应用层绘制(<code>performTraversal</code>)（蓝色块，CPU行，UI Thread使用CPU调度绘图）和硬件加速（绿色块，GPU行，硬件加速情况下会创建Render Thread，它实际使用GPU完成绘图，Display List -&gt; OpenGL -&gt; GPU）、SurfaceFlinger合成(绿色块，GPU行)这两块的虚拟VSYNC触发信号被省略不表了。Besides，现代Android普遍采用比双重缓冲更高的缓冲级别，如下图为三重缓冲（部分vendor可能采用四重缓冲）</li>
+</ul>
+<p>下图中，ABC表示时间顺序上的三个图像帧，当蓝块+绿块未能在<code>HW_VSYNC</code>之前完成，即SurfaceFlinger没能完成合成-&gt;HWC未能完成合成并提交到<code>offscreen buffer</code>(<code>off-fb</code>)，那么在A帧显示完成，需要刷新显示B帧时，没有就绪的buffer，导致原本被替换为B帧的A帧继续显示——掉帧，B帧被“丢掉”了（**&#x3D;&#x3D;注意，掉帧并不意味着帧真的被丢掉了（不再渲染了）&#x3D;&#x3D;——它只不过没来得及在DeadDeadline之前提交而已，实际上由于流水线的生产者-消费者模型，它最终还是能够按照既定的顺序上屏显示的**。如下图，第一个VSync发生掉帧，原因是SF合成没有完成，因此HWC不得不暂时不刷新屏幕，让Display继续显示A帧。在接下来的新的一个VSync到来前，SF已经完成工作并提交，此时B帧被显示——它错过了本来要上屏的VSync（掉帧），但在完成工作后上屏了（不会丢失））。</p>
+<blockquote>
+<p>这是非常简化的垂直同步机制，也是应用视角最基本的抽象模型。它能阐述图形层如何保证屏幕刷新以及实现三重缓冲、<code>SurfceFlinger</code>与Display的同步，抽象地忽略了应用层绘图与图形栈的同步、应用层的两帧缓冲。</p>
+</blockquote>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC_with_triple_buf.webp"></p>
+<ul>
+<li><strong>流水线两帧缓冲</strong>：图形栈在合成和渲染阶段会提供两帧缓冲，表现是，Display显示画面N时（号码为N的帧），图形层已经在合成N+1帧了（这个N+1帧是上一个周期中应用层完成的绘图），应用层同步被调度进行N+2帧的绘图。这个流水线保证，上游比下游提前1帧绘制，应用层、图形栈、Display（HWC提交）各自分别提前各自下游1帧的工作。如上图，Display显示帧A（号码N）时，SurfaceFlinger已经在合成N+1了，应用层正在或即将绘制N+2。</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android%E4%B8%89%E9%87%8D%E7%BC%93%E5%86%B2.png"></p>
+<blockquote>
+<p>虽然应用每帧绘图需要时间n（60Hz下，经过计算，n为<del>16.66ms），但是显示这帧画面需要</del>2n的时间(~33ms，因为n大于16.6ms)。</p>
+</blockquote>
+<blockquote>
+<p>双重&#x2F;三重缓冲是指Linux Framebuffer具有多重缓冲：包括正在显示的fb和缓存下一帧画面的off-screen fb。两帧缓冲是指流水线上游比下游提前绘制一帧，应用层的即时绘图是Display接下来会显示的第二帧画面。</p>
+</blockquote>
+<p>一般来说三级流水线配合三个buffer效果最好，四级流水线对应配合四个buffer。如在120Hz的刷新率下，Android提供四级流水线与四重buffer。目前各系统2、3、4级流水线都设计了对应的2、3、4重缓冲搭配实现更好的效果。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E5%9B%9B%E7%BA%A7%E6%B5%81%E6%B0%B4%E7%BA%BF.png"></p>
+<ul>
+<li>查看Android系统中应用的缓冲区<br><code>dumpsys SurfaceFlinger</code>命令输出的最后，根据包名&#x2F;活动名可以看到对应的buffer。<em>除SurfaceView、非原生图形引擎如Flutter、Cocos2d、Unity、RN、Weex外</em>，常规原生应用都会有三个buffer，对应底层三重缓冲。应用可以通过SurfaceView自行绘制图形，当然<strong>也可以通过SurfaceView自行设计实现多重缓冲</strong>。</li>
+</ul>
+<p>接下来简述两个虚拟化出来的VSYNC是如何工作的，实际上它是对上图抽象模型的具象解释，将上图中蓝色块和绿色块调度原理——VSYNC-app和VSYNC-sf进行阐述。</p>
+<blockquote>
+<p>下图。黄线蓝线分别是app和sf的VSYNC相对于HW_VSYNC_0的偏移（延时），当这些线从左往右结束时，出现的黄色块和蓝色块表示app或SF开始工作。</p>
+</blockquote>
+<ul>
+<li><code>HW_VSYNC_0</code>：屏幕刷新信号，Display显示新的一帧画面(N)</li>
+<li><code>VSYNC-APP</code>：经过<code>HW_VSYNC_0</code>加上VSYNC-app偏移指定的间隔时间后（下图，HW_VSYNC + App offset &#x3D; 黄色块开始，应用绘图），应用绘图生成下一帧(N + 2)</li>
+<li><code>VSYNC-SF</code>：官方文档标称<code>SF_VSYNC</code>。与<code>VSYNC-APP</code>一致，只不过<code>HW_VSYNC_0</code>加上的偏移量不一样（由<code>VSYNC-sf</code>指定），经过偏移后的时间间隔，SF开始合成下一帧(N + 1)</li>
+</ul>
+<blockquote>
+<p>偏移量是相对HW_VSYNC的相位偏移，可以简单理解为相对于HW_VSYNC_0的延时（可以是负值）。</p>
+</blockquote>
+<p>由于VSYNC-app和VSYNC-sf的存在，以及它们对HW_VSYNC_0的固有的、编程的延时，<strong>应用层绘图和SF合成事实上就不是和屏幕刷新同步的</strong>，且由于延时的存在，<strong>应用绘图和SF合成工时（最大可用工时，超出工时就是掉帧（连续超出工时导致流水线缓存的帧耗尽））事实上小于<code>HW_VSYNC_0</code>间隔</strong>。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC%E8%99%9A%E6%8B%9F%E4%BF%A1%E5%8F%B7%E6%8E%A7%E5%88%B6%E7%9A%84%E7%BB%98%E5%88%B6%E5%90%88%E6%88%90%E6%B5%81%E7%A8%8B.png"></p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC%E5%81%8F%E7%A7%BB.jpg"></p>
+<ul>
+<li>那么，VSYNC偏移的意义是什么？<br><strong>VSYNC偏移的意义是，减少画面延时</strong>。画面延时不是丢帧，它是指，原本应用的画面经过流水线处理，在N+2进行显示，而画面延时则导致该帧在N+3才显示。</li>
+</ul>
+<blockquote>
+<p>减少画面延时还有一个绝招，就是使用SurfaceView，自行控制绘制节奏。</p>
+</blockquote>
+<p>首先<code>VSYNC-sf</code>很好理解，因为它的流水线上游（应用）首先完成绘图，然后才到SF合成，所以SF当然完全没必要紧跟着<code>HW_VSYNC_0</code>。<code>VSYNC-sf</code>的偏移，即上图中SF开始合成时相对于<code>HW_VSYNC_0</code>的延时A<code>phase-sf</code>的作用是，**在延时期内，等待、确保应用完成绘图，&#x3D;&#x3D;一旦<code>VSYNC-sf</code>到达，SF开始合成图形，对于没有完成画面更新的app，将继续使用old passed画面帧（上一帧，已合成&#x2F;显示过的帧）进行合成——这意味着，SF按照自己的节奏工作，保证自己及时（下一个<code>HW_VSYNC_0</code>到来之前）提交合成的画面。对于一部分没来得及完成绘制的应用，从它们单个应用的角度来看，它们发生了掉帧，但是SF完成了提交，所以系统全局并没有掉帧&#x3D;&#x3D;**。</p>
+<p>没有VSYNC-sf或VSYNC-sf很短<br>   应用来不及完成绘图，在绘图完成前SF就触发合成了，此时该应用仍以上一帧画面参与合成，展示到屏幕上时画面仍然是上一帧。对于SF来说它及时提交了，然而对于应用来说它掉了1帧。而这个“掉”的一帧，最快（如果应用完成绘制的话）会在下一个<code>VSYNC-sf</code>才合成、下一个<code>HW_VSYNC_0</code>才上屏，这意味着画面延时了。</p>
+<p>对于<code>VSYNC-app</code>，这个延时是为了给App留下一点处理时间，在绘制之前App可能想要更新UI控件、调整绘制细节。</p>
+<ol>
+<li>应用的 UI 线程处理输入事件，调用应用的回调，并更新视图层次结构中记录的绘图命令列表(DisplayLists)</li>
+<li>应用的 RenderThread 将记录的命令发送到 GPU （GPU硬件加速）</li>
+<li>GPU 绘制这一帧(是指应用对应窗口的一帧，还不是SF合成的全屏幕的帧)</li>
+<li>SF合成各个Layer的画面，并将画面提交到HAL；在下一个<code>HW_VSYNC_0</code>中画面上屏</li>
+</ol>
+<blockquote>
+<p>在俺的某个设备中，VSYNC-sf、VSYNC-app都配置为~8.3ms</p>
+</blockquote>
+<ul>
+<li>VSYNC-sf为什么会出现偏差？<br>出于<strong>功耗的考虑，VSYNC-sf合VSYNC-app并不是一定会触发的</strong>。如果app或sf并没有更新画面的需求，那么死板固定地调度它们进行绘制和合成是不必的。编程上，负责触发VSYNC-sf和VSYNC-app的两个<code>EventThread</code>会在<code>requestNextVsync</code>调用后才会将下一个VSYNC-sf或VSYNC-app发出。因此，当<code>requestNextVsync</code>没有调用时，VSYNC-app和VSYNC-sf也就出现漂移。<code>BufferQueueLayer::onFrameAvailable</code>会在应用提交后调用，该方法通过调用SF的<code>signalLayerUpdate</code>触发产生下一个<code>VSYNC-sf</code>。</li>
+</ul>
+<p>到此，VSYNC-sf虽然出现了偏差，但是目前看它与卡顿问题仅有相关性，并非因果关系。猜测是其他卡顿问题导致了SF延缓了对VSYNC的request，导致其信号出现漂移。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/blogs-of-lxl/p/11443693.html">Vsync机制</a></li>
+<li><a target="_blank" rel="noopener" href="https://source.android.com/devices/graphics/implement-vsync">显示流水线VSYNC垂直同步</a></li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/">https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><a class="post-meta__tags" href="/tags/Graphics/">Graphics</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC偏移.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/04/22/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%9A%E6%80%A7%E5%92%8C%E5%AE%9A%E4%BD%8DAndroid%E5%9B%BE%E5%BD%A2%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94%E4%BB%A5%E5%90%8E%E5%8F%B0%E5%BD%95%E5%B1%8F%E7%9A%84%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B8%BA%E4%BE%8B/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/git.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例</div></div></a></div><div class="next-post pull-right"><a href="/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://community.arm.com/cfs-filesystemfile/__key/communityserver-components-secureimagefileviewer/communityserver-blogs-components-weblogfiles-00-00-00-20-66/Mali_2D00_G72-hero-thumbnail_2E00_.png_2D00_900x506x2.png?_=636789250477958139" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android平台GPU负载计算、分析方法</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/" title="Android平台GPU负载计算、分析方法"><img class="cover" src= "/loading.gif" data-lazy-src="https://community.arm.com/cfs-filesystemfile/__key/communityserver-components-secureimagefileviewer/communityserver-blogs-components-weblogfiles-00-00-00-20-66/Mali_2D00_G72-hero-thumbnail_2E00_.png_2D00_900x506x2.png?_=636789250477958139" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-20</div><div class="title">Android平台GPU负载计算、分析方法</div></div></a></div><div><a href="/2022/04/22/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%9A%E6%80%A7%E5%92%8C%E5%AE%9A%E4%BD%8DAndroid%E5%9B%BE%E5%BD%A2%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94%E4%BB%A5%E5%90%8E%E5%8F%B0%E5%BD%95%E5%B1%8F%E7%9A%84%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B8%BA%E4%BE%8B/" title="Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/git.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-22</div><div class="title">Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%9F%E4%B8%8D%E4%B8%8A%E6%97%8B%E5%BE%8B%E8%8A%82%E5%A5%8F%E7%9A%84VSYNC"><span class="toc-number">2.</span> <span class="toc-text">跟不上旋律节奏的VSYNC</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">3.</span> <span class="toc-text">参考</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/'
+    this.page.identifier = '2022/04/20/Android图形层垂直同步虚拟VSYNC机制/'
+    this.page.title = 'Android图形层垂直同步虚拟VSYNC机制'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

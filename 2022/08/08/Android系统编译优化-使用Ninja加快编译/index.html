@@ -1,0 +1,372 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android系统编译优化: 使用Ninja加快编译 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,工具,性能优化"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="10:34 amMonday, 8 August 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   背景 环境 关键编译阶段和耗时分析 阶段一：Soong bootstrap 阶段二：Kati遍历、mk搜集与ninja生成 阶段三：Ninja编译   编译优化 对比汇总  背景Android系统模块代码的编译实在是太耗时了，即使">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android系统编译优化: 使用Ninja加快编译">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="10:34 amMonday, 8 August 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   背景 环境 关键编译阶段和耗时分析 阶段一：Soong bootstrap 阶段二：Kati遍历、mk搜集与ninja生成 阶段三：Ninja编译   编译优化 对比汇总  背景Android系统模块代码的编译实在是太耗时了，即使">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png">
+<meta property="article:published_time" content="2022-08-08T09:16:51.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.199Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="工具">
+<meta property="article:tag" content="性能优化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android系统编译优化: 使用Ninja加快编译',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android系统编译优化: 使用Ninja加快编译</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.199Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android系统编译优化: 使用Ninja加快编译"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>10:34 am<br>Monday, 8 August 2022 (GMT+8)<br>Time in Guangzhou, Guangdong Province, China</p>
+<hr>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#%E7%8E%AF%E5%A2%83">环境</a></li>
+<li><a href="#%E5%85%B3%E9%94%AE%E7%BC%96%E8%AF%91%E9%98%B6%E6%AE%B5%E5%92%8C%E8%80%97%E6%97%B6%E5%88%86%E6%9E%90">关键编译阶段和耗时分析</a><ul>
+<li><a href="#%E9%98%B6%E6%AE%B5%E4%B8%80-soong-bootstrap">阶段一：Soong bootstrap</a></li>
+<li><a href="#%E9%98%B6%E6%AE%B5%E4%BA%8C%EF%BC%9Akati%E9%81%8D%E5%8E%86%E3%80%81mk%E6%90%9C%E9%9B%86%E4%B8%8Eninja%E7%94%9F%E6%88%90">阶段二：Kati遍历、mk搜集与ninja生成</a></li>
+<li><a href="#%E9%98%B6%E6%AE%B5%E4%B8%89%EF%BC%9Aninja%E7%BC%96%E8%AF%91">阶段三：Ninja编译</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96">编译优化</a></li>
+<li><a href="#%E5%AF%B9%E6%AF%94%E6%B1%87%E6%80%BB">对比汇总</a></li>
+</ul>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>Android系统模块代码的编译实在是太耗时了，即使寥寥几行代码的修改，也能让一台具有足够性能的编译服务器工作十几分钟以上（模块单编），只为编出一些几兆大小的jar和dex。</p>
+<blockquote>
+<p>这里探究的是系统完成过一次整编后进行的模块单编，即m、mm、mmm等命令。</p>
+</blockquote>
+<p>除此之外，一些不会更新源码、编译配置等文件的内容的操作，如touch、git操作等，会被Android系统编译工具识别为有差异，从而在编译时重新生成编译配置，重新编译并没有更新的源码、重新生成没有差异的中间文件等一系列严重耗时操作。</p>
+<p>本文介绍关于<strong>编译过程中的几个阶段</strong>，以及这些阶段的<strong>耗时点&#x2F;耗时原因</strong>，并最后给出一个<strong>覆盖一定应用场景的基于ninja的加快编译的方法（实际上是裁剪掉冗余的编译工作）</strong>。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>编译服务器硬件及Android信息：</p>
+<ul>
+<li>Ubuntu 18.04.4 LTS</li>
+<li>Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz (28核56超线程)</li>
+<li>MemTotal: 65856428 kB (62.8GiB)</li>
+<li>AOSP Android 10.0</li>
+<li>仅修改某个Java文件内部的boolean初始化值（true改false）</li>
+<li>不修改其他任何内容，包括源码、mk、bp的情况下，使用m单编模块（在清理后，使用对比的ninja进行单编）</li>
+<li>使用time计时</li>
+<li>此前整个系统已经整编过一次</li>
+<li><strong>编译时不修改任何编译配置文件如Android.mk</strong></li>
+</ul>
+<p><strong>之所以做一个代码修改量微乎其微的case，是因为要分析编译性能瓶颈，代码变更量越小的情况下，瓶颈就越明显，越有利于分析</strong>。</p>
+<h1 id="关键编译阶段和耗时分析"><a href="#关键编译阶段和耗时分析" class="headerlink" title="关键编译阶段和耗时分析"></a>关键编译阶段和耗时分析</h1><p>由于<code>Makefile</code>结构复杂、不易调试、难以扩展，因此Android决定将它替换掉。Android在7.0时引入了<code>Soong</code>，它将Android从<code>Makefile</code>的编译架构带入到了<code>ninja</code>的时代。</p>
+<p><code>Soong</code>包含两大模块，其中<code>Kati</code>负责解析<code>Makefile</code>并转换为<code>.ninja</code>，第二个模块<code>Ninja</code>则基于生成的<code>.ninja</code>完成编译。</p>
+<blockquote>
+<p><code>Kati</code>是对<code>GNU Make</code>的clone，并将编译后端实现切换到ninja。<code>Kati</code>本身不进行编译，仅生成<code>.ninja</code>文件提供给<code>Ninja</code>进行编译。</p>
+</blockquote>
+<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">M<span class="function"><span class="title">akefile</span>/Android.mk -&gt;</span> K<span class="function"><span class="title">ati</span> -&gt;</span> Ninja</span><br><span class="line">A<span class="function"><span class="title">ndroid</span>.bp -&gt;</span> B<span class="function"><span class="title">lueprint</span> -&gt;</span> S<span class="function"><span class="title">oong</span> -&gt;</span> Ninja</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">M<span class="function"><span class="title">akefile</span>/Android.mk --&gt;</span> Kati</span><br><span class="line">K<span class="function"><span class="title">ati</span> --&gt;</span> Ninja</span><br><span class="line">A<span class="function"><span class="title">ndroid</span>.bp --&gt;</span> Blueprint</span><br><span class="line">B<span class="function"><span class="title">lueprint</span> --&gt;</span> Soong</span><br><span class="line">S<span class="function"><span class="title">oong</span> --&gt;</span> Ninja</span><br></pre></td></tr></table></figure>
+
+<p>因此在执行编译之前（即<code>Ninja</code>真正开动时），还有一些生成<code>.ninja</code>的步骤。关键编译阶段如下：</p>
+<ol>
+<li>Soong的自举（Bootstrap），将Soong本身编译出来<ol>
+<li>系统代码首次编译会比较耗时，其中一个原因是Soong要全新编译它自己</li>
+</ol>
+</li>
+<li>遍历源码树，收集所有编译配置文件（Makefile&#x2F;Android.mk&#x2F;Android.bp)<ol>
+<li><strong>遍历、验证非常耗时，多么强劲配置的机器都将受限于单线程效率和磁盘IO效率</strong></li>
+<li><strong>由于Android系统各模块之间的依赖、引入，因此即使是单编模块，Soong（Kati）也不得不确认目标模块以外的路径是否需要重新跟随编译</strong>。</li>
+</ol>
+</li>
+<li>验证编译配置文件的合法性、有效性、时效性、是否应该加入编译，生成.ninja<ol>
+<li>如果没有任何更改，.ninja不需要重新生成</li>
+<li><strong>最终生成的.ninja文件很大（In my case，1GB以上），有很明显的IO性能效率问题，显然在查询效率方面也很低下</strong></li>
+</ol>
+</li>
+<li>最后一步，真正执行编译，调用ninja进入多线程编译<ol>
+<li>由于Android加入了大量的代码编译期工作，如API权限控制检查、API列表生成等工作（比如，生成系统API保护名单、插桩工作等等），因此编译过程实际上不是完全投入到编译中</li>
+<li>编译过程穿插“泛打包工作”，如生成odex、art、res资源打包。虽然不同的“泛打包”可以多线程并行进行，但是每个打包本身只能单线程进行</li>
+</ol>
+</li>
+</ol>
+<p>下面将基于模块单编（因开发环境系统全新编译场景频率较低，不予考虑），对这四个关键阶段进行性能分析。</p>
+<h2 id="阶段一：Soong-bootstrap"><a href="#阶段一：Soong-bootstrap" class="headerlink" title="阶段一：Soong bootstrap"></a>阶段一：Soong bootstrap</h2><p>在系统已经整编过一次的情况下，Soong已经完成了编译，因此其预热过程占整个编译时间的比例会比较小。</p>
+<p>在“环境”下，修改一行Framework代码触发差异进行编译。并且使用下面的命令进行编译。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">time</span> m services framework -j<span class="number">57</span></span><br></pre></td></tr></table></figure>
+
+<p>编译实际耗时22m37s：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"> <span class="attribute">build</span> completed successfully (<span class="number">22</span>:<span class="number">37</span> (mm:ss)) ####</span><br><span class="line"><span class="attribute">real</span>    <span class="number">22</span>m<span class="number">37</span>.<span class="number">504</span>s</span><br><span class="line"><span class="attribute">user</span>    <span class="number">110</span>m<span class="number">25</span>.<span class="number">656</span>s</span><br><span class="line"><span class="attribute">sys</span>     <span class="number">12</span>m<span class="number">28</span>.<span class="number">056</span>s</span><br></pre></td></tr></table></figure>
+
+<p>对应的分阶段耗时如下图。</p>
+<ul>
+<li>可以看到，包括Soong bootstrap流程在内的预热耗时占比非常低，耗时约为11.6s，总耗时约为1357s，预热耗时占比为<code>0.8%</code>。</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://s2.loli.net/2022/08/08/kxlQBKUAeN1CMpW.png" alt="Soong编译耗时占比"></p>
+<ul>
+<li>Kati和ninja，也就是上述编译关键流程的第2步和第3步，分别占了接近60%（820秒，13分钟半）和约35%（521秒，8分钟半）的耗时，合计占比接近95%的耗时。</li>
+</ul>
+<p><strong>注：这个耗时是仅小幅度修改Java代码后测试的耗时。如果修改编译配置文件如Android.mk，会有更大的耗时。</strong></p>
+<p>小结：看来在完成一次整编后的模块单编，包括Soong bootstrap、执行编译准备脚本、vendorsetup脚本的耗时占比很低，可以完全排除存在性能瓶颈的可能。</p>
+<h2 id="阶段二：Kati遍历、mk搜集与ninja生成"><a href="#阶段二：Kati遍历、mk搜集与ninja生成" class="headerlink" title="阶段二：Kati遍历、mk搜集与ninja生成"></a>阶段二：Kati遍历、mk搜集与ninja生成</h2><p>从上图可以看到，<code>Kati</code>耗时占比很大，它的任务是遍历源码树，收集所有的编译配置文件，经过验证和筛选后，将它们解析并转化为<code>.ninja</code>。</p>
+<p>从性能角度来看，它的主要特点如下：</p>
+<ol>
+<li>它要遍历源码树，收集所有mk文件（In my case，有983个mk文件）</li>
+<li>解析mk文件（In my case，framework&#x2F;base&#x2F;Android.mk耗费了~6800ms）</li>
+<li>生成并写入对应的.ninja</li>
+<li>单线程</li>
+</ol>
+<p>直观展示如下，它是一个单线程的、IO速度敏感、CPU不敏感的过程：</p>
+<p><img src= "/loading.gif" data-lazy-src="https://s2.loli.net/2022/08/08/2KYmOSuU17dZGMq.png" alt="Soong编译-Kati耗时细节.png"></p>
+<p>Kati串行地处理文件，此时对CPU利用率很低，对IO的压力也不高。</p>
+<p>小结：可以确定它的性能瓶颈来源于IO速度，单纯为编译实例分配更多的CPU资源也无益于提升Kati的速度。</p>
+<h2 id="阶段三：Ninja编译"><a href="#阶段三：Ninja编译" class="headerlink" title="阶段三：Ninja编译"></a>阶段三：Ninja编译</h2><p><code>Soong</code>Clone了一份<code>GNU Make</code>，并将其改造为<code>Kati</code>。即使我们没有修改任何mk文件，前面<code>Kati</code>仍然会花费数分钟到数十分钟的工作耗时，只为了生成一份能够被<code>Ninja</code>或<code>.ninja</code>的生成工具能够识别的文件。接下来是调用<code>Ninja</code>真正开始编译工作。</p>
+<p>从性能角度来看，它的主要特点如下：</p>
+<ol>
+<li>根据目标target及依赖，读取前面生成的.ninja配置，进行编译</li>
+<li>比较独立，不与前面的组件，如blueprint、kati等耦合，只要<code>.ninja</code>文件中能找到target和build rule就能完成编译</li>
+<li>多线程</li>
+</ol>
+<p>直观展示如下，<code>Ninja</code>将会根据传入的并行任务数参数启动对应数量的线程进行编译。<code>Ninja</code>编译阶段会真正的启动多线程。但做不到一直多线程编译，因为部分阶段如部分编译目标（比如生成一个API文档）、泛打包阶段等本身无法多线程并行执行。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://s2.loli.net/2022/08/08/p4bnkJmearyzVZG.png" alt="Soong编译-ninja耗时.png"></p>
+<blockquote>
+<p>可以看到此时CPU利用率应该是可以明显上升的。但是耗时较大的阶段仅启用了几个线程，后面的阶段和最后的图形很细（时间占比很小）的阶段才用起来更多的线程。</p>
+</blockquote>
+<blockquote>
+<p>其中，一些阶段（图中时间占比较长的几条记录）没能跑满资源的原因是这些编译目标本身不支持并行，且本次编译命令指定的目标已经全部“安排”了，不需要调动更多资源启动其他编译目标的工作。当编译整个系统时就能够跑满了。</p>
+</blockquote>
+<blockquote>
+<p>最后一个阶段（图中最后的几列很细的记录）虽然跑满了所有线程资源，但是运行时间很短。这是因为本case进行编译分析的过程中，仅修改了一行代码来触发编译。因编译工作量很小，所以这几列很细。</p>
+</blockquote>
+<p>小结：我们看到，<code>Ninja</code>编译启动比较快，这<strong>表明<code>Ninja</code>对<code>.ninja</code>文件的读取解析并不敏感</strong>。整个过程也没有看到显著的耗时点。且最后面编译量很小，表明<code>Ninja</code>能够确保增量编译、未更新不编译。</p>
+<h1 id="编译优化"><a href="#编译优化" class="headerlink" title="编译优化"></a>编译优化</h1><p>本节完成点题——Android系统编译优化：使用Ninja加快编译。</p>
+<p>根据前面分析的小结，可以总结性能瓶颈:</p>
+<ol>
+<li>Kati遍历、生成太慢，受限于IO速率</li>
+<li>Kati吞吐量太低，单线程</li>
+<li>不论有无更新均重新解析Makefile</li>
+</ol>
+<p>利用<code>Ninja</code>进行编译优化的思路是，<strong>大多数场景，可以舍弃Kati的工作，仅执行Ninja的工作，以节省掉60%以上的时间</strong>。其<strong>核心思路，也是制约条件，即在不影响编译正确性的前提下，舍弃不必要的Kati编译工作</strong>。</p>
+<ul>
+<li>使用<code>Ninja</code>直接基于<code>.ninja</code>文件进行编译来改善耗时：</li>
+</ul>
+<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line"><span class="function"><span class="title">make</span>--&gt;</span>Soong</span><br><span class="line">S<span class="function"><span class="title">oong</span>--&gt;</span>Kati</span><br><span class="line">K<span class="function"><span class="title">ati</span>--&gt;</span>.ninja</span><br><span class="line">.<span class="function"><span class="title">ninja</span>--&gt;</span>Ninja</span><br><span class="line">N<span class="function"><span class="title">inja</span>--&gt;</span>TARGET</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">ninja</span>--&gt;</span>Ninja</span><br></pre></td></tr></table></figure>
+
+<p>结合前面的分析，容易想到，如果目标被构建前，能够确保mk文件没有更新也不需要重新生成一长串的最终编译目标（即.ninja），那么<code>make</code>命令带来的Soong bootstrap、Kati等工作完全是重复的冗余的——这个性质Soong和Kati自己识别不出来，它们会重复工作一次。</p>
+<p>既重新生成.ninja是冗余的，那么直接命令编译系统根据指定的.ninja进行编译显然会节省大量的工作耗时。ninja命令is the key:</p>
+<p>使用源码中自带的ninja:</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.<span class="regexp">/prebuilts/</span>build-tools<span class="regexp">/linux-x86/</span>bin/ninja --version</span><br><span class="line"><span class="number">1.8</span>.<span class="number">2</span>.git</span><br></pre></td></tr></table></figure>
+
+<p>对比最上面列出的<code>make</code>命令的编译，这里用ninja编译同样的目标：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">time .<span class="regexp">/prebuilts/</span>build-tools<span class="regexp">/linux-x86/</span>bin<span class="regexp">/ninja -j 57 -v -f out/</span>combined-full_xxxxxx.ninja services framework</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>ninja自己识别出来CPU平台后，默认使用-j58。这里为了对比上面的m命令，使用-j57编译</p>
+</blockquote>
+<blockquote>
+<p>-f参数指定.ninja文件。它是编译配置文件，在Android中由Kati生成。这里文件名用’x’替换修改</p>
+</blockquote>
+<p>编译结果，对比上面的<code>m</code>，有三倍的提升：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">real</span>    <span class="number">7</span>m<span class="number">57</span>.<span class="number">835</span>s</span><br><span class="line"><span class="attribute">user</span>    <span class="number">97</span>m<span class="number">12</span>.<span class="number">564</span>s</span><br><span class="line"><span class="attribute">sys</span>     <span class="number">8</span>m<span class="number">31</span>.<span class="number">756</span>s</span><br></pre></td></tr></table></figure>
+
+<p><strong>编译耗时为8分半，仅make的三分之一</strong>。As we can see，当<strong>能够确保编译配置没有更新，变更仅存在于源码范围时，使用Ninja直接编译，跳过Kati可以取得很显著的提升</strong>。</p>
+<p>直接使用ninja:</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.<span class="regexp">/prebuilts/</span>build-tools<span class="regexp">/linux-x86/</span>bin<span class="regexp">/ninja -j $MAKE_JOBS -v -f out/</span>combined-*.ninja &lt;targets...&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="对比汇总"><a href="#对比汇总" class="headerlink" title="对比汇总"></a>对比汇总</h1><p>这里找了一个其他项目的编译Demo，该Demo的特点是本身代码较简单，编译配置也较简单，整体编译工作较少，通过make编译的大部分耗时来自soong、make等<strong>工具自身的消耗，而真正执行编译的ninja耗时占比极其低</strong>。由于ninja本身跳过了soong，因此可以跳过这一无用的繁琐的耗时。可以看到下面，ninja编译iperf仅花费10秒。这个时间如果给soong来编译，预热都不够。</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ -&gt; f_ninja_msf iperf</span><br><span class="line">Run ninja with out/combined-full_xxxxxx.ninja to build iperf.</span><br><span class="line">====== ====== ======</span><br><span class="line">Ninja: .<span class="regexp">/prebuilts/</span>build-tools<span class="regexp">/linux-x86/</span>bin/ninja@<span class="number">1.8</span>.<span class="number">2</span>.git</span><br><span class="line">Ninja: build with out/combined-full_xxxxxx.ninja</span><br><span class="line">Ninja: build targets iperf</span><br><span class="line">Ninja: j72</span><br><span class="line">====== ====== ======</span><br><span class="line">time <span class="regexp">/usr/</span>bin<span class="regexp">/time ./</span>prebuilts<span class="regexp">/build-tools/</span>linux-x86<span class="regexp">/bin/</span>ninja -j <span class="number">72</span> -f out/combined-full_xxxxxx.ninja iperf</span><br><span class="line"></span><br><span class="line">[<span class="number">24</span><span class="regexp">/24] Install: out/</span>target<span class="regexp">/product/</span>xxxxxx<span class="regexp">/system/</span>bin/iperf</span><br><span class="line"><span class="number">53.62</span>user <span class="number">11.09</span>system <span class="number">0</span>:<span class="number">10.17</span>elapsed <span class="number">636</span>%CPU (<span class="number">0</span>avgtext+<span class="number">0</span>avgdata <span class="number">5696772</span>maxresident)</span><br><span class="line"><span class="number">4793472</span>inputs+<span class="number">5992</span>outputs (<span class="number">4713</span>major+<span class="number">897026</span>minor)pagefaults <span class="number">0</span>swaps</span><br><span class="line"></span><br><span class="line">real    <span class="number">0</span>m10.<span class="number">174</span>s</span><br><span class="line">user    <span class="number">0</span>m53.<span class="number">624</span>s</span><br><span class="line">sys     <span class="number">0</span>m11.<span class="number">096</span>s</span><br></pre></td></tr></table></figure>
+
+<p>下面给出soong编译的恐怖耗时：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ -&gt; rm out<span class="regexp">/target/</span>product<span class="regexp">/xxxxxx/</span>system<span class="regexp">/bin/i</span>perf</span><br><span class="line">$ -&gt; time m iperf -j72</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">[<span class="number">100</span>% <span class="number">993</span><span class="regexp">/993] Install: out/</span>target<span class="regexp">/product/</span>xxxxxx<span class="regexp">/system/</span>bin/iperf</span><br><span class="line"></span><br><span class="line"><span class="comment">#### build completed successfully (14:45 (mm:ss)) ####</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">real    <span class="number">14</span>m45.<span class="number">164</span>s</span><br><span class="line">user    <span class="number">23</span>m40.<span class="number">616</span>s</span><br><span class="line">sys     <span class="number">11</span>m46.<span class="number">248</span>s</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>As we can see，m和ninja一个是10+ minutes，一个是10+ seconds，比例是88.5倍。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/">https://nasdaqgodzilla.github.io/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/%E5%B7%A5%E5%85%B7/">工具</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></div><div class="post_share"><div class="social-share" data-image="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Clash配置暴露代理服务</div></div></a></div><div class="next-post pull-right"><a href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/04/13/Inferno%EF%BC%9A%E4%B8%BAAndroid%E5%8E%9F%E7%94%9F%E5%BA%94%E7%94%A8%E7%94%9F%E6%88%90%E7%81%AB%E7%84%B0%E5%9B%BE%E2%80%94%E2%80%94Flamegraph-generator-for-pure-native-app/" title="Inferno：为Android原生应用生成火焰图——Flamegraph generator for pure native app"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Inferno.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-13</div><div class="title">Inferno：为Android原生应用生成火焰图——Flamegraph generator for pure native app</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div><div><a href="/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setTaskWindowingMode流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidFileTransfer.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android setTaskWindowingMode流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E7%BC%96%E8%AF%91%E9%98%B6%E6%AE%B5%E5%92%8C%E8%80%97%E6%97%B6%E5%88%86%E6%9E%90"><span class="toc-number">3.</span> <span class="toc-text">关键编译阶段和耗时分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%80%EF%BC%9ASoong-bootstrap"><span class="toc-number">3.1.</span> <span class="toc-text">阶段一：Soong bootstrap</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%BA%8C%EF%BC%9AKati%E9%81%8D%E5%8E%86%E3%80%81mk%E6%90%9C%E9%9B%86%E4%B8%8Eninja%E7%94%9F%E6%88%90"><span class="toc-number">3.2.</span> <span class="toc-text">阶段二：Kati遍历、mk搜集与ninja生成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%89%EF%BC%9ANinja%E7%BC%96%E8%AF%91"><span class="toc-number">3.3.</span> <span class="toc-text">阶段三：Ninja编译</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96"><span class="toc-number">4.</span> <span class="toc-text">编译优化</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AF%B9%E6%AF%94%E6%B1%87%E6%80%BB"><span class="toc-number">5.</span> <span class="toc-text">对比汇总</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/'
+    this.page.identifier = '2022/08/08/Android系统编译优化-使用Ninja加快编译/'
+    this.page.title = 'Android系统编译优化: 使用Ninja加快编译'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

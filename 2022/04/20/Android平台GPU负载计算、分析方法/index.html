@@ -1,0 +1,302 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android平台GPU负载计算、分析方法 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,性能优化,Graphics"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="11:42 amWednesday, 6 April 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   简介 读取负载 实现 其他 获取型号 读取当前频率 读取CPU负载   名词解释 参考   简介本文介绍Android平台（Android Q，MTK(CPU)，Mali(GPU)）通过kernel misc节点读取GPU负载">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android平台GPU负载计算、分析方法">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="11:42 amWednesday, 6 April 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   简介 读取负载 实现 其他 获取型号 读取当前频率 读取CPU负载   名词解释 参考   简介本文介绍Android平台（Android Q，MTK(CPU)，Mali(GPU)）通过kernel misc节点读取GPU负载">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://community.arm.com/cfs-filesystemfile/__key/communityserver-components-secureimagefileviewer/communityserver-blogs-components-weblogfiles-00-00-00-20-66/Mali_2D00_G72-hero-thumbnail_2E00_.png_2D00_900x506x2.png?_=636789250477958139">
+<meta property="article:published_time" content="2022-04-20T12:39:28.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.199Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="性能优化">
+<meta property="article:tag" content="Graphics">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://community.arm.com/cfs-filesystemfile/__key/communityserver-components-secureimagefileviewer/communityserver-blogs-components-weblogfiles-00-00-00-20-66/Mali_2D00_G72-hero-thumbnail_2E00_.png_2D00_900x506x2.png?_=636789250477958139"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android平台GPU负载计算、分析方法',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://community.arm.com/cfs-filesystemfile/__key/communityserver-components-secureimagefileviewer/communityserver-blogs-components-weblogfiles-00-00-00-20-66/Mali_2D00_G72-hero-thumbnail_2E00_.png_2D00_900x506x2.png?_=636789250477958139')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android平台GPU负载计算、分析方法</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-04-20T12:39:28.000Z" title="发表于 2022-04-20 20:39:28">2022-04-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.199Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Graphics/">Graphics</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android平台GPU负载计算、分析方法"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>11:42 am<br>Wednesday, 6 April 2022 (GMT+8)<br>Time in Guangzhou, Guangdong Province, China</p>
+<hr>
+<ul>
+<li><a href="#%E7%AE%80%E4%BB%8B">简介</a></li>
+<li><a href="#%E8%AF%BB%E5%8F%96%E8%B4%9F%E8%BD%BD">读取负载</a></li>
+<li><a href="#%E5%AE%9E%E7%8E%B0">实现</a></li>
+<li><a href="#%E5%85%B6%E4%BB%96">其他</a><ul>
+<li><a href="#%E8%8E%B7%E5%8F%96%E5%9E%8B%E5%8F%B7">获取型号</a></li>
+<li><a href="#%E8%AF%BB%E5%8F%96%E5%BD%93%E5%89%8D%E9%A2%91%E7%8E%87">读取当前频率</a></li>
+<li><a href="#%E8%AF%BB%E5%8F%96CPU%E8%B4%9F%E8%BD%BD">读取CPU负载</a></li>
+</ul>
+</li>
+<li><a href="#%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A">名词解释</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://community.arm.com/cfs-filesystemfile/__key/communityserver-components-secureimagefileviewer/communityserver-blogs-components-weblogfiles-00-00-00-20-66/Mali_2D00_G72-hero-thumbnail_2E00_.png_2D00_900x506x2.png?_=636789250477958139" alt="如果图片挂了，烦请采取行动告知我"></p>
+<h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>本文介绍Android平台（Android Q，MTK(CPU)，Mali(GPU)）通过kernel misc节点读取GPU负载的方法。介绍了通过<code>watch</code>、<code>awk</code>自动周期性间隔打印GPU利用率的命令。</p>
+<h1 id="读取负载"><a href="#读取负载" class="headerlink" title="读取负载"></a>读取负载</h1><ul>
+<li><p>读取GPU负载；输出三列数据分别为Loading、Block、Idle<br><code>cat /sys/kernel/debug/ged/hal/gpu_utilization</code></p>
+</li>
+<li><p>其中Loading、Blocking、Idle可以分别从独立的节点中单独读取</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cat <span class="regexp">/sys/m</span>odule<span class="regexp">/ged/</span>parameters/gpu_loading</span><br><span class="line"></span><br><span class="line">cat <span class="regexp">/sys/m</span>odule<span class="regexp">/ged/</span>parameters/gpu_block</span><br><span class="line"></span><br><span class="line">cat <span class="regexp">/sys/m</span>odule<span class="regexp">/ged/</span>parameters/gpu_idle</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>sys节点下kernel的dvfs挂载到了&#x2F;d，因此通过<code>/d</code>访问是事实上等价的。<br><code>cat /d/ged/hal/gpu_utilization</code></p>
+</li>
+<li><p>读取带百分号的GPU占用率<br><code>cat /d/ged/hal/gpu_utilization | awk &#39;&#123;print $1&quot;%&quot;&#125;&#39;</code></p>
+</li>
+<li><p>每隔1秒钟输出一次带百分号的GPU占用率<br><code>watch -tn1 &quot;cat /d/ged/hal/gpu_utilization | awk &#39; &#123;print \$1\&quot;%\&quot;&#125;&#39;&quot;</code></p>
+</li>
+</ul>
+<h1 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h1><p>本节介绍MTK(with Mali) Android Q平台kernel中关于GPU Debug VFS（ged）的实现。下文内容均基于父目录<code>kernel-4.14/drivers/misc/mediatek/gpu</code>（下文将简称父目录）。在该目录下，主要关注的是各级Makefile、Kconfig以及hal目录、ged(<code>GPU Extension Device</code>)目录内的源码。</p>
+<ul>
+<li>DFS节点创建、注册处理函数<code>ged/*/*/ged_hal.c</code>。从代码可知，该节点向外输出信息是借助seq file interface的，节点本身实现为seq file。<figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Get GPU Utilization */</span></span><br><span class="line">err = <span class="built_in">ged_debugFS_create_entry</span>(<span class="string">&quot;gpu_utilization&quot;</span>,</span><br><span class="line">		gpsHALDir, &amp;gsDvfs_gpu_util_ReadOps, <span class="literal">NULL</span>, <span class="literal">NULL</span>,</span><br><span class="line">		&amp;gpsDvfsGpuUtilizationEntry);</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">seq_operations</span> <span class="title">gsDvfs_gpu_util_ReadOps</span> =</span> &#123;</span><br><span class="line">    .start = ged_dvfs_gpu_util_seq_start,</span><br><span class="line">    .stop = ged_dvfs_gpu_util_seq_stop,</span><br><span class="line">    .next = ged_dvfs_gpu_util_seq_next,</span><br><span class="line">    .show = ged_dvfs_gpu_util_seq_show,</span><br><span class="line">   &#125;;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>seq file提供的接口让读取数据通过类似迭代器的形式实现：通过start接口拿到迭代器，并通过next移动迭代器、stop释放迭代器以及show接口获取迭代的信息。</p>
+</blockquote>
+</li>
+<li>阅读代码发现，该节点的start、stop、next节点字面上是空实现，或逻辑意义上是空实现&#x2F;无业务逻辑实现，因此仅关注show接口即可。</li>
+<li>show接口代码实现清晰，可以看到节点读取出来的第一个值就是GPU负载了（百分比）<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">static <span class="built_in">int</span> ged<span class="constructor">_dvfs_gpu_util_seq_show(<span class="params">struct</span> <span class="params">seq_file</span> <span class="operator">*</span><span class="params">psSeqFile</span>, <span class="params">void</span> <span class="operator">*</span><span class="params">pvData</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">if</span> (pvData != NULL) &#123;</span><br><span class="line">		unsigned <span class="built_in">int</span> loading;</span><br><span class="line">		unsigned <span class="built_in">int</span> block;</span><br><span class="line">		unsigned <span class="built_in">int</span> idle;</span><br><span class="line">		mtk<span class="constructor">_get_gpu_loading(&amp;<span class="params">loading</span>)</span>;</span><br><span class="line">		mtk<span class="constructor">_get_gpu_block(&amp;<span class="params">block</span>)</span>;</span><br><span class="line">		mtk<span class="constructor">_get_gpu_idle(&amp;<span class="params">idle</span>)</span>;</span><br><span class="line">		seq<span class="constructor">_printf(<span class="params">psSeqFile</span>, <span class="string">&quot;%u %u %u\n&quot;</span>, <span class="params">loading</span>, <span class="params">block</span>, <span class="params">idle</span>)</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	return <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>这里我们已经看到了节点输出的三个数据的含义，进一步的，简单看看它如何计算得到数值的。阅读代码可知<code>mtk_get_gpu_loading</code>等三个函数通过策略模式实现了一层包装，真正的实现在<code>gpu_mali/*/*/drivers/gpu/arm/midgard/backend/gpu/*</code>。这里有多个不同芯片的实现，对应许多不同目录，查找资料了解到G72属于彩虹桥架构，因此看对应的目录<code>mali_bifrost</code>。<blockquote>
+<p>Arm Mali-G72 was the second generation high performance GPU based on the Mali Bifrost architecture</p>
+</blockquote>
+</li>
+<li>Bifrost彩虹桥内的代码：从驱动节点读取metrics，从metrics内根据耗时分别计算三大块的百分比——单位时间内工作时长对总时长的占比即使用率。<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">static void kbase_pm_get_dvfs_utilisation_calc(struct kbase_device *kbdev,</span><br><span class="line">								ktime_t now)</span><br><span class="line">&#123;</span><br><span class="line">	ktime_t diff;</span><br><span class="line">	<span class="function"><span class="title">lockdep_assert_held</span>(&amp;kbdev-&gt;</span>pm.backend.metrics.lock);</span><br><span class="line">	<span class="function"><span class="title">diff</span> = ktime_sub(now, kbdev-&gt;</span>pm.backend.metrics.time_period_start);</span><br><span class="line">	<span class="keyword">if</span> (ktime_to_ns(diff) &lt; <span class="number">0</span>)</span><br><span class="line">		return;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="title">if</span> (kbdev-&gt;</span>pm.backend.metrics.gpu_active) &#123;</span><br><span class="line">		u32 ns_time = (u32) (ktime_to_ns(diff) &gt;&gt; KBASE_PM_TIME_SHIFT);</span><br><span class="line">		<span class="function"><span class="title">kbdev</span>-&gt;</span>pm.backend.metrics.values.time_busy += ns_time;</span><br><span class="line">		<span class="function"><span class="title">if</span> (kbdev-&gt;</span>pm.backend.metrics.active_cl_ctx[<span class="number">0</span>])</span><br><span class="line">			<span class="function"><span class="title">kbdev</span>-&gt;</span>pm.backend.metrics.values.busy_cl[<span class="number">0</span>] += ns_time;</span><br><span class="line">		<span class="function"><span class="title">if</span> (kbdev-&gt;</span>pm.backend.metrics.active_cl_ctx[<span class="number">1</span>])</span><br><span class="line">			<span class="function"><span class="title">kbdev</span>-&gt;</span>pm.backend.metrics.values.busy_cl[<span class="number">1</span>] += ns_time;</span><br><span class="line">		<span class="function"><span class="title">if</span> (kbdev-&gt;</span>pm.backend.metrics.active_gl_ctx[<span class="number">0</span>])</span><br><span class="line">			<span class="function"><span class="title">kbdev</span>-&gt;</span>pm.backend.metrics.values.busy_gl += ns_time;</span><br><span class="line">		<span class="function"><span class="title">if</span> (kbdev-&gt;</span>pm.backend.metrics.active_gl_ctx[<span class="number">1</span>])</span><br><span class="line">			<span class="function"><span class="title">kbdev</span>-&gt;</span>pm.backend.metrics.values.busy_gl += ns_time;</span><br><span class="line">		<span class="function"><span class="title">if</span> (kbdev-&gt;</span>pm.backend.metrics.active_gl_ctx[<span class="number">2</span>])</span><br><span class="line">			<span class="function"><span class="title">kbdev</span>-&gt;</span>pm.backend.metrics.values.busy_gl += ns_time;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="function"><span class="title">kbdev</span>-&gt;</span>pm.backend.metrics.values.time_idle += (u32) (ktime_to_ns(diff)</span><br><span class="line">							&gt;&gt; KBASE_PM_TIME_SHIFT);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="title">kbdev</span>-&gt;</span>pm.backend.metrics.time_period_start = now;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void kbase_pm_get_dvfs_metrics(struct kbase_device *kbdev,</span><br><span class="line">			       struct kbasep_pm_metrics *last,</span><br><span class="line">			       struct kbasep_pm_metrics *diff)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="function"><span class="title">struct</span> kbasep_pm_metrics *cur = &amp;kbdev-&gt;</span>pm.backend.metrics.values;</span><br><span class="line">	unsigned long flags;</span><br><span class="line">	<span class="function"><span class="title">spin_lock_irqsave</span>(&amp;kbdev-&gt;</span>pm.backend.metrics.lock, flags);</span><br><span class="line">	kbase_pm_get_dvfs_utilisation_calc(kbdev, ktime_get());</span><br><span class="line"></span><br><span class="line">	memset(diff, <span class="number">0</span>, sizeof(*diff));</span><br><span class="line">	<span class="function"><span class="title">diff</span>-&gt;</span><span class="function"><span class="title">time_busy</span> = cur-&gt;</span><span class="function"><span class="title">time_busy</span> - last-&gt;</span>time_busy;</span><br><span class="line">	<span class="function"><span class="title">diff</span>-&gt;</span><span class="function"><span class="title">time_idle</span> = cur-&gt;</span><span class="function"><span class="title">time_idle</span> - last-&gt;</span>time_idle;</span><br><span class="line">	<span class="function"><span class="title">diff</span>-&gt;</span><span class="function"><span class="title">busy_cl</span>[0] = cur-&gt;</span><span class="function"><span class="title">busy_cl</span>[0] - last-&gt;</span>busy_cl[<span class="number">0</span>];</span><br><span class="line">	<span class="function"><span class="title">diff</span>-&gt;</span><span class="function"><span class="title">busy_cl</span>[1] = cur-&gt;</span><span class="function"><span class="title">busy_cl</span>[1] - last-&gt;</span>busy_cl[<span class="number">1</span>];</span><br><span class="line">	<span class="function"><span class="title">diff</span>-&gt;</span><span class="function"><span class="title">busy_gl</span> = cur-&gt;</span><span class="function"><span class="title">busy_gl</span> - last-&gt;</span>busy_gl;</span><br><span class="line"></span><br><span class="line">	*last = *cur;</span><br><span class="line">	<span class="function"><span class="title">spin_unlock_irqrestore</span>(&amp;kbdev-&gt;</span>pm.backend.metrics.lock, flags);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>基于计数器(Counters)的性能观测&#x2F;监控<br>这里原理实际上是驱动会将GPU工作状态以time_busy、time_idle的状态记录下来——它将GPU启动和停止的时间戳记录下来，并开放了dev接口允许外部读取。而dvfs除了将这些值读取出来，还进行了换算得到百分比作为占用率。在后端(backend，即GPU)记录工作状态，而由前端通过dvfs读取（dvfs读取backend数据并做了转换）。这种性能数据(metrics)记录方式属于打点计数——在某个时刻不处于空闲状态时则打点记录，达到一个触发点时，将所有点求和除以全体，即得到百分比。</li>
+</ul>
+<blockquote>
+<p>进程的CPU（注意不是GPU）占用率正是采用了相同的原理——计数器，在Linux中，打点计数是四大性能观测基本原理之一。另外三个是跟踪(Tracing)、采样(Profiling)和监控(Monitoring)。在Kernel中，随处可见有大量的，专为性能观测、或实现功能的不完全是为了观测性能而设置了计数器。</p>
+</blockquote>
+<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><h2 id="获取型号"><a href="#获取型号" class="headerlink" title="获取型号"></a>获取型号</h2><ol>
+<li>通过sys节点（封装成一行命令了，实际原理是读sys节点下的gpuinfo）<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">find</span> `<span class="keyword">find</span> <span class="regexp">/sys/</span>devices/platform -name *.mali` -name gpuinfo | xargs cat</span><br></pre></td></tr></table></figure>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Mali</span>-G<span class="number">72</span> <span class="number">3</span> cores r<span class="number">0</span>p<span class="number">3</span> <span class="number">0</span>x<span class="number">6221</span></span><br></pre></td></tr></table></figure></li>
+<li>通过dumpsys<figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dumpsys SurfaceFlinger<span class="string">|grep GLES</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">GLES</span>: ARM, Mali-G<span class="number">72</span> MP<span class="number">3</span>, OpenGL ES <span class="number">3</span>.<span class="number">2</span> v<span class="number">1</span>.r<span class="number">20</span>p<span class="number">0</span>-<span class="number">01</span>rel<span class="number">0</span>.a<span class="number">978</span>c<span class="number">58</span>d<span class="number">28</span>f<span class="number">0</span>d<span class="number">572</span>d<span class="number">1</span>d<span class="number">23</span>ebd<span class="number">7162</span>cf<span class="number">0</span>d</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="读取当前频率"><a href="#读取当前频率" class="headerlink" title="读取当前频率"></a>读取当前频率</h2><p>两个等价的节点（实际上是同一个节点）：<code>/sys/kernel/debug/ged/hal/current_freqency</code>、<code>/d/ged/hal/current_freqency</code></p>
+<h2 id="读取CPU负载"><a href="#读取CPU负载" class="headerlink" title="读取CPU负载"></a>读取CPU负载</h2><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">cat</span> /sys/devices/system/cpu/rq-stats/cpu_normalized_load</span><br><span class="line"><span class="attribute">cpu</span>(<span class="number">0</span>): load(rel/abs) = <span class="number">1</span>/<span class="number">0</span></span><br><span class="line"><span class="attribute">cpu</span>(<span class="number">1</span>): load(rel/abs) = <span class="number">7</span>/<span class="number">2</span></span><br><span class="line"><span class="attribute">cpu</span>(<span class="number">2</span>): load(rel/abs) = <span class="number">4</span>/<span class="number">1</span></span><br><span class="line"><span class="attribute">cpu</span>(<span class="number">3</span>): load(rel/abs) = <span class="number">7</span>/<span class="number">2</span></span><br><span class="line"><span class="attribute">cpu</span>(<span class="number">4</span>): load(rel/abs) = <span class="number">0</span>/<span class="number">0</span></span><br><span class="line"><span class="attribute">cpu</span>(<span class="number">5</span>): load(rel/abs) = <span class="number">0</span>/<span class="number">0</span></span><br><span class="line"><span class="attribute">cpu</span>(<span class="number">6</span>): load(rel/abs) = <span class="number">0</span>/<span class="number">0</span></span><br><span class="line"><span class="attribute">cpu</span>(<span class="number">7</span>): load(rel/abs) = <span class="number">0</span>/<span class="number">0</span></span><br><span class="line"><span class="attribute">htask_threshold</span>=<span class="number">920</span>, total_htask#=<span class="number">0</span></span><br><span class="line"><span class="attribute">cluster0</span>: current_htask#=<span class="number">0</span></span><br><span class="line"><span class="attribute">cluster1</span>: current_htask#=<span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="名词解释"><a href="#名词解释" class="headerlink" title="名词解释"></a>名词解释</h1><table>
+<thead>
+<tr>
+<th>名词</th>
+<th>English</th>
+<th>说明或&#x2F;和例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>占用率&#x2F;使用率&#x2F;利用率</td>
+<td>utilization</td>
+<td>GPU utilization</td>
+</tr>
+<tr>
+<td>ged</td>
+<td>GPU Extension Device</td>
+<td></td>
+</tr>
+<tr>
+<td>指标</td>
+<td>metrics</td>
+<td></td>
+</tr>
+</tbody></table>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/latest/filesystems/seq_file.html">The seq interface</a> </li>
+<li><a target="_blank" rel="noopener" href="https://developer.arm.com/Processors/Mali-G72">ARM Developer Mali G72 Specifications</a></li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/">https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><a class="post-meta__tags" href="/tags/Graphics/">Graphics</a></div><div class="post_share"><div class="social-share" data-image="https://community.arm.com/cfs-filesystemfile/__key/communityserver-components-secureimagefileviewer/communityserver-blogs-components-weblogfiles-00-00-00-20-66/Mali_2D00_G72-hero-thumbnail_2E00_.png_2D00_900x506x2.png?_=636789250477958139" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC偏移.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android图形层垂直同步虚拟VSYNC机制</div></div></a></div><div class="next-post pull-right"><a href="/2022/04/13/Inferno%EF%BC%9A%E4%B8%BAAndroid%E5%8E%9F%E7%94%9F%E5%BA%94%E7%94%A8%E7%94%9F%E6%88%90%E7%81%AB%E7%84%B0%E5%9B%BE%E2%80%94%E2%80%94Flamegraph-generator-for-pure-native-app/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Inferno.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Inferno：为Android原生应用生成火焰图——Flamegraph generator for pure native app</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/" title="Android图形层垂直同步虚拟VSYNC机制"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC偏移.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-20</div><div class="title">Android图形层垂直同步虚拟VSYNC机制</div></div></a></div><div><a href="/2022/04/22/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%9A%E6%80%A7%E5%92%8C%E5%AE%9A%E4%BD%8DAndroid%E5%9B%BE%E5%BD%A2%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94%E4%BB%A5%E5%90%8E%E5%8F%B0%E5%BD%95%E5%B1%8F%E7%9A%84%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B8%BA%E4%BE%8B/" title="Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/git.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-22</div><div class="title">Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AF%BB%E5%8F%96%E8%B4%9F%E8%BD%BD"><span class="toc-number">2.</span> <span class="toc-text">读取负载</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0"><span class="toc-number">3.</span> <span class="toc-text">实现</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">4.</span> <span class="toc-text">其他</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E5%9E%8B%E5%8F%B7"><span class="toc-number">4.1.</span> <span class="toc-text">获取型号</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E5%8F%96%E5%BD%93%E5%89%8D%E9%A2%91%E7%8E%87"><span class="toc-number">4.2.</span> <span class="toc-text">读取当前频率</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E5%8F%96CPU%E8%B4%9F%E8%BD%BD"><span class="toc-number">4.3.</span> <span class="toc-text">读取CPU负载</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A"><span class="toc-number">5.</span> <span class="toc-text">名词解释</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/'
+    this.page.identifier = '2022/04/20/Android平台GPU负载计算、分析方法/'
+    this.page.title = 'Android平台GPU负载计算、分析方法'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

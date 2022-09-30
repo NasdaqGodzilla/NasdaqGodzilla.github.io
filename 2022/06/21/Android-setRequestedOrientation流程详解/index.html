@@ -1,0 +1,280 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android setRequestedOrientation流程详解 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,性能优化"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="概述 ConfigurationContainer家族 setRequestedOrientation调用  概述基于Android 10分析setRequestedOrientation()调用的流程。 ConfigurationContainer家族 ConfigurationContainer()体系结构  其中聚合关系是通过ConfigurationContainer.getParent">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android setRequestedOrientation流程详解">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="概述 ConfigurationContainer家族 setRequestedOrientation调用  概述基于Android 10分析setRequestedOrientation()调用的流程。 ConfigurationContainer家族 ConfigurationContainer()体系结构  其中聚合关系是通过ConfigurationContainer.getParent">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg">
+<meta property="article:published_time" content="2022-06-21T07:38:31.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.197Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="性能优化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android setRequestedOrientation流程详解',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android setRequestedOrientation流程详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-06-21T07:38:31.000Z" title="发表于 2022-06-21 15:38:31">2022-06-21</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.197Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android setRequestedOrientation流程详解"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#configurationcontainer%E5%AE%B6%E6%97%8F">ConfigurationContainer家族</a></li>
+<li><a href="#setrequestedorientation%E8%B0%83%E7%94%A8">setRequestedOrientation调用</a></li>
+</ul>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>基于Android 10分析<code>setRequestedOrientation()</code>调用的流程。</p>
+<h1 id="ConfigurationContainer家族"><a href="#ConfigurationContainer家族" class="headerlink" title="ConfigurationContainer家族"></a>ConfigurationContainer家族</h1><ul>
+<li>ConfigurationContainer()体系结构</li>
+</ul>
+<p>其中聚合关系是通过ConfigurationContainer.getParent()聚合的，集成关系则是各子类的继承关系。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/ConfContainer%E7%B1%BB%E5%AE%B6%E6%97%8F.png" alt="ConfigurationContainer类家族和聚合关系"></p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_Activity_Stack.jpg" alt="ConfigurationContainer组合"></p>
+<h1 id="setRequestedOrientation调用"><a href="#setRequestedOrientation调用" class="headerlink" title="setRequestedOrientation调用"></a>setRequestedOrientation调用</h1><h2 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h2><p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bLLHJzim47xthx3O2moL7n0XHDTI5ccbg0r3Uq9kSWIBnCvi1yRO-ErpumJdIfgbFDLttrs--_pvEDU6ALFc6OapfZMzvIAHptCcM0fg2kiodKXnprFwIgZzUwFH-FBkTaw3bL5Sf7LmUl7bvl9kihYQXPStot4KBgvei9Oo0oOGPB4CBwwY7i3gDemcNxjptyO_5ZUHp_qbX0i3wfx5GCDnKMGyPePB4Sb748ImjJQAnOQwqTmWfQeWzc0O5w1EByxgsKOqNyBF4hI1PF44Il44K0qDqD4NQPazxLSpAxEi4uTXSr3f7etVg1Jz8qmUcB0T3uzgl7BSEx7l82bwUqY1QVQ0ZsaAffzX6-dCo4KwbmaS7j7HMOTo9yyL2iS-5bkt88jVAnc3rhRCA9bbeBmBeWS5BA41ibGLgn5baJ23QRS_i9JIZ6F3dxXvQNnMjt-ZJBn4J3_Ef0gjAZJO79OGIvMuF0XTAgZBEUZlNFDrPWTefwiWpsp_iKWSZmQWGFFVi38iVcn26ioKwo9ZBzsArp0ZYsKfX5Mi8R_Xr_ns7FsGdZTz7MQchGjelK0Almo8v4EczJAlcG9XQB25gDAVQBvGtARhXy4jyBpX7OfxMQDICAwDczWfqrHYmqz1nvOH4pxllJmOXiHwbodVdCAaujc4gljoPgX-UcYZCdAAowRDlLOk0s7QdyGP-hhVQCxXBS1CoTm-XsgpwdTOsgrVBFEYDB2A5O3uZmsgZZXa5J3GXEn7Mq0xXs-0hLcFU4nPKT1WnoDlTDtg6k2pTuVVLH_67EroJyjctPVcOwvcqDFf_kz5J_-CHhisMczDrvBghsZGpg13a6x8NgZNOi24dkSkyCa9FUXEdIBwPmTa80vFLBygGhftlEo0RfqHnac9JbHYLVnFL5bd2HR62R2zNrkloiuzf08_Xu556wO3eSroUk1PifMp7SX-U7T3UDyHqasl1lizI_hLSd2qgQfT_haZwZhQbEjF2ARa4lZ3lQ9xgeIq4YwCmIXVS_EBz1n4KkRPFm00" alt="setRequestedOrientation相关类图"></p>
+<h2 id="setRequestedOrientation-触发Task-onDescendantOrientationChanged"><a href="#setRequestedOrientation-触发Task-onDescendantOrientationChanged" class="headerlink" title="setRequestedOrientation()触发Task.onDescendantOrientationChanged()"></a>setRequestedOrientation()触发Task.onDescendantOrientationChanged()</h2><p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/VPB1JiCm38RlUOeSjyDu00wmgLoGc41TfPwjnDki3ISaNj7U7YT8T8MAKrN_N_xViRFE0aakxsSJzKkE8h3OJOpJVoSqa5mjPBkPLJh8foqm733jC0taiBBTTZUBj-X2yXLfVoVtn3vyTk64N86-cn3VSXDOW1XJGVfcGfHUIhapXeEW3GCcPUozNTzu6xEngzL3xL6bZDBYnmMpe7zDX6el57YnD1KeOFi_rjv2KmtAjK5GvSADgHo4zjTnAd-TcoFm0VqOq7Tp2Hud6GgLk_ND7AjLrOhD0UKDaagBvUDTu2VC3ja3otm3fUSwiXZry7EPyqx0dLue2p8cjVYfZSVg3iwubxA08taqQmtH9_S5" alt="setRequestedOrientation流程"></p>
+<h2 id="Task-onDescendantOrientationChanged-流程"><a href="#Task-onDescendantOrientationChanged-流程" class="headerlink" title="Task.onDescendantOrientationChanged()流程"></a>Task.onDescendantOrientationChanged()流程</h2><p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/fLJDRXCz5DtFKznlrow-UO0ke25H4L9_q6HGrwvzCx4wOm_sTKjPmGOM2EW6yH98Y2L8F0q4mLjmFPbfuvOeGaIA9h7FEJxt-DxPzIGSXQREMdvggLjX24hXJmkKrYaG7ihYrcQtV6jrIa8kjwR9taJxjXONOsi83KN0P9m0ZhLHzln0656Xcw8xqn8ZxFWW5IgifP4aVQQfKnFQe8l0OfGA3g3ewhRig6JTxFyxKC8EM3D1Bz4evXqvZQnAsfhnN9WArTPs9ce27rfq-IOeEAJW390Bc9KG3vZo2HNIG-4OlRLzTwD6nXGcJiP_JSJQ8nnQi0P16vZhQewE7-Y4a_CBOA2gqOEcl3TNTELpa3DT1NTJpgWiOnk3cSqvnSm58SDNUQ5LlBZ2s7Es6RLjQK_HU0vj9p6G6SiIDSw8kVUHmE0vI4R0YV2em9gkdVfUofi27mVqXEhe39tJ2XEr7FwRMIVnKMTYdKLfcpOGJgL3JEFOL5RVsIEZLWgCDVKR3ypC9XMDHIr37ULM422CWgjpMI4nDp3ksM0K1xP6RvMVdtS3bKPnql6_FNjkhwtoFsUlVYx7K9lgm2hC5AuftIFjYmiRw11HnQllDtbQuou9HtiEyIaBzKNkMtaQWQbcDraLKWygx11Vxj2tA8cxPBZUDDyT6C2WFSpq4rHv1lnP6edpVVEA_jWUIr_Tv2IAnj9IzHz48pCMo4L4IOUr24REKS7Yqzl5vtS_th_w-VN3ulBDyAxwzVBrulBZzoylEkhrmSKeXkxGXmRth0mULVUYzQLjUwx6s1UH4gSsVjEWirrU2qtz6m00" alt="Task.onDescendantOrientationChanged流程"></p>
+<h2 id="ConfigurationContainer的四大Configuration"><a href="#ConfigurationContainer的四大Configuration" class="headerlink" title="ConfigurationContainer的四大Configuration"></a>ConfigurationContainer的四大Configuration</h2><p><code>ConfigurationContainer</code>包含了四个<code>Configuration</code>成员（以及一个用于计算Configuration时的中间临时载体mTmpConfig）。</p>
+<figure class="highlight vhdl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// Contains requested override <span class="keyword">configuration</span> settings applied <span class="keyword">to</span> this <span class="keyword">configuration</span> container.</span><br><span class="line">private <span class="keyword">Configuration</span> mRequestedOverrideConfiguration = <span class="keyword">new</span> <span class="keyword">Configuration</span>();</span><br><span class="line"></span><br><span class="line">// Contains the requested override <span class="keyword">configuration</span> <span class="keyword">with</span> parent <span class="keyword">and</span> policy constraints applied. This <span class="keyword">is</span> the set <span class="keyword">of</span> overrides that gets applied <span class="keyword">to</span> the full <span class="keyword">and</span> merged configurations.</span><br><span class="line">private <span class="keyword">Configuration</span> mResolvedOverrideConfiguration = <span class="keyword">new</span> <span class="keyword">Configuration</span>();</span><br><span class="line"></span><br><span class="line">// Contains full <span class="keyword">configuration</span> applied <span class="keyword">to</span> this <span class="keyword">configuration</span> container. Corresponds <span class="keyword">to</span> full parent<span class="symbol">&#x27;s</span> config <span class="keyword">with</span> applied mResolvedOverrideConfiguration.</span><br><span class="line">private <span class="keyword">Configuration</span> mFullConfiguration = <span class="keyword">new</span> <span class="keyword">Configuration</span>();</span><br><span class="line"></span><br><span class="line">// Contains merged override <span class="keyword">configuration</span> settings from the top <span class="keyword">of</span> the hierarchy down <span class="keyword">to</span> this particular instance. It <span class="keyword">is</span> different from mFullConfiguration because it starts from topmost container<span class="symbol">&#x27;s</span> override config instead <span class="keyword">of</span> global config.</span><br><span class="line">private <span class="keyword">Configuration</span> mMergedOverrideConfiguration = <span class="keyword">new</span> <span class="keyword">Configuration</span>();</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>作用</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>mRequestedOverrideConfiguration</td>
+<td>记录该容器自身自行设置的或所对应的层级请求的Conf</td>
+<td>onRequestedOverrideConfigurationChanged()回调时会修改该值，并触发onConfigurationChanged()</td>
+</tr>
+<tr>
+<td>mResolvedOverrideConfiguration</td>
+<td>以mRequestedOverrideConfiguration为基础，按照容器定义的Conf策略（resolveOverrideConfiguration()）修改后的结果</td>
+<td>resolveOverrideConfiguration()修改该值；可以理解为ConfContainer对requested override configuration的调整、修改、限制；ConfContainer的默认实现是不做修改，完全等同于mRequestedOverrideConfiguration</td>
+</tr>
+<tr>
+<td>mFullConfiguration</td>
+<td>ConfContainer实际的最终的Configuration</td>
+<td>在onConfiguration()时根据changed的conf和resolved conf进行修改，然后传递到子ConfContainer.onConfigurationChanged()；由<strong>Global configuration changed触发，如setRequestedOrientation等屏幕旋转</strong></td>
+</tr>
+<tr>
+<td>mMergedOverrideConfiguration</td>
+<td>从顶层层级的parent触发的传递下来的merged override conf</td>
+<td>onMergedOverrideConfiguration()触发修改；由<strong>顶层的Container触发并向下层传递</strong>，区别于mFullConfiguration是global conf触发的</td>
+</tr>
+</tbody></table>
+<h2 id="ATMS-updateDisplayOverrideConfigurationLocked-流程"><a href="#ATMS-updateDisplayOverrideConfigurationLocked-流程" class="headerlink" title="ATMS.updateDisplayOverrideConfigurationLocked()流程"></a>ATMS.updateDisplayOverrideConfigurationLocked()流程</h2><p>ATMS调用<code>updateGlobalConfigurationLocked()</code>，它获取<code>RootActivityContainer</code>中的Configuration作为基础，根据传入的Configuration参数进行更新，然后增加Configuration序列号。向<code>RootActivityContainer</code>和全局所有<code>WindowProcessController</code>调用<code>onConfigurationChanged()</code>来更新Configuration。</p>
+<p>最后通过<code>ensureConfigAndVisibilityAfterUpdate()</code>来重新计算前台应用，最后返回。</p>
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/dPBFJW8n4CRlF4MFUl05E1Ws6Br0983kUMXdOKBfhDCfXhUtkuX9LsA8fxtylZ_VTYPHGJGT_AZDNxBKGb1JMQKZwMaDSJ-705kK5SgHB1g8fbhFLmM-PDQBPCf1WG9AHowhQG7M51n_BeGjnjYHmjwVqNfn3VqTNkViqSDZNyACJMeTA3vHR3sSNeyeGWwpSqFR9A34OSPsZ-xkVWHTmmoV-_Vwx5FtDWwRd9Aa0OipE77IBEYHOTIBvmtuMnB0goau4rYDtK7OeXkQjoWDo-7gaBS-EFkZZpWKKh224ClDA_puANNXyrjad4C1Jhis1LOl_iJo13GU6ytGCuj1iBl-xHoMw_-phtGOEc8e_zhOO8X9lasguDufqePyFiAgKPIRR8U7O3aeXOJ3MnYg9hbDElWl" alt="ATMS.updateDisplayOverrideConfigurationLocked流程"></p>
+<h3 id="RootActivityContainer-onConfigurationChanged-流程"><a href="#RootActivityContainer-onConfigurationChanged-流程" class="headerlink" title="RootActivityContainer.onConfigurationChanged()流程"></a>RootActivityContainer.onConfigurationChanged()流程</h3><p><code>RootActivityContainer</code>通过<code>onConfigurationChanged()</code>触发整个层级体系的处理，最终将Conf更新到<code>ActivityRecord</code>，将Merged Conf更新到<code>AppWindowToken</code>和它的Child <code>WindowState</code>中。</p>
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bPFFRjD04CRlVWfpImxj0t10jL9neaAoBUMyoax2AlQkiTT1vLG4BGBHb4E5-gUbH2WH9uf02WcfnClOhdFY5PYrbIPkggGvRUBvpVVDjvhT22JnPUWwceSdgp6FSAcRGaYZ9bcBoUsAu98m3hvE0jqqAWKGYtNM27qYcU05ib849sgRBF0Sigq8O_DEmfAaripgLg5kaw1fGatuL1LjyyxcAM3S0ZoloZWLBspH19u1LRj0v6Lqbw3ALKlJkC3VeWK-fj4VPk6rjKTugd-25yC_8xm1j5JML7aDiSf2YZXIV-3QhfVNr-5vI9oWv9eG2AS5z2dQ-en2eRsieUXKUWlynZnPDCf3E52Ns19__pm-teq6xt76QB2V_ZsDTxlfPPVL_rrzY4-_-BcvKbHgfNBoivESlKiEX_71KJQQ-emiDaTN9_6WbvntAQlNP-VAhP-mG0BkGh0kk8dX891BHmLESo7SZIpWyaYt5oiQNk1ioQYJzd-bFrvV7twRlIQbToDpVV8cEUz4exw6RihJMkI9LMHiSn53r2n40c8QaXD-UglpuOjfPfPy_7O_tZkE_kmjwQOmxsgOgzxUQfx6ZClgInYDslZkWCkq_Ji--9Jtvy-ibczNFEo77iL8ZttXwZTFGcbFlAls_SqLZ3rLQuMMQS9IydKdkUWcHvVnnzxuR2VjlLBlfZsos4jiTpqYjmI5ihO1d8Qkyny0" alt="RAC.onConfChanged流程"></p>
+<h2 id="WindowProcessController-onConfigurationChanged-流程"><a href="#WindowProcessController-onConfigurationChanged-流程" class="headerlink" title="WindowProcessController.onConfigurationChanged()流程"></a>WindowProcessController.onConfigurationChanged()流程</h2><p><code>WindowProcessController</code>的作用就是通过<code>IApplicationThread</code>将新的Configuration发送到<code>ActivityThread</code>。<code>ActivityThread</code>通过<code>ClientTransaction</code>机制配合消息循环完成处理。</p>
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/ZPFFQXin4CRlUeez9eVu0NeesOW56-8qf5lIMr6aiIqgIukaTPjRIjC_q41ToA6azDP2eFHFhsqXJxDnSkehT6GlMokEGquBEp_DzsdcqxhppFfog4Y1NybbmRHFTgKMvicsDHoSeqPxQvG2cp2Nx6xJ2ALAWlQRiWTydoleCitwCv9kTYEoanQ5afnvQNG-iC04KlWtZwYKUpcIVly_WS2YO6wPTeo7NcscXQebytR4pb7PK-2bDrCip-AEHlTalxGiS7J0T1yw7eRJXhH3Y3OU4ZC2YrQIEya6Sv1mnPnBJ6-fdRbJw6hXM7pDEHWL4KwJlPjLWa52rkw6VI1lz3MN42kh99GRofK5sDRjsB8Gp4D48XB4H_W_G3KVzepyCFN3LXyMah3W0H7c_0uKndeGLmK4H18aD6yq71-0A1KqSuWz8LJp8LNB-Dci5VGy4fS79nTdhpOmxc2hj-yk3vvLHo-gyPTWQt9ok33swlMFwjVnvFZqukp3vFGD4H2faw2xXletoDS4Xc8f4cfD4z2YYwyGPxaIXwRLRcKFC_eWpnxbE-dM_PJcdNjRgmGLcjE3QHZhytEpmcgDvHbYC7qS4CqVaGP7YY1u1QTCgJt67piyDwjYU9jo98S54egnhsjp62q8wVFttvUzCTnGzNKy-Vdxxv-ZwjlpwjFXPFmIOpFR92xs_EDdP89CtJrQ6Er4jWlZV1OFehdyEcXH3jK_" alt="WPC.onConfigurationChanged流程"></p>
+<h3 id="handleConfigurationChanged-接收Configuration-Changed后ActivityThread的流程"><a href="#handleConfigurationChanged-接收Configuration-Changed后ActivityThread的流程" class="headerlink" title="handleConfigurationChanged(): 接收Configuration Changed后ActivityThread的流程"></a>handleConfigurationChanged(): 接收Configuration Changed后ActivityThread的流程</h3><p><code>ActivityThread</code>将新的Configuration分发到三大组件（四大组件除BroadcastReceiver以外）。</p>
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bPB1RXCn48Rl-nG-fWTKgKSEg64bJgIWD2zWlBE9LSUps4vGRg16fHMWSgYAO54bf20uqAhYK522u67OtRGdNe5nqpIRDghKNBBspFV_djzUjOuRrsch8A5_AMJ2jMDLuMHNkbwZPO17Z5jMRSmrrC5YnmYmDQvv4tn7lRPGuXmEv-aGsmbgq2xaIZtXOiEk-BOmN0a2ZGuOTi7u9RlBxdCBJ2XkBSDuHjhArE3lynVhOBfI07s5g1rL7nlioWZCqdKvWpmItBew292qNtp_L7pS4QXZ9bfSDo4AWZltQ5vgfdMa8AIQR7OCTn9rEEcfB0NS-tC7FXhg9gPU8uOdYUhD8GsyJEiXYWqFUs1g8kqZrmAp3a_Nu1cOoiMP5SIEggT_tf-zV9rl3uhzGwyw_j3FXxlvzhjyzyU_NsdsSrZi7_j2iVDcFFeo7XtcW_xuxLRPGQ1I8DprrAzu5NidP-bMdgRvW8JwsUZ4knqTPBzVZVU-PgFFUNfmUhoP7srceszKGksDPudCiZwtdNJJ0DamdQWG8sP4m9MZwIzVIi3eLpfs0YP6qruK_mCqKufyFLU-ZSKwKs3nTLw5Qhp7W1lLOmPSnsYslCpMqD4gGUEOGrPD4YPZff55CexBVEW5KDzW547vlA0iCFIFmDuYWni7fyT-opFeA9ZVMQMjJblz1m00" alt="ActivityThread.handleConfigurationChanged流程"></p>
+<h3 id="Activity-onConfigurationChanged"><a href="#Activity-onConfigurationChanged" class="headerlink" title="Activity.onConfigurationChanged()"></a>Activity.onConfigurationChanged()</h3><p>在上面，<code>ActivityThread</code>回调<code>Activity.onConfigurationChan()</code>。SDK内<code>Activity</code>类的<code>onConfigurationChan()</code>进行了重写，不是空实现。它内部的实现也是整个流程中重要的一环。</p>
+<p>App必定需要调用super.onConfigurationChanged()来调用SDK中提供的基类的实现。因为在<code>ActivityThread</code>的实现中，会检查基类<code>Activity.onConfigurationChanged()</code>是否被调用，否则会抛出异常，愤怒地杀死App。</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ActivityThread.performActivityConfigurationChanged()</span></span><br><span class="line">    <span class="keyword">if</span> (shouldChangeConfig) &#123;</span><br><span class="line">        activity.mCalled = <span class="literal">false</span>;</span><br><span class="line">        activity.on<span class="constructor">ConfigurationChanged(<span class="params">configToReport</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (!activity.mCalled) &#123;</span><br><span class="line">            throw <span class="keyword">new</span> <span class="constructor">SuperNotCalledException(<span class="string">&quot;Activity &quot;</span> + <span class="params">activity</span>.<span class="params">getLocalClassName</span>()</span> +</span><br><span class="line">                            <span class="string">&quot; did not call through to super.onConfigurationChanged()&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">// 在Activity.onConfigurationChanged()的开头，设置了mCalled。</span></span><br><span class="line"><span class="comment">// 这个操作避免ActivityThread抛出异常</span></span><br></pre></td></tr></table></figure>
+
+<p><code>Activity.onConfiguration()</code>的实现如下。首先发送changed Configuration到Fragments。然后发送到Window和ActionBar，分别回调它们的<code>onConfigurationChanged()</code>。</p>
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/ZPBBQiCm44Nt-Wej-y1UT1bAIPDIy29GIcdN4tdYYCYZ88qQGX_VNiLsb3W4fzuOtxa-cWCQUmR7eJP24wDRW48vjVNQ4X9FmPWvg9MNNqB6vrPQcbfQw2euO1q_ba0LbbVNuaSC0kw4WBbd1ugbCk2z_D1Ksaq2Grb6CYFnkyPD1ARusK3bK-2H-q4L0mGE3W_P8h9tcCcsYBl9x67NUa9bNGlF-uKBRcay2uPrk_VCbjYJRwLUbb6xPvR9kZbOZjBvNLvXe_fgBHVrshHxjkNyP7PnXzxF0nw3cidYKR7-rBmzA7HAe-uzFlBSLmhox4ADn0rs7x_P5P8S5PDOHjUalnAOGIt_jT6PktZ_dMLdhzYPB9RpF0a9qGaqY6C9aPnlJYTZf3BKvWy0" alt="Activity.onConfChanged相关类图"></p>
+<h2 id="ATMS-performDisplayOverrideConfigUpdate-流程"><a href="#ATMS-performDisplayOverrideConfigUpdate-流程" class="headerlink" title="ATMS.performDisplayOverrideConfigUpdate()流程"></a>ATMS.performDisplayOverrideConfigUpdate()流程</h2><p><code>performDisplayOverrideConfigUpdate()</code>将更新后的Configuration发送到DisplayManagerService和DisplayDevice，并检查是否需要执行屏幕旋转动画。</p>
+<h2 id="ATMS-ensureConfigAndVisibilityAfterUpdate-流程"><a href="#ATMS-ensureConfigAndVisibilityAfterUpdate-流程" class="headerlink" title="ATMS.ensureConfigAndVisibilityAfterUpdate()流程"></a>ATMS.ensureConfigAndVisibilityAfterUpdate()流程</h2><p><code>ensureConfigAndVisibilityAfterUpdate()</code>用于检查Activity可见性。</p>
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/VT71QWCX40RWkq_XiJtq1NeeaRqc54pQ-rGdkqFik8pZGj--hf0bAIKd4Rv_nXztHK6qVYSpjvC2pS1gNL1QI7zEK2u7O1XHZYWB1RHGh3iTZdVSvwpNo91PWHXbbTuD_yxr6BB4FiiRmrdHvWMbtUohrJpxoamyNla-Xml6fsTZNjxwzgQGInLisyuqEewVLEYBKiFkh2WVSmJ5bkXwJVajixsqPwk0KkQL-WtM7dzVK8GYFe05TGz5FSvP5ECZEUMQeiS4bSEqDReLOS9Oq_swOG8UCTuqyMxuMuMmzFu9cpCxvDW-z1S0" alt="ATMS.performDisplayOverrideConfigUpdate()流程"></p>
+<h2 id="ATMS完成了所有工作，最后，调用WM-continueSurfaceLayout"><a href="#ATMS完成了所有工作，最后，调用WM-continueSurfaceLayout" class="headerlink" title="ATMS完成了所有工作，最后，调用WM.continueSurfaceLayout"></a>ATMS完成了所有工作，最后，调用WM.continueSurfaceLayout</h2><h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p><code>setRequestedOrientation()</code>通过Binder触发<code>ActivityRecord</code>向上的整个<code>ConfigurationContainer</code>体系计算新的Configuration。并通过<code>WindowProcessController</code>触发各App的更新，回调<code>onConfigurationChanged()</code>。然后<code>ensureConfigAndVisibilityAfterUpdate()</code>计算各个Activity的可见性，最后继续WindowManager.<code>continueSurfaceLayout()</code>。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/">https://nasdaqgodzilla.github.io/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/06/21/Android%E7%BC%96%E8%AF%91AOSP%E6%BA%90%E7%A0%81%E5%B9%B6%E7%94%9F%E6%88%90%E6%A8%A1%E6%8B%9F%E5%99%A8%E9%95%9C%E5%83%8F%E5%B9%B6%E8%BF%90%E8%A1%8C/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://fossbytes.com/wp-content/uploads/2018/07/Best-Android-Emulator-of-2018.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android编译AOSP源码并生成模拟器镜像并运行</div></div></a></div><div class="next-post pull-right"><a href="/2022/06/20/git-rebase%E6%97%B6%E6%98%BE%E7%A4%BA%E4%BD%9C%E8%80%85%E4%BF%A1%E6%81%AF/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/57486f1069401b46430ac71f.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">git rebase时显示作者信息</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setTaskWindowingMode流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidFileTransfer.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android setTaskWindowingMode流程详解</div></div></a></div><div><a href="/2022/06/16/Android-unbindService%E6%B5%81%E7%A8%8B%E4%B8%8EBIND-AUTO-CREATE%E8%AF%A6%E8%A7%A3/" title="Android unbindService流程与BIND_AUTO_CREATE详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/56d107c769401b79f1a427e6.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-16</div><div class="title">Android unbindService流程与BIND_AUTO_CREATE详解</div></div></a></div><div><a href="/2022/06/13/Android-startForegroundService%E8%AF%A6%E8%A7%A3/" title="Android startForegroundService详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://images.viblo.asia/2370c6a3-6499-44f1-8701-be440160b6a8.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-13</div><div class="title">Android startForegroundService详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ConfigurationContainer%E5%AE%B6%E6%97%8F"><span class="toc-number">2.</span> <span class="toc-text">ConfigurationContainer家族</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#setRequestedOrientation%E8%B0%83%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">setRequestedOrientation调用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB%E5%9B%BE"><span class="toc-number">3.1.</span> <span class="toc-text">类图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#setRequestedOrientation-%E8%A7%A6%E5%8F%91Task-onDescendantOrientationChanged"><span class="toc-number">3.2.</span> <span class="toc-text">setRequestedOrientation()触发Task.onDescendantOrientationChanged()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Task-onDescendantOrientationChanged-%E6%B5%81%E7%A8%8B"><span class="toc-number">3.3.</span> <span class="toc-text">Task.onDescendantOrientationChanged()流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ConfigurationContainer%E7%9A%84%E5%9B%9B%E5%A4%A7Configuration"><span class="toc-number">3.4.</span> <span class="toc-text">ConfigurationContainer的四大Configuration</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ATMS-updateDisplayOverrideConfigurationLocked-%E6%B5%81%E7%A8%8B"><span class="toc-number">3.5.</span> <span class="toc-text">ATMS.updateDisplayOverrideConfigurationLocked()流程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#RootActivityContainer-onConfigurationChanged-%E6%B5%81%E7%A8%8B"><span class="toc-number">3.5.1.</span> <span class="toc-text">RootActivityContainer.onConfigurationChanged()流程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WindowProcessController-onConfigurationChanged-%E6%B5%81%E7%A8%8B"><span class="toc-number">3.6.</span> <span class="toc-text">WindowProcessController.onConfigurationChanged()流程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#handleConfigurationChanged-%E6%8E%A5%E6%94%B6Configuration-Changed%E5%90%8EActivityThread%E7%9A%84%E6%B5%81%E7%A8%8B"><span class="toc-number">3.6.1.</span> <span class="toc-text">handleConfigurationChanged(): 接收Configuration Changed后ActivityThread的流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Activity-onConfigurationChanged"><span class="toc-number">3.6.2.</span> <span class="toc-text">Activity.onConfigurationChanged()</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ATMS-performDisplayOverrideConfigUpdate-%E6%B5%81%E7%A8%8B"><span class="toc-number">3.7.</span> <span class="toc-text">ATMS.performDisplayOverrideConfigUpdate()流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ATMS-ensureConfigAndVisibilityAfterUpdate-%E6%B5%81%E7%A8%8B"><span class="toc-number">3.8.</span> <span class="toc-text">ATMS.ensureConfigAndVisibilityAfterUpdate()流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ATMS%E5%AE%8C%E6%88%90%E4%BA%86%E6%89%80%E6%9C%89%E5%B7%A5%E4%BD%9C%EF%BC%8C%E6%9C%80%E5%90%8E%EF%BC%8C%E8%B0%83%E7%94%A8WM-continueSurfaceLayout"><span class="toc-number">3.9.</span> <span class="toc-text">ATMS完成了所有工作，最后，调用WM.continueSurfaceLayout</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/'
+    this.page.identifier = '2022/06/21/Android-setRequestedOrientation流程详解/'
+    this.page.title = 'Android setRequestedOrientation流程详解'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

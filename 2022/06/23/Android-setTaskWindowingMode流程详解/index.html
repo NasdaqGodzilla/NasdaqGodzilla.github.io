@@ -1,0 +1,470 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android setTaskWindowingMode流程详解 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,性能优化"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="10:01 amWednesday, 22 June 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   概述 ActivityTaskManagerService.setTaskWindowingMode ActivityStack.setWindowingMode ActivityStack.ConfigurationCont">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android setTaskWindowingMode流程详解">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="10:01 amWednesday, 22 June 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   概述 ActivityTaskManagerService.setTaskWindowingMode ActivityStack.setWindowingMode ActivityStack.ConfigurationCont">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidFileTransfer.png">
+<meta property="article:published_time" content="2022-06-23T03:39:11.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.197Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="性能优化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidFileTransfer.png"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android setTaskWindowingMode流程详解',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidFileTransfer.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android setTaskWindowingMode流程详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-06-23T03:39:11.000Z" title="发表于 2022-06-23 11:39:11">2022-06-23</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.197Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android setTaskWindowingMode流程详解"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>10:01 am<br>Wednesday, 22 June 2022 (GMT+8)<br>Time in Guangzhou, Guangdong Province, China</p>
+<hr>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#activitytaskmanagerservice.settaskwindowingmode">ActivityTaskManagerService.setTaskWindowingMode</a></li>
+<li><a href="#activitystack.setwindowingmode">ActivityStack.setWindowingMode</a><ul>
+<li><a href="#activitystack.configurationcontainer.setwindowingmode">ActivityStack.ConfigurationContainer.setWindowingMode</a></li>
+<li><a href="#taskrecord.scheduleupdatemultiwindowmode">TaskRecord.scheduleUpdateMultiWindowMode</a></li>
+</ul>
+</li>
+<li><a href="#activitystack.resize">ActivityStack.resize</a></li>
+<li><a href="#rootactivity.resumefocusedstackstopactivities">RootActivityContainer.resumeFocusedStacksTopActivities</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>基于Android 10分析ATMS.<code>setTaskWindowingMode()</code>流程。</p>
+<h1 id="ActivityTaskManagerService-setTaskWindowingMode"><a href="#ActivityTaskManagerService-setTaskWindowingMode" class="headerlink" title="ActivityTaskManagerService.setTaskWindowingMode"></a>ActivityTaskManagerService.setTaskWindowingMode</h1><p><code>setTaskWindowingMode</code>判断是否为请求的目标<code>windowingMode</code>是否为分屏模式并调用对应方法处理分屏。</p>
+<p>否则验证权限后调用Task对应的<code>ActivityStack</code>的<code>setWindowingMode()</code>进行<code>windowingMode</code>变换。</p>
+<!--```uml
+@startuml
+participant ActivityTaskManagerService as ATMS
+participant ActivityStack as AS
+
+-> ATMS : setTaskWindowingMode
+
+alt windowingMode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY
+ATMS -> ATMS : setTaskWindowingModeSplitScreenPrimary()
+activate ATMS
+deactivate ATMS
+return return
+end
+
+alt toTop
+ATMS -> AS : moveToFront()
+end
+
+ATMS -> AS : setWindowingMode()
+
+@enduml
+```-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/VP31QiCm38RlVWeVjyDUOD3Hi6OZCBSXDfITWd144KtieAWfUVivoM4BZ5uiR7_y_uVsWm3BhMjLdoPvwY68phpGI38v6Au60boGBV987ZKCEdF6_ejR0NzT2AlKozi2wbSzeCn1PmfDl5EucDYWKj2AllzzqhkTFXV7moaTdxKv7VBQbb-5g-rxbUV7kgmAarNVQabzd6xxbiHwHWmbKmSyFJqhc2r1SFLlS7jdb1i7lGw5eLaD9RhO_rREXLqSqSKFZa5Iwa9k_fFGHYP1Qf-mjEGV" alt="ATMS.setTaskWindowingMode流程"></p>
+<h1 id="ActivityStack-setWindowingMode"><a href="#ActivityStack-setWindowingMode" class="headerlink" title="ActivityStack.setWindowingMode"></a>ActivityStack.setWindowingMode</h1><p><code>ActivityStack</code>会检查windwoingMode、修改windowingMode，并且通过触发<code>ConfigurationContainer</code>体系的<code>onConfigurationChanged()</code>取得体系计算或覆盖的windowingMode。根据这个windowingMode将自身乃至整个<code>ConfigurationContainer</code>中低层级的children的windowingMode通过<code>setWindowingMode()</code>修改，并<code>resize()</code>到指定大小。</p>
+<p>最后，会计算可见的Activity并resume top running Activity。</p>
+<p>其中，比较细节的部分是<code>setWindowingMode()</code>部分，触发children的<code>ConfigurationContainer</code>体系的<code>onConfigurationChanged()</code>，通过这个流程来影响child的conf。<code>resize()</code>部分，也会触发changed。<code>RootActivityContainer</code>.<code>resumeFocusedStacksTopActivities()</code>最终还是会回调<code>ActivityStack</code>来resume stack内的Activity。</p>
+<!--```uml
+@startuml
+participant ActivityStack as AS
+participant WindowManagerService as WMS
+participant SurfaceControl as SC
+participant ActivityDisplay as AD
+participant ConfigurationContainer as CC
+participant RootActivityContainer as RAC
+
+-> AS : setWindowingMode()
+AS -> AS : mTmpConfig <- getRequestedOverrideConfiguration()
+AS -> AS : mTmpConfig.windowConfiguration.setWindowingMode()
+
+AS -> WMS : inSurfaceTransaction()
+WMS -> SC : openTransaction()
+WMS -> AS : setWindowingModeInSurfaceTransaction()
+
+activate AS
+
+note over AS : Ensure that windowing mode is support.
+note over AS : 检查系统是否开启了多窗口模式、分屏模式、画中画模式；检查Activity是否支持调整窗口大小
+
+AS -> AD : validateWindowingMode()
+alt alreadyInSplitScreenMode && targetWindowingMode == WINDOWING_MODE_FULLSCREEN
+note over AS : 从分屏模式切换到全屏；设置为WINDOWING_MODE_UNDEFINED
+note over AS : 当处于分屏模式时，UNDEFINED会被解析和处理成使用上一个WINDOWING_MODE，上一个mode由mRestoreOverrideWindowingMode存储
+AS -> AS : setWindowingModeInSurfaceTransaction(WINDOWING_MODE_UNDEFINED)
+end
+
+alt currentMode == targetWindowingMode
+AS -> AS : getRequestedOverrideConfiguration().windowConfiguration.setWindowingMode(windowingMode)
+return return
+end
+
+AS -> WMS : deferSurfaceLayout()
+
+AS -> CC : setWindowingMode()
+note over AS : setWindowingMode()触发整个ConfContainer体系的更新，然后获取更新后的windowingMode
+AS -> CC : getWindowingMode() -> windowingMode
+AS -> AS : mTmpRect2.setEmpty()
+alt Target windowingMode != WINDOWING_MODE_FULLSCREEN && !mTaskStack.matchParentBounds()
+AS -> AS : mTaskStack.getRawBounds(mTmpRect2)
+end
+
+alt !equals(getRequestedOverrideBounds(), mTmpRect2)
+AS -> AS : resize()
+end
+
+AS -> WMS : continueSurfaceLayout()
+
+alt !deferEnsuringVisibility
+note over AS : 计算可见的Activity
+AS -> RAC : ensureActivitiesVisible()
+AS -> RAC : resumeFocusedStacksTopActivities()
+end
+
+deactivate AS
+WMS -> SC : closeTransaction()
+@enduml
+```-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/bLLFRnj55B_lfvXSgaQYEN145DNO3egKFyXsoR4QTb_SKNTdbvdPMEQKG0WH2h6XeQrIYQfDQAAY9gceYfKuy67OsVMjNu4PhzVnRBSeNBpUUR_tUtz-yzxUuW8p4Ngk5QWdiKc0gK0bMv1L8jfrWUrx27DKgXlsPK8TlxM0AMu2gmDR9JPesFA2YQk7R0NRKFQfOBwh4VLoOQ0AuO6BsyDG5GEXV5T8CsHO49zg8ameC0qicrGrtnSPdO6hbSgMTUCJLGFw274GQVA4DXTy1wvFM-eyiteDBqW3eezle2Q86dmL0XVWBAq2OyG18vttES-qXY4Cx4n1v96twffo9tJKhGR3b6Dx540PDQPULX0_05feBInjhfZGmhf9M80MrQA--kEhubAEAkKX0oJkOe5Q6Hdo51iY7F4m27mcPl9UyVvQ_EItv8_pvFn9_EX4Tf_B_fhidaHdc_9WBtdnK7RsuwEdij_vPsrTRctALvtnQx9x7lLUgj_qv6t_SSgMIPdonRidyVRwuFJR-9VNAPyyE9Id7IiJeABIMCKkSLHX-JPZLo3iCi1EM_KaS8cesmo0QZEwTWq9p9gvtg6RDz7ot69bIVryTcTXgLAzCtjxVhvUhbMhY_doe_EToQBarlVnZy_argdyxaWTgee6ntyb5yTHxon7UNknKfsTMwnMyepouhuys8ZE3DxuuPkt_UsnJzJV6ppxVN2u7__QbJzlAtpItOotkj75tydkKTJx8UgjHRqNPaX5CBPeLPFTLruDkF0PP3VSw8Dy-KX-SsIL_kSjUr-TqnPGnneAOeUC0HLPimiqc8nwXL6ysj2r9j-cBGOYP1Ib3vsSEPCEh00RrJUFstueBgUsN2vS9uQKXOZ1uNFP-KbTPAM1pdQyhAAB-tg6zZRYnw_Z1wTAgsJZZUpk37R-b9q7wQ5wLG2ZYibyckz4qwOyt5XPDR35XxfHLIyGxT6uD8Poc8vewZzcGi_HbDV0_Dxmcp7ZOM7V_HnhYJ_rG-hm_AuS8xMqk3K2ZHEQk2bJIdZiykj5To3Z_k2o52CE0qw-LbruLrfRTPtG4FBgfY67mW-NeIh-2yB9byGbefqNTt3yD3bMs-XaSBYkPCbsrYXGhQGb0Sq28nC1FcHpLKu6IYKQUZ3hso47PzWOtl23Iw-i10ScrhVnSR1Td-TM_Itb4dhklm00" alt="ActivityStack.setWindowingMode流程"></p>
+<h2 id="ActivityStack-ConfigurationContainer-setWindowingMode"><a href="#ActivityStack-ConfigurationContainer-setWindowingMode" class="headerlink" title="ActivityStack.ConfigurationContainer.setWindowingMode"></a>ActivityStack.ConfigurationContainer.setWindowingMode</h2><p><code>ActivityStack.setWindowingMode()</code>通过<code>ConfiguraionContainer</code>体系，将设置的windowing mode转化为configuration changed设置到体系中的childern中。更新Stack内<code>TaskRecord</code>、<code>ActivityRecord</code>的configuration，应用新的windowing mode，计算应用bounds。最后通过<code>ActivityRecord</code>将merged conf更新到<code>AppWindowToken</code>。</p>
+<!--```uml
+@startuml
+participant ActivityStack as AS
+participant ConfigurationContainer as CC
+participant TaskRecord as TR
+participant ActivityRecord as AR
+participant AppWindowToken as AWT
+participant ActivityDisplay as AD
+participant ActivityStackSupervisor as ASS
+
+AS --\> CC : super.setWindowingMode()
+note over CC : Update mRequestedOverConf by new windowing mode
+CC -> CC : onRequestedOverrideConfigurationChanged()
+activate CC
+CC -> CC : onConfigurationChanged()
+CC -> TR : (Foreach children) onConfigurationChanged()
+deactivate CC
+
+TR -> TR : onConfigurationChanged()
+activate TR
+TR -> CC : super.onConfigurationChanged()
+activate TR
+CC -> TR : resolveOverrideConfiguration()
+note right : 根据ActivityStack的Conf和bounds调整自身conf和bounds
+TR -> AR : (Foreach children)onConfigurationChanged()
+deactivate TR
+
+activate AR
+AR -> CC : super.onConfigurationChanged()
+CC -> AR : resolveOverrideConfiguration()
+AR -> AR : onMergedOverrideConfigurationChanged()
+alt Seq not equal
+AR -> AWT : onMergedOverrideConfigurationChanged()
+end
+alt Activity window is visible
+AR -> AD : handleActivitySizeCompatModeIfNeeded()
+note left : 弹出通知或按钮提示用户可以进入size compat mode
+else shouldUseSizeCompatMode()
+AR -> AR : restartProcessIfVisible()
+end
+deactivate AR
+
+alt 进入或退出了多窗口模式
+TR -> ASS : scheduleUpdateMultiWindowMode()
+end
+deactivate TR
+@enduml
+```-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/ZLHDQzj04BthL-mnEQG_e8SIaL388MsnbEQyqOwj9UjTPNTbuvuC_KWAAIwX7-0Usj8OGWff3uKIDz0_4ydsl-X8icghsDGdOyrxRzwy6MdJMAfjt1HEXByyu16LbhY1vIrkEvwbmI6XXhXUfRwbP9qtOaqjLnB_MCebw0oujLK1-jGSrY1GccL5lxQmompW_WE8edqkcMhxwX1a3jZt5qfiSnC9siaXsyj7yU88T8iRfOkXFCTnFRAnSGzzaxl4PEKx1cpHbSl6hcAmjkv8PO6e5kW2jnSnYW-QDJYAmLXW3x6KPK8EEaH2cxHBFccYW8EaieMI5PBc3AfXXbGsW65FcXd7DiYh2Yp15nY_XfYr-qe33K8IX5mm3N9zEOt1V2C7-QNAKaf9G5Y6hwQt2clUgmQZH0iMXb4chtaZj8XDFrsdhwug6ntrdsMKvEpqGCMIcV7tf-dR7-FZo_7mQp1Vc3fr5-UpIZpeUpO4NggxykZ5kEuAuxepaqhkWcxy_qo49HuS4GoAu6LHKMhi-wkBW6IvK1djz809DwJ53JyGKAfkeoZIc82_Q-1FKBOPKPkzB3lr1m0CMBaw0VLiSydDTN8yd7Jxeu-3zEHTUlfoSdQLzbwFpeUZDnVfoS-az-tsrs3y-qFoV61GaGIvPF7-W310JAXYmVOCL1jMGzEGVyyUQHM0CJlrnuNxwOWCvlUNJrnqH4kJRXSTtWvV9EVzqUNxfFSblVYStFJAk_6yRCz122mMK7m0TcDXUV6fG2Tba-h5REAZk2d-0000" alt="ActivityStack.ConfigurationContainer.setWindowingMode流程"></p>
+<h2 id="ActivityStackSupervisor-scheduleUpdateMultiWindowMode"><a href="#ActivityStackSupervisor-scheduleUpdateMultiWindowMode" class="headerlink" title="ActivityStackSupervisor.scheduleUpdateMultiWindowMode"></a>ActivityStackSupervisor.scheduleUpdateMultiWindowMode</h2><p>在<code>ActivityStack.setWindowingMode()</code>流程中，<code>TaskRecord.onConfigurationChanged()</code>时，如果发生了多窗口模式的进入或退出，会调用<code>ActivityStackSupervisor.scheduleUpdateMultiWindowMode()</code>。它的主要作用是回调到App的<code>onMultiWindowModeChanged()</code>。</p>
+<!--```uml
+@startuml
+participant TaskRecord as TR
+participant ActivityStackSupervisor as ASS
+participant ActivityRecord as AR
+participant ClientLifecycleManager as CLM
+participant ActivityThread as AT
+participant Activity as A
+participant Window as W
+participant PhoneWindow as PW
+participant DecorView as DV
+
+TR -> ASS : scheduleUpdateMultiWindowMode()
+ASS -> ASS : sendMessage(REPORT_MULTI_WINDOW_MODE_CHANGED_MSG)
+
+ASS --\> ASS : handleMessage()
+ASS -> AR : updateMultiWindowMode()
+
+AR -> AR : scheduleMultiWindowModeChanged()
+AR -> CLM : scheduleTransaction(MultiWindowModeChangeItem)
+
+CLM -\-> AT : handleMultiWindowModeChanged()
+note left : IApplicationThread + Handler
+AT -> A : dispatchMultiWindowModeChanged()
+A -> A : mFragments.dispatchMultiWindowModeChanged()
+A -> W : onMultiWindowModeChanged()
+W -\-> PW : onMultiWindowModeChanged()
+PW -> DV : onConfigurationChanged()
+note left : DecorView处理大小、显示
+A -> A : onMultiWindowModeChanged()
+note left : 回调App Activity覆写的方法
+@enduml
+```-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/Z971Zfim48RlF8MFMLNj0_HG5K6wYnHl43ZXY2nx0bQCZMoJAczVssbAgK3TKoJ_ttppJ_Xk7JLk6cGo-b_1n4YLGuJQQmLC6uweHQHQX2bpuYRSlNQKNUjf17CJLfj0fdMzYiwkTEdAf03b3k82xCuaOAfe1r6L7V2gYlG6w4D5Le4OBP96AAv_XlTcyLxsMi4Sbiiq3vtF0cAMdvE4LEZpjt0Y-eeiwu5F4auZfmxm99ruYB3ci7j90ZN3e3W6Q_rfksfV7YlIujE156rJlEV7fiN7VDzcR-dxwpvlSVtwaZpc_mXwghY4fsAsLpwRDXeaFetCtFPVAlFU3hY78nl-yhzWOgYob3cXrMvri70m-3rXAbObSzEjFKexG18kpgD5EevIC1eM_Fwedz1Rd3U9bmMbnxYm8tMit-x-98SVXdO3A6U_V6oeyKDQRJ9DFAly3-LpJ-NdI6LQNKGtcNZKhs7rDY9PFLtIydn2szCbovzkw7_SqFXinhxdItR1VODf9NRZdiwUzs93Cp0euUd_nRAsfsqpdyzgUJPjvxFDKxaSWAaFcBy1" alt="ActivityStackSupervisor.scheduleUpdateMultiWindowMode"></p>
+<h1 id="ActivityStack-resize"><a href="#ActivityStack-resize" class="headerlink" title="ActivityStack.resize"></a>ActivityStack.resize</h1><p><code>ActivityStack</code>完成<code>setWindowingMode()</code>流程后，满足条件（bounds改变），就会执行<code>resize()</code>流程。其中，resize的目标bounds要么是EMPTY（match parent），要么是parent即TaskStack中获取的。<code>resize()</code>流程主要将<code>ActivityStack</code>及其children的Configuration按照resize bounds进行更新，并通过<code>ActivityRecord</code>更新<code>AppWindowToken</code>的merged configuration。</p>
+<!--```
+@startuml
+participant ActivityStack as AS
+participant TaskRecord as TR
+participant ConfigurationContainer as CC
+participant ActivityRecord as AR
+participant AppWindowToken as AWT
+
+-> AS : resize()
+alt TaskRecord isResizable()
+AS -> TR : updateOverrideConfiguration()
+TR -> TR : setBounds()
+TR --、> CC : setBounds()
+CC -> CC : onRequestedOverrideConfigurationChanged()
+TR -> TR : resolveOverrideConfiguration()
+CC -> AR : onConfigurationChanged()
+AR -> AWT : onMergedOverrideConfigurationChanged()
+end
+
+AS -> AS : setBounds()
+AS -\-> CC : setBounds()
+CC -> CC : onRequestedOverrideConfigurationChanged()
+@enduml
+```-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/hP91JuGm48Nl_0gEUl0FU32BFHkJRXFE8nrn0awndMBqrpibkveQZ9UzG7Zlwvitf8Sa42M_pisYRnfe0PQs6uHMae-Zm32raDhkMFaEqcHn2D4NqzdAD86VQSmHX0BhXm0nnW8Qiplb9wcpDR0iFR4FxovCo1lGkwQvkTC-xMqRCT4dNbqtC5ULADdYmDDSJ4NrWBDw82yU11zNZ94yLZqLLEGC9fJxaDcdawowCRzq5SvoO8jl6PEWtmqtBy0Z-dg6jW_pkj_cExwpM_mVQUeMfdSRz81n_BS0iczElqIVrKOgNt3JWqxIQ_K5" alt="ActivityStack.resize流程"></p>
+<h1 id="RootActivityContainer-resumeFocusedStacksTopActivities"><a href="#RootActivityContainer-resumeFocusedStacksTopActivities" class="headerlink" title="RootActivityContainer.resumeFocusedStacksTopActivities"></a>RootActivityContainer.resumeFocusedStacksTopActivities</h1><p><code>ActivityStack.resize()</code>以及<code>WMS.continueSurfaceLayout()</code>完成后，通过<code>RootActivityContainer.ensureActivitiesVisible()</code>计算Activity可见性，然后调用<code>RootActivityContainer.resumeFocusedStacksTopActivities()</code>。经过一系列准备后，resume了Activity并回调App的<code>Activity.onResume()</code>。</p>
+<!--```uml
+@startuml
+participant RootActivityContainner as RAC
+participant ActivityRecord as AR
+participant ActivityStack as AS
+participant DisplayContent as DC
+participant WindowSurfacePlacer as WSP
+
+-> RAC : resumeFocusedStacksTopActivities()
+note over AR : Each top running ActivityRecord of each ActivityStack of each TaskRecord of ActivityDisplay
+alt ActivityStack.isTopStack() && topRunningActivity.isState(RESUMED)
+RAC -> AS : executeAppTransition()
+AS -> DC : executeAppTransition()
+DC -> WSP : requestTraversal()
+else
+RAC -> AR : makeActiveIfNeeded()
+end
+
+RAC -> AS : resumeTopActivityUncheckedLocked()
+AS -> AS : resumeTopActivityInnerLocked()
+activate AS
+AS -> DC : prepareAppTransition()
+note left : 隐藏上一个Activity
+AS -> AR : setVisibility()
+note left : 显示下一个Activity
+AS -> AR : setState(RESUMED)
+note left : 最终通过IApplicationThread回调应用Activity.onResume()
+deactivate AS
+
+@enduml
+```-->
+
+<p><img src= "/loading.gif" data-lazy-src="//www.plantuml.com/plantuml/png/VP6zRXD14CVxUugj8hk01w10EVcCP0bGTEUGUjWTuvNNiyVkNY2T9GeG55140WL4HO6eAAqWmSius7aBPe_S9MTXchEryzlvV-o-3-12DJT9oRzQwX8eYDpQaCgWZtKu6LWAe8dG2V0YJmSTig5obDQfIAJvFu4YW9pLyw8ppxGl3TGgI242MLVXI9EopuhAJK3YWU5FRUIeE4YIMtUZ8N57EFJL7EzPMNbKjPGVs_9AMwFlzHEo0OKzHiSE-SOGv5G4MmfN4Mbwift4JWGoqlNVdex1prgmPQwo962sSj_MqKxzjzSNUtjHEF-hst2Cy3nWBnyMXm-6MJ-9oJXWMh1RV8wo2fYMvTW1USvaYJFnZ8bii9l8uevOLbtIqmfzu3ctuC7m68t7LYZMCeSPrfPmD7c8g515YbHoRQUj-xhXaqEIKvGpLFTj_3RMTj0Z8dGj2V6KapDyCr3fi0JN3TGyey59OEJoxDtc_TlLylLgkLWjlpNhUKkRnsDufBr-h0qFjgx__l1p_ULyjNppt-lTL-ak-BHO_tXrkJZR_7evOgD6IuWsnrE7e2u-VjvyVt5nVhe-_Tg-igMyReEjABoPFDb7KjNS_040" alt="RootActivityContainer.resumeFocusedStacksTopActivities流程"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p><code>setTaskWindowingMode()</code>根据指定的不同的windowing mode，将<code>ActivityStack</code>以及其children设置到对应的configuration，并触发变换后，对窗口变换的实体处理Surface transaction，然后回调对应的应用层接口，最后完成窗口模式变换。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/">https://nasdaqgodzilla.github.io/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidFileTransfer.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android resizeTask流程详解</div></div></a></div><div class="next-post pull-right"><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android WindowManager continueSurfaceLayout流程</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div><div><a href="/2022/06/16/Android-unbindService%E6%B5%81%E7%A8%8B%E4%B8%8EBIND-AUTO-CREATE%E8%AF%A6%E8%A7%A3/" title="Android unbindService流程与BIND_AUTO_CREATE详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/56d107c769401b79f1a427e6.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-16</div><div class="title">Android unbindService流程与BIND_AUTO_CREATE详解</div></div></a></div><div><a href="/2022/06/13/Android-startForegroundService%E8%AF%A6%E8%A7%A3/" title="Android startForegroundService详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://images.viblo.asia/2370c6a3-6499-44f1-8701-be440160b6a8.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-13</div><div class="title">Android startForegroundService详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ActivityTaskManagerService-setTaskWindowingMode"><span class="toc-number">2.</span> <span class="toc-text">ActivityTaskManagerService.setTaskWindowingMode</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ActivityStack-setWindowingMode"><span class="toc-number">3.</span> <span class="toc-text">ActivityStack.setWindowingMode</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#ActivityStack-ConfigurationContainer-setWindowingMode"><span class="toc-number">3.1.</span> <span class="toc-text">ActivityStack.ConfigurationContainer.setWindowingMode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ActivityStackSupervisor-scheduleUpdateMultiWindowMode"><span class="toc-number">3.2.</span> <span class="toc-text">ActivityStackSupervisor.scheduleUpdateMultiWindowMode</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ActivityStack-resize"><span class="toc-number">4.</span> <span class="toc-text">ActivityStack.resize</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RootActivityContainer-resumeFocusedStacksTopActivities"><span class="toc-number">5.</span> <span class="toc-text">RootActivityContainer.resumeFocusedStacksTopActivities</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/'
+    this.page.identifier = '2022/06/23/Android-setTaskWindowingMode流程详解/'
+    this.page.title = 'Android setTaskWindowingMode流程详解'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

@@ -1,0 +1,722 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android 11 WindowContainer窗口模型详解 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="3:34 pmWednesday, 29 June 2022 (HKT)Time in Hong Kong   概述 类图 总结  概述基于Android 11分析ConfigurationContainer和WindowContainer的模型。 类图   类 说明    ConfigurationContainer    WindowContainer    WindowProcessCon">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 11 WindowContainer窗口模型详解">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="3:34 pmWednesday, 29 June 2022 (HKT)Time in Hong Kong   概述 类图 总结  概述基于Android 11分析ConfigurationContainer和WindowContainer的模型。 类图   类 说明    ConfigurationContainer    WindowContainer    WindowProcessCon">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp">
+<meta property="article:published_time" content="2022-07-03T10:34:03.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.190Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android 11 WindowContainer窗口模型详解',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android 11 WindowContainer窗口模型详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-03T10:34:03.000Z" title="发表于 2022-07-03 18:34:03">2022-07-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.190Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android 11 WindowContainer窗口模型详解"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>3:34 pm<br>Wednesday, 29 June 2022 (HKT)<br>Time in Hong Kong</p>
+<hr>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E6%B5%81%E7%A8%8B">类图</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>基于Android 11分析<code>ConfigurationContainer</code>和<code>WindowContainer</code>的模型。</p>
+<h1 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h1><table>
+<thead>
+<tr>
+<th>类</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ConfigurationContainer</td>
+<td></td>
+</tr>
+<tr>
+<td>WindowContainer</td>
+<td></td>
+</tr>
+<tr>
+<td>WindowProcessController</td>
+<td>与AMS的ProcessRecord通信、与ActivityThread通信</td>
+</tr>
+<tr>
+<td>RootWindowContainer</td>
+<td>Tree root节点</td>
+</tr>
+<tr>
+<td>DisplayContent</td>
+<td>RootWindowContainer的子节点，用于管理同一个逻辑屏的窗口</td>
+</tr>
+<tr>
+<td>DisplayChildWindowContainer</td>
+<td>DisplayContent中的所有子节点的父类</td>
+</tr>
+<tr>
+<td>NonAppWindowContainers</td>
+<td>继承于DisplayChildWindowContainer，保存非应用的WindowToken</td>
+</tr>
+<tr>
+<td>WindowContainers</td>
+<td>只包含一个子节点：DisplayArea.Root，大部分窗口都保存在这个容器</td>
+</tr>
+<tr>
+<td>DisplayArea</td>
+<td>对DisplayContent内的节点进行分类管理</td>
+</tr>
+<tr>
+<td>DisplayArea.Root extends DisplayArea</td>
+<td>DisplayContent中最顶层的显示区域，用来保存 Tokens、TaskDisplayArea、ImeContainer容器</td>
+</tr>
+<tr>
+<td>TaskDisplayArea extends DisplayArea</td>
+<td>用于管理Task</td>
+</tr>
+<tr>
+<td>DisplayArea.Tokens extends DisplayArea</td>
+<td>用于保存普通窗口的 WindowToken</td>
+</tr>
+<tr>
+<td>DisplayContent.ImeContainer extends Tokens</td>
+<td>用于保存IME窗口的 WindowToken</td>
+</tr>
+<tr>
+<td>Task</td>
+<td>保存ActivityRecord</td>
+</tr>
+<tr>
+<td>ActivityStack extends Task</td>
+<td>管理处于同一个栈的Activity，特殊栈可以保存Task</td>
+</tr>
+<tr>
+<td>WindowToken</td>
+<td>管理窗口，多个窗口可以被一个 WindowToken 进行管理</td>
+</tr>
+<tr>
+<td>ActivityRecord extends WindowToken</td>
+<td>表示ActivityStack中的一个 Activity实例</td>
+</tr>
+<tr>
+<td>WallpaperWindowToken extends WindowToken</td>
+<td>壁纸窗口</td>
+</tr>
+<tr>
+<td>WindowState</td>
+<td>窗口对象</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Android 11 Window Tree模型:</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android%2011WindowTree%E4%BD%93%E7%B3%BB.jpg" alt="Android11WindowTree模型"></p>
+<ul>
+<li>下面是Android 12的窗口Tree层级模型，大致上与Android 11相差不大。其中Android 12完全移除了<code>ActivityStack</code>，仅使用<code>Task</code>。在Android 11中<code>ActivityStack</code>实际上是<code>Task</code>的子类。</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android12%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E6%8A%BD%E8%B1%A1.png" alt="Android12窗口模型抽象"></p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android11%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E7%BB%93%E6%9E%84.png" alt="Android11窗口模型结构"></p>
+<ul>
+<li>Android 10 的Window Tree模型</li>
+</ul>
+<p>Android 11就已经对Window Tree模型大改了，可以看到与Android 10差异很大。Android 11解决和改善了Android 10中各种独立混乱的<code>*Record</code>，并将他们合并，取代了Android 10中窗口模型分散在AMS和WMS的情况，因此产生了架构和结构上的巨大差异。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android%2010%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E6%8A%BD%E8%B1%A1.png" alt="Android 10窗口模型抽象"></p>
+<ul>
+<li>Android 11 WindowContainer总体架构:</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/ConfigurationContaienr%E5%AE%B6%E6%97%8F.jpg" alt="Android11WindowContainer总体架构"></p>
+<ul>
+<li>Android 11 WindowContainer类图:</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android11WindowContainer%E7%B1%BB%E5%9B%BE%E6%A8%A1%E5%9E%8B.png"></p>
+<!--![Android11WindowContainer类图](//www.plantuml.com/plantuml/png/nJfTTzisik_w5UYvBybDfTvdNILRsP8RdTgMZwKqstrnON9aSKCIAW3QHvisltqnu03aK9HMtdtOdfv4c8_1OBu1vaTZfRPLaG_aex5Q9bPSgdAJFLLQsaoLRc5bLeAUp3-8hmFX_XkAY-MdszdguVBZzFQd-SFjydOknbbfUx5tozLYlLZU7gTOBVx6-8lBhIoVu3ep5jp6Oeo_9lrQ1Q8FWVSUVg_0mTBbCsYTfS3un9Wj6oQZykVNyLnLUTvBnybkG3-zGl0teShJHwYDaxvvI_IwrhsNDXAfibz6HDz93QKzX9zGdnE_4qzWJslUfloSbQbwoSgd6vN2cxTY-A77egCNJyLXNUQsL4PvJ2gH5z8cs_hO5wegK-FfUqyHyAFCp8kTtRUtl5CceyFzEHWakJH6S2z_9MAbCxTN3SDe5pyk6mZH6FZTusZ9pq-izUdxZbJjKcdXIgkYhGsZPphz3wPQbgSQIago-OU0c6Lcbyiz9fhJCK2N_0mHlghqHYQ0r5hbOipNfDxdnUriwVxuwU5cEPi_k18mlrhSpcTa3URLVfQhJzVNgylx-PogII_HpQVhzUAX1fuWkt9YhfRtDssIwULwySjY_Ul3-jUx-SFiVZvbwFlbUegbZAiUonOxW1YpPQmqoaghIiPNXvSOtqCIOTFThXUSsEmvi_lrVWTajZQ8z4oago4c-mUifVb2QS2LU__-g3d--EEKGLbWcgc6LI9pa8yvdBdFtUBsTXxYrK1DVgLb0LTANyZaIwhLxZ_LcRQPdPSNX_tjd7Z-9gG9jdSkKZgjjIwhl24W1n2Of6-KdkOvyMPWGhab16MUiwtiegv1Rb1a5yvWM9M2OcrOIsuiTNNzSvMDunaRAmJa6GvigY7PwNEMsYsHSjFXHeGzuFe8sTFM7cKBw4OrF7PtFNrKpz05Na2kNXXGxNfCH8qbGhQoJ7CmiUXHp_EHD0EJG9dAqiQJ_Cics_0maIV8JlVTsAJTaTEBVPtp1qsTWT-zUhv0UYPtHntFjuvfun03xMCTPjgTLWaOGnxDGOkln5aioeqQ2rVpyYpnt0W8kHX6l36N4y11ngqim2MgrQvU1DQxB0q_rriDCXNZHMkN6aOKgGjf70aEZS72APuw9ZL7NQgg9Ep_DQXwfnfCgfmJDE_EdC1UxrgYNu5-pX9OuHs08n1oa28xMHakSaPMQqWqxAJcHAwoNykgJBREDHsPGohElMChuLookX2iYXRtegGeM6nk0L98s-666J_XfJcKTbwJxJOpf4NJCbMOzXhCQWT9jjdpw8xrDw4cPa8hPF5ohrIqOvX87Jc2FqA-0ptQqBBB5VLaXJheZpsFz2SUvxA46BW4QKJGmDCGIsQedH1Jd0L7xb0WdKyJ1CGTtx_7S7yRkUCER4iYRQccojRk5c8GdfK0vrPDpMkKQLfWxsK12Jf-Bb1zYYenFbAoIBodxSmFOjm3R6IpmP-QsoY0WrYqtYBrH36SkUycID94SxA5n7MthTiLxpacqG0bIx58zJFidogfqryoaprcUHiFfQaqD0E99ycXPmfmlXxpte--V_E6wVYM1uCVBZZJUSuV2erfZ_dVv3tU-LNoXRkU4tqg_O4XFI2i32prfGPfQJG-5Wq8GOe8ZM7L2ITqq-IxuR1s5HzQXiCFl0EkrHSe9_NlbGKBZICjebntkd3846OqPSTPdw0oJMiHFl5mwHEtyRO_7rUbPOD2FSEYA23D75M-RnTENZERafddCorVd7gFIkKWI_733sAQvwIV4Llv3E8He1GfqWMstUvK7X79kZuutthaeNYwThT6MBlitWBTQgDYXCtAZMf4qYpX4op0BbMnKoM6xpZ-n04Yqjc2McCZ1-FXHfRo2JJX0lLbZdM9ieOfWxdF8dmLBlZ4oWqRHnvfx3ti53RbpkqVnm4EzEv03f4ugD349wno3GA49FM5seZ4A_hl5Z5VlXjx-6N0TGwFEj5kmcnLbQSkFiHpJVGNOWgQzjZWMqH6mHnTgfVZMoAskvbrtXDZzE5X6fswpxMRxBQX89okeC5Hb3UZeVZkFOPux9YBqjT7Aak7RNCKITxWhhpLBZTySC7xC1vgT31a1F_AB-2148OaXbgKP2469QD6ZZFlDXhyCt8SoheTnCXdMAk_5dbJO5sDJgiSJeebeZW1GXfEUK09bcLX6t4qcuuH_PIhHvaV9MrtK0owZSmDOBgbOAnM-z06EXmvTCYp52XWcnAyw1QyWF2B-40XhPN9zl2ELQTel5Ujm1XVDUX7WFCuxrPVL7Az1M7mHgKU_mw9nHcog5N8DdNukVzbYU5DRS2jKX_rM9n5gSfXWpDXOwhshNR8QwZhW3MEpabWz7O9kSEMkogi0YV1-YX8oCBu3bbBxbGIBBPxLTawtW-GyKBb7orywIRpX6FZtEai8gruaKReG2yUzsYSqO6W-Xc3FnmsZs1XzAGLSKTtnoUJANLE7CWEOiPFyvsEAecXzuunPlCRrIMgIOoo-u1_K29Dw_bynIToOl6tfCuDpr-zilAffk359n9HLlKzk3C3nkYd1kRaUanyIOr8A6s3yNwT_rx9F7JE52qdDfuYstZGucQEWLygYnTTumICn1pJ6G9ZMW-wn5PaPMKybzGWHvtD5wK1QvhTQOt1XFGYKS-Wwr0oUsEXY1FN6rCbMo6DLyfOQTqkZr87_nGpLBrpjiL6F2gx9V8wNULpzkJZ1haTJCSc_VsX2KmyPTZMqTN8KTouFZxVsgSBb3PpukihYZU7KBLHUV1XC8NSmZ8JKx57fXEIatRUQ2WDguu1CAtCopbh4FLOMISXbzWYmw5s_fujaZ3xn8Ej_6bxT6Ysx_Dzsr8PkZVgHHAxCO3FhypndehxNv3toPNETL4eTXgkPvCb_0useIMLHZRnDVUIpCnW8wlS4ZKhaA-Vb2-a0PBa2ogUU0NM1PqKlxqKlfZ-vWpbCbpcxdVgJkoeYaKDQRFsYAnBQqooIclCS9LKL5MfFmQ2U2JwqO6Z9-vKdYL4mK2XT1DYuMyShKK7VmDMPubJWwyxL9tTUdTgNX8wW8xsL0pPAf1uaq3gsaQtzSUEMOH7hHWJJda7xNdPKBPbdVe2GHjnjt7tzBcKTNHdegrA_S-rr4zWUtruBSqn3mzvQm-mEz0RfGdbFy7ZOAadBVOFHDj_G-e0eXC3N3lWlKmpr6cJAtbmRwV6JNpIDU_enDZoF9GwNZthchMMfP598AF7oJofSccXyr21RugrbsbF_c0v0_F5gbtzXD5DQMTg7XJ_tGySh_zYiQizJ975MJxvKOAHnc28KEEKeyU5tWl0bRCX6s_UzRmCnOUTtNrLblpbEvRadW2Ry3BTbEB2zyTLjSEIQfHkShU3Q8RjNPFf5_lujdaZTvE54_u4-dlHUITd0sThhZpthP3mpHLfMjATAyGiVLNZ8vyvDyR8OM4MpDqV1PIs_MxNStlZ4sM_L_Ym6H8olYMslTQkTz4xzJET__D7AAj2V9rUB7-PFwodgvzNtukB-VNoSrXCRt_z_pzZgkQveUTz_gZGyzMM3ziSZMt7aV0kTDgcx9D9IzI4HLRhkxYBY6cP5LwCInhGlP_6XsUF1KHzeHHczzdIFwe2pY7cBG9IVvnEtaGo_uNANtNuKn7r0TmJONtimrS-fdqx-cgB8ljWCGvVysWVfPsiH3vOCMxZlrHg1Iv1OlG628Om_RAETRd1o4CXlBPDMa7L2gDPLXHed_hlXiLtHZDfjKbYwhFOqz7lpUqv9V9to1DPfXbckh-9-ypo88S6zcyhOe52-JoFuXwJFuP3qN7q6RJTP_6ZFF_hM1YgemaIaCmE6G7vxXZ6_PYMvKyGq93LIz1oU3y1Rs_zD2Uk9lqCVOasm6FMQ9wn2FSMwyo-0qRcACXIWuC75YTrDFBH6aqSu8TYyVDGcmRb7dueQbEeZg47NA9uv_1nyqZc1RF7eq5xLKijWcahgoexwAmz3QSOj1pQsFe0IgdR0-UTXH7WER1cS63V5l74xb3rtxLqp7Jky3QNEd3z02KB5QN5DPSKeLtj1pnwKI_EsSMV3kOkkNeTEJcStqO67G7zESnPkX0dcPmmwCain7RJs8qyQLNa_mG0)-->
+
+<!--```uml
+@startuml
+abstract ConfigurationContainer<E> {
+    - BOUNDS_CHANGE_NONE :int
+    - BOUNDS_CHANGE_POSITION :int
+    - BOUNDS_CHANGE_SIZE :int
+    - mChangeListener :List<ConfigurationContainerListener>
+    - mRequestedOverrideConfiguration :Configuration
+    - mResolvedOverrideConfiguration :Configuration
+    - mFullConfiguration :Configration
+    - mMergedOverrideConfiguration :Configuration
+    ~ onRequestedOverrideConfigurationChanged()
+    ~ resolveOverrideConfiguration()
+    ~ onConfigurationChanged()
+    ~ onParentChanged()
+    ~ onMergedOverrideConfigurationChanged()
+    + getRequestedOverrideConfiguration()
+    + getWindowingMode() -> mFullConfiguration.windowConfiguration.getWindowingMode()
+    + getConfiguration() -> mFullConfiguration
+    + matchParentBounds() -> getRequestedOverrideBounds().isEmpty()
+    + getPosition()
+}
+
+class Configuration {
+    + orientation :int @Orientation
+    + seq :int
+    + windowConfiguration :WindowConfiguration
+    + updateFrom()
+}
+
+class WindowConfiguration {
+    # mChildren :List<E>
+    # mDisplayContent
+    # mOrientation :int
+    # mSurfaceControl :SurfaceControl
+    + WINDOWING_MODE_UNDEFINED :int @WindowingMode
+    + WINDOWING_MODE_FULLSCREEN :int
+    + WINDOWING_MODE_MULTI_WINDOW :int
+    + WINDOWING_MODE_FREEFORM :int
+    + ACTIVITY_TYPE_DREAM :int
+    + ROTATION_UNDEFINED :int
+    - mWindowingMode :WindowingMode
+    - mRotaton :int
+    - mBounds :Rect
+    - mAppBounds :Rect
+    - mActivityType :int @ActivityType
+    + canResizeTask() -> mWindowingMode == WINDOWING_MODE_FREEFORM || WINDOWING_MODE_MULTI_WINDOW
+    + windowsAreScaleable() -> mWindowingMode == WINDOWING_MODE_PINNE
+    + useWindowFrameForBackdrop() -> mWindowingMode == WINDOWING_MODE_FREEFORM || WINDOWING_MODE_PINNED
+    + updateFrom()
+}
+
+class WindowContainer<E> {
+    - mSurfaceControl :SurfaceControl
+    ~ asActivityRecord() -> null
+    ~ asTask() -> null
+    - forAllActivities()
+    ~ forAllDisplayAreas()
+    ~ forAllLeafTasks()
+    ~ forAllTasks()
+    ~ getActivity()
+    ~ getDisplayArea() -> getParent().getDisplayArea()
+    ~ getDisplayContent() -> mDisplayContent
+    + getSurfaceWidth() -> mSurfaceControl.getWidth()
+    + getSurfaceHeight() -> mSurfaceControl.getHeight()
+    ~ getTask()
+    ~ getTaskAbove()
+    ~ getTaskBelow()
+    ~ getTopActivity()
+    ~ getWindow()
+    ~ handlesOrientationChangeFromDescendant()
+    + onConfigurationChanged()
+    ~ onDescendantOrientationChanged()
+    ~ onDescendantOverrideConfigurationChanged()
+    ~ onMovedByResize()
+    ~ onParentResize()
+    + onRequestedOverrideConfigurationChanged()
+    ~ onResize()
+    ~ positionChildAt()
+    ~ setOrientation()
+}
+
+class WindowProcessController {
+    ~ mInfo: ApplicationInfo
+    - mListener: WindowProcessListener
+    ~ mName :String
+    - mPid
+    - mThread :IApplicationThread
+    - dispatchConfigurationChange()
+    ~ getChildAt() -> null
+    ~ getChildCount() -> 0
+    ~ getThread() -> mThread
+    + onConfigurationChanged()
+    + onMergedOverrideConfigurationChanged()
+    + onRequestedOverrideConfigurationChanged()
+    + onServiceStarted()
+    + onStartActivity()
+    ~ pauseConfigurationDispatch()
+    ~ prepareConfigurationForLaunchingActivity()
+    - updateConfiguration()
+    ~ updateTopResumingActivityInProcessIfNeeded()
+}
+
+class Task<ActivityRecord> {
+    ~ asTask() -> this
+    - canResizeToBounds()
+    - canSpecifyOrientation()
+    ~ forceWindowsScaleable()
+    ~ getRootActivity() -> mFindRootHelper.findRoot()
+    ~ getRootTask() -> getParent().asTask() || this
+    ~ getStack() -> getRootTask() as ActivityStack
+    ~ isLeafTask() -> mChildren.foreach(child.asTask()==null)
+    ~ isRootTask() -> getRootTask()==this
+    ~ onActivityStateChanged()
+    + onConfigurationChanged()
+    + onDescendantOrientationChanged()
+    ~ resize()
+    ~ setActivityWindowingMode()
+    + setBounds()
+    - mRootProcess :WindowProcessController
+    ~ mRootWindowContainer :RootWindowContainer
+    - mRotation :int @Surface.Rotation
+    ~ mTaskId :int
+}
+
+class ActivityStack<Task> {
+    ~ checkBehindFullscreenActivity()
+    ~ checkKeyguardVisibility()
+    ~ ensureActivitiesVisible()
+    ~ getDisplay() :DisplayContent -> ((ActivityStack) getRootTask()).getDisplayContent()
+    + onConfigurationChanged()
+    - resumeTopActivityInnerLocked()
+    ~ resumeTopActivityUncheckedLocked()
+    ~ reuseOrCreateTask()
+    + setBounds()
+    - setTaskBounds()
+    ~ setWindowingMode()
+}
+
+class WindowToken<WindowStete> {
+    ~ token :IBinder
+    ~ windowType :int
+    ~ addWindow() -> addChild()
+    ~ createSurfaceControl()
+    ~ removeImmediately()
+}
+
+class ActivityRecord {
+    ~ allDrawn :boolean // All windows have been drawn
+    ~ app :WindowProcessController
+    ~ appToken :ActivityRecord.Token -> ApplicationToken
+    ~ forceNewConfig :boolean
+    ~ info :ActivityInfo
+    ~ mActivityComponent :ComponentName
+    ~ mAtmService :ActivityTaskManagerService
+    ~ mClientVisible :boolean
+    - mConfigurationSeq :int
+    ~ mDrawn :boolean
+    - mLastReportedConfiguration :MergedConfiguration // Last conf reported to the activity of client
+    ~ mRootWindowContainer :RootWindowContainer
+    - mState :ActivityState
+    - mVisible :boolean // client should be visible?
+    - reportedDrawn :boolean
+    ~ reportedVisible :boolean
+    ~ nowVisible :boolean // client now visible?
+    - task :Task
+    ~ addWindow()
+    ~ asActivityRecord() -> this
+    ~ hasActivity() -> true
+    ~ hasProcess() -> null != app
+    ~ isInStackLocked() -> getRootTask().isInStack(this)
+    ~ isRootOfTask() -> this == task.getRootActivity()
+    ~ makeActiveIfNeeded()
+    ~ makeInvisible()
+    ~ makeVisibleIfNeeded()
+    + onConfigurationChanged()
+    ~ restartProcessIfVisible()
+    ~ saveToXml()
+    - scheduleConfigurationChanged()
+    ~ scheduleTopResumedActivityChanged()
+    ~ setClientVisible()
+    ~ setLastReportedConfiguration()
+    ~ setLastReportedGlobalConfiguration()
+    ~ setVisibility() // false to destroy Surface
+    ~ setVisible() // false to ide client
+}
+
+class IApplicationToken
+
+class Token {
+    - attach()
+}
+
+class WindowState {
+    ~ mSession :Session
+    ~ mActivityRecord :ActivityRecord // The same object as mToken if this is an app window and null for non-app windows
+    ~ mToken :WindowToken
+    ~ mClient :IWindow
+    - mClientChannel :InputChannel
+    ~ mInputChannel :InputChannel
+    - mIsChildWindow :boolean
+    ~ mLayoutNeeded :boolean
+    ~ mRequestedWidth :int // The window size that was requested by app.
+    ~ mRequestedHeight :int
+    - mWindowFrames :WindowFrames
+    ~ attach()
+    + getAppToken() :IApplicationToken -> mActivityRecord.appToken
+    ~ getRootTask() :ActivityStack -> getTask().getRootTask()
+    + getWindow() -> this
+    ~ setRequestedSize()
+    ~ setWindowScale()
+    ~ updateResizingWindowIfNeeded()
+    ~ updateSurfacePosition()
+}
+
+class WindowFrames {
+    ~ mContainingFrame :Rect
+    ~ mContentFrame :Rect // Equal to the decor frame if the IME is not present. Else equal to display frame minus IME area.
+    ~ mContentInsets :Rect // Insets that are covered by system windows (such as the status bar)
+    + mDecorFrame :Rect // If both status and navigation bars are visible, the decor frame is equal to the stable frame.
+    + mDisplayFrame :Rect // The entire screen area of the ActivityStack this window is in
+    ~ mFrame :Rect // The real frame that the app sees.
+    ~ mRelFrame :Rect // mFrame but relative to the parent container.
+    + mStableFrame :Rect // The frame that display frame minus the stable insets.
+    ~ mStableInsets :Rect // Area covered by stable system window such as statusbar.
+    ~ mVisibleFrame :Rect
+}
+
+class DisplayContent<DisplayChildWindowContainer> {
+    ~ isDefaultDisplay :boolean
+    ~ mAtmService :ActivityTaskManagerService
+    ~ mBaseDisplayWidth // Set via `wm size` initialized with mInitialDisplayWidth
+    ~ mBaseDisplayHeight
+    ~ mCurrentFocus :WindowState
+    ~ mDisplay :Display
+    ~ mDisplayAreaPolicy :DisplayAreaPolicy
+    - mDisplayInfo :DisplayInfo
+    - mDisplayMetrics :DisplayMetrics
+    - mDisplayPolicy :DisplayPolicy
+    - mDisplayRotation :DisplayRotation
+    ~ mDisplayFrames DisplayFrames
+    ~ mFocusedApp :ActivityRecord
+    - mImeWindowsContainers :ImeContainer
+    - mRootDisplayArea :Root
+    ~ mInitialDisplayHeight
+    ~ mInitialDisplayWidth
+    ~ mInputMethodInputTarget :WindowState
+    ~ mLastFocus :WindowState
+    - mLayoutNeeded
+    - mPerformLayout :Consumer<WindowState>
+    - mRootWindowContainer :WindowContainers
+    - mWindowCornerRadius :float
+    ~ addWindowToken()
+    - applyRotation()
+    ~ applySurfaceChangesTransaction()
+    - calculateBounds()
+    ~ findFocusedWindow()
+    ~ forceDesktopMode() :boolean
+    ~ getActivityRecord()
+    + onConfigurationChanged()
+    ~ onDescendantOrientationChanged()
+    ~ onDescendantOverrideConfigurationChanged()
+    + onRequestedOverrideConfigurationChanged()
+    ~ performDisplayOverrideConfigUpdate()
+    ~ performLayout()
+    ~ sendNewConfiguration()
+    ~ setForcedSize()
+    + setWindowingMode()
+    ~ topRunningActivity()
+}
+
+class RootWindowContainer<DisplayContent> {
+    ~ mStackSupervisor :ActivityStackSupervisor
+    ~ mTopFocusedAppByProcess :Map<Integer, ActivityRecord>
+    ~ attachApplication()
+    ~ ensureActivitiesVisible()
+    ~ ensureVisibilityAndConfig()
+    - handleResizingWindows()
+    + onConfigurationChanged()
+    ~ performSurfacePlacement()
+    - setGlobalConfigurationIfNeeded()
+    ~ topRunningActivity()
+    ~ updateRotationUnchecked()
+}
+
+class DisplayArea {
+    ~ mType :Type @enum {ABOVE_TASKS, BELOW_TASKS, ANY;}
+    ~ fillsParent() -> true
+    ~ getDisplayArea() -> this
+    ~ getDisplayAreaInfo() :DisplayInfo
+    + onConfigurationChanged()
+}
+
+class TaskDisplayArea<ActivityStack> {
+    - mAppAnimationLayer :SurfaceControl
+    - mAtmService :ActivityTaskManagerService
+    - mBoostedAppAnimationLayer :SurfaceControl
+    - mHomeAppAnimationLayer :SurfaceControl
+    ~ mLastFocusedStack :ActivityStack
+    ~ mLaunchRootTask :Task
+    - mRootHomeTask :ActivityStack
+    - mRootWindowContainer :RootWindowContainer
+    ~ addChild()
+    ~ createStack()
+    ~ createStackUnchecked()
+    ~ ensureActivitiesVisible()
+    ~ getStack()
+    ~ topRunningActivity()
+}
+
+enum Type {
+    + ABOVE_TASKS
+    + BELOW_TASKS
+    + ANY
+    + typeOf() :Type
+}
+
+class Root<DisplayArea> {
+    - mDimmer :Dimmer
+}
+
+class Tokens<WindowToken> {
+    ~ addChild()
+    ~ getOrientation()
+}
+
+class ImeContainer {
+    ~ getOrientation(candidate :int) -> canditate
+    ~ forAllWindows()
+}
+
+ConfigurationContainer <|-- WindowContainer
+ConfigurationContainer <|-- WindowProcessController
+ConfigurationContainer *-- Configuration
+
+Configuration *-- WindowConfiguration
+
+WindowContainer <|-- Task
+WindowContainer <|-- WindowToken
+WindowContainer <|-- WindowState
+WindowContainer <|-- DisplayArea
+WindowContainer <|-- DisplayContent
+WindowContainer <|-- DisplayChildWindowContainer
+WindowContainer <|-- RootWindowContainer
+
+Task <|-- ActivityStack
+Task *-- ActivityRecord
+
+ActivityStack *-- Task
+
+IApplicationToken <|.. Token
+
+WindowToken <|-- ActivityRecord
+WindowToken o-- WindowState
+
+ActivityRecord +-- Token
+
+WindowState *-- WindowFrames
+
+WindowFrames o-- WmDisplayCutout
+WmDisplayCutout o-- DisplayCutout
+
+DisplayArea <|-- Root
+DisplayArea <|-- Tokens
+DisplayArea <|-- TaskDisplayArea
+DisplayArea +-- Type
+DisplayArea +-- Root
+DisplayArea +-- Tokens
+
+Tokens <|-- ImeContainer
+
+TaskDisplayArea o-- ActivityStack
+
+Root o-- Tokens
+Root o-- ImeContainer
+Root o-- TaskDisplayArea
+
+DisplayContent +-- ImeContainer
+DisplayContent +-- DisplayChildWindowContainer
+DisplayContent o-- DisplayChildWindowContainer
+DisplayContent *-- WindowContainers
+
+DisplayChildWindowContainer <|-- WindowContainers
+
+WindowContainers *-- Root
+
+RootWindowContainer *-- DisplayContent
+@enduml
+```-->
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>从Window Tree模型、类图、结构图可以看到，Android 11在Window相关部分的改动量很大，结构差异、流程变化不小。其相对Android 10可以说是完全不同的两种实现，而对Android 12则一脉相承、差异较小。可以这么认为，在Window这一块，Android 11与Android 12相对Android 10来说是全新的一套实现和机制。</p>
+<p>Android 11和Android 12带来的全新实现，我想除了是为了实现<em>全局缩放</em>功能外（似乎Android引入<code>DisplayArea</code>的目的是为了实现缩放功能，代码中已经可以看到大量的缩放机制支持代码），还能够解决Android 10中Window部分的实现存在的冗余——Window实现含有大量<code>*Record</code>。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/">https://nasdaqgodzilla.github.io/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android 11 startActivity之ActivityStarter流程</div></div></a></div><div class="next-post pull-right"><a href="/2022/06/28/Android-Studio%E5%AF%BC%E5%85%A5AOSP%E7%B3%BB%E7%BB%9F%E6%BA%90%E7%A0%81/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidStudio.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android Studio导入AOSP系统源码</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-06</div><div class="title">Android 11 setRequestedOrientation流程详解</div></div></a></div><div><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/" title="Android 11 startActivity之ActivityStarter流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-05</div><div class="title">Android 11 startActivity之ActivityStarter流程</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%B1%BB%E5%9B%BE"><span class="toc-number">2.</span> <span class="toc-text">类图</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/'
+    this.page.identifier = '2022/07/03/Android-11-WindowContainer窗口模型详解/'
+    this.page.title = 'Android 11 WindowContainer窗口模型详解'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,性能优化,Graphics"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="4:43 pmFriday, 8 April 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   简介 发现、定性与定位 工具 GPU Loading FPS   初步定位问题 定性问题 跟不上旋律节奏的VSYNC 严重异常耗时的dequeueBuffer VirtualDisplay合成耗时 结论   定位问题 总结     成">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/04/22/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%9A%E6%80%A7%E5%92%8C%E5%AE%9A%E4%BD%8DAndroid%E5%9B%BE%E5%BD%A2%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94%E4%BB%A5%E5%90%8E%E5%8F%B0%E5%BD%95%E5%B1%8F%E7%9A%84%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B8%BA%E4%BE%8B/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="4:43 pmFriday, 8 April 2022 (GMT+8)Time in Guangzhou, Guangdong Province, China   简介 发现、定性与定位 工具 GPU Loading FPS   初步定位问题 定性问题 跟不上旋律节奏的VSYNC 严重异常耗时的dequeueBuffer VirtualDisplay合成耗时 结论   定位问题 总结     成">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/git.png">
+<meta property="article:published_time" content="2022-04-22T02:37:52.000Z">
+<meta property="article:modified_time" content="2022-08-29T11:29:39.199Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="性能优化">
+<meta property="article:tag" content="Graphics">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/git.png"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/04/22/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%9A%E6%80%A7%E5%92%8C%E5%AE%9A%E4%BD%8DAndroid%E5%9B%BE%E5%BD%A2%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94%E4%BB%A5%E5%90%8E%E5%8F%B0%E5%BD%95%E5%B1%8F%E7%9A%84%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B8%BA%E4%BE%8B/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-08-29 19:29:39'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/git.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-04-22T02:37:52.000Z" title="发表于 2022-04-22 10:37:52">2022-04-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-08-29T11:29:39.199Z" title="更新于 2022-08-29 19:29:39">2022-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Graphics/">Graphics</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>4:43 pm<br>Friday, 8 April 2022 (GMT+8)<br>Time in Guangzhou, Guangdong Province, China</p>
+<hr>
+<ul>
+<li><a href="#%E7%AE%80%E4%BB%8B">简介</a></li>
+<li><a href="#%E5%8F%91%E7%8E%B0%E3%80%81%E5%AE%9A%E6%80%A7%E4%B8%8E%E5%AE%9A%E4%BD%8D">发现、定性与定位</a><ul>
+<li><a href="%E5%B7%A5%E5%85%B7">工具</a><ul>
+<li><a href="#gpu-loading">GPU Loading</a></li>
+<li><a href="#fps">FPS</a></li>
+</ul>
+</li>
+<li><a href="#%E5%88%9D%E6%AD%A5%E5%AE%9A%E4%BD%8D%E9%97%AE%E9%A2%98">初步定位问题</a></li>
+<li><a href="#%E5%AE%9A%E6%80%A7%E9%97%AE%E9%A2%98">定性问题</a><ul>
+<li><a href="#%E8%B7%9F%E4%B8%8D%E4%B8%8A%E6%97%8B%E5%BE%8B%E8%8A%82%E5%A5%8F%E7%9A%84vsync">跟不上旋律节奏的VSYNC</a></li>
+<li><a href="#%E4%B8%A5%E9%87%8D%E5%BC%82%E5%B8%B8%E8%80%97%E6%97%B6%E7%9A%84dequeuebuffer">严重异常耗时的dequeueBuffer</a></li>
+<li><a href="#virtualdisplay%E5%90%88%E6%88%90%E8%80%97%E6%97%B6">VirtualDisplay合成耗时</a></li>
+<li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li>
+</ul>
+</li>
+<li><a href="#%E5%AE%9A%E4%BD%8D%E9%97%AE%E9%A2%98">定位问题</a><ul>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E6%88%90%E6%9E%9C%E5%B1%95%E7%A4%BA">成果展示</a></li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+<h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>本文记录一次Android图形性能问题的分析过程——<strong>发现</strong>、<strong>定性</strong>和<strong>定位</strong>图形性能问题，以及探讨的性能优化方案。<br>环境：Android Q + MTK + ARM Mali-G72。<br>所分析的性能问题（下称case）：打开录屏应用并启动后台录屏，滑动前台应用（滑屏）。性能表现差：CPU、GPU负载显著升高、掉帧、用户明显卡顿感，帧率不足30帧，帧渲染、合成耗时急剧飙升（渲染耗时平均为29ms左右）。<br>经过优化后，相同环境和条件下，渲染帧率稳定在60帧（提升一倍），渲染耗时平均为8.44ms左右（为优化前的不到三分之一的消耗）。</p>
+<p>关键词 Keywords: Screen Recording; Frame rate; FPS; GPU utilization; Jank; MediaProjection; VirtualDisplay; MediaCodec; Perfetto; Inferno; Surface; SurfaceTexture; VSYNC; SurfaceFlinger; HWC; Hardware composer; GPU; OpenGL;</p>
+<h1 id="发现、定性与定位"><a href="#发现、定性与定位" class="headerlink" title="发现、定性与定位"></a>发现、定性与定位</h1><p>本节记录过程中如何发现以及定性、定位性能问题的。首先介绍针对该问题<strong>开发</strong>的共性通用工具（现有工具的介绍和使用不再赘述），然后围绕性能跟踪手段获得的报告和结果开展定性、定位工作，并最终给出解决这类性能问题的<strong>具有通用性的优化方案</strong>。额外的，结论和方案展示中会讨论几种解决方案并探讨它们的优缺点和对比结论。</p>
+<h2 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h2><p>本小节介绍分析该问题过程中<strong>开发</strong>的可以分析共性问题的工具。本节仅介绍自己搞的工具，使用现成的工具不再赘述。</p>
+<p>性能分析和测量工作往往利用工具或观测机制来提升效率。在本case中至少存在对GPU负载和FPS的观测（观察、测量）的需求，而该部分恰好是没有趁手工具的，因此退而结网先把工具开发出来。</p>
+<h3 id="GPU-Loading"><a href="#GPU-Loading" class="headerlink" title="GPU Loading"></a>GPU Loading</h3><p>Android的GPU往往通过驱动提供的GED（GPU Extension Device）在sys节点提供GPU工况信息。可以从adb shell中直接读出GPU信息。</p>
+<blockquote>
+<p>在本case中，通过实时查看GPU负载来判断界面卡顿、掉帧时是否触及GPU性能瓶颈，帮助压实卡顿问题责任归属，指导问题分析方向。</p>
+</blockquote>
+<p>case中发现卡顿掉帧时GPU负载有明显、大阶梯上升，但是包括本case内的其他各种性能问题在内，当GPU保持较长时间满负载时（~100ms以上）才有充分的指导意义（表示性能问题可能来自于GPU性能瓶颈）。而GPU没有上升到满负载并没有明确指导意义，即不能断言GPU性能完全没有短板，也不能断言GPU拖后腿。</p>
+<ul>
+<li><p>获取GPU使用率的方法</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cat <span class="regexp">/sys/m</span>odule<span class="regexp">/ged/</span>parameters/gpu_loading</span><br><span class="line"></span><br><span class="line">cat <span class="regexp">/sys/</span>kernel<span class="regexp">/debug/g</span>ed<span class="regexp">/hal/g</span>pu_utilization</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>读取GPU型号</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">find</span> `<span class="keyword">find</span> <span class="regexp">/sys/</span>devices/platform -name *.mali` -name gpuinfo | xargs cat</span><br><span class="line"></span><br><span class="line">dumpsys SurfaceFlinger|<span class="keyword">grep</span> GLES</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>参考：<a href="https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/">Android平台GPU负载计算、分析方法</a></p>
+<h3 id="FPS"><a href="#FPS" class="headerlink" title="FPS"></a>FPS</h3><p>出于同样的原因，FPS也没有直接可用的工具能够快速获取。因此也以同样的目的设计FPS工具。Android的图形渲染分为四大part：Draw	Prepare	Process	Execute，渲染耗时可能来自这四部分之若干部分，需要分开计算和观测。</p>
+<ul>
+<li>计算FPS的方法和工具<br>Android框架层通过hwui配合底层完成渲染。该框架本身提供了逐帧渲染分段耗时记录。通过dumpsys gfxinfo可以获取。但是其为逐帧分散的记录，没有进行计算、统计展现，对调试非常不友好。</li>
+</ul>
+<figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">io.microshow.screenrecorder/io.microshow.screenrecorder.activity.MainActivity/android.view.ViewRootImpl@<span class="number">6b9b8a9</span> (visibility=<span class="number">0</span>)</span><br><span class="line">	Draw	Prepare	Process	Execute</span><br><span class="line">	<span class="number">3.80	0.48</span>	<span class="number">13.88	1.64</span></span><br><span class="line">	<span class="number">1.08	0.50</span>	<span class="number">14.29	1.59</span></span><br><span class="line">	<span class="number">1.12	0.51</span>	<span class="number">17.49	1.74</span></span><br><span class="line">	<span class="number">1.74	0.17</span>	<span class="number">15.56	1.39</span></span><br><span class="line">...</span><br><span class="line">	<span class="number">1.38	0.45</span>	<span class="number">17.64	1.38</span></span><br><span class="line">	<span class="number">1.56	0.44</span>	<span class="number">10.85	1.38</span></span><br><span class="line">	<span class="number">3.09	0.24</span>	<span class="number">18.03	1.73</span></span><br><span class="line">	<span class="number">1.25	0.30</span>	<span class="number">12.43	1.38</span></span><br></pre></td></tr></table></figure>
+<p>开发的工具主要使用adb shell，通过shell命令处理记录并计算平均耗时和帧率，将上面多条记录进行处理和统计。支持平均耗时计算、支持分段平均耗时计算、支持帧率计算。<a target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla/GetFPS">get_fps: 统计计算耗时与帧率</a></p>
+<p>使用该工具统计帧率与平均耗时（同时打印GPU负载），在开启后台录屏的情况下滑动屏幕，平均渲染耗时高达~29ms，超出16.67ms一倍，导致帧率仅31帧，显著低于60帧。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Average</span> elapsed <span class="number">28</span>.<span class="number">96</span> ms</span><br><span class="line"><span class="attribute">FPS</span>: <span class="number">31</span> │ <span class="number">9</span>.<span class="number">03</span> <span class="number">0</span>.<span class="number">73</span> <span class="number">16</span>.<span class="number">76</span> <span class="number">2</span>.<span class="number">44</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># GPU负载 LOADING BLOCKING IDLE</span></span><br><span class="line"><span class="attribute">70</span> <span class="number">0</span> <span class="number">30</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># case的对比——未开启后台录屏</span></span><br><span class="line"><span class="attribute">Average</span> elapsed <span class="number">9</span>.<span class="number">00</span> ms</span><br><span class="line"><span class="attribute">FPS</span>: <span class="number">60</span> │ <span class="number">1</span>.<span class="number">56</span> <span class="number">0</span>.<span class="number">65</span> <span class="number">5</span>.<span class="number">62</span> <span class="number">1</span>.<span class="number">17</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>通过gfx柱状图直观感受性能数据<br>直观地感受图形渲染性能，除了帧率感受、触控延时外，还可以通过将gfxinfo的分段耗时通过柱状图展示在屏幕上。</li>
+</ul>
+<p>这是case性能问题的gfxinfo柱状图，可以看到红柱和绿柱都非常高，远远超越了流畅标准。<br><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E4%BC%98%E5%8C%96%E5%89%8D%EF%BC%88%E5%BC%80%E5%90%AF%E5%BD%95%E5%B1%8F%EF%BC%89%E7%9A%84%E7%BB%98%E5%88%B6%E6%83%85%E5%86%B5.png"><br>其中，绿柱异常放大表明两个Vsync之间耗时显著增长，红柱异常放大表明应用层应用加速使用的DisplayLists大量增长、或图形层使用GLES调用GPU耗时显著增多导致的GPU执行绘制指令耗时变长。</p>
+<h2 id="初步定位问题"><a href="#初步定位问题" class="headerlink" title="初步定位问题"></a>初步定位问题</h2><p>本节记录初步的分析思路和定位过程。首先我们完成实验（启停后台录屏并滑动屏幕触发渲染）、观测以及记录，拿到了后台录屏启停情况下的FPS、分阶段耗时以及GPU负载（相关数据位于工具节FPS小节）。</p>
+<p>开发的工具输出的统计数据计算结果非常直观，一眼可见，<strong>后台录屏为Draw阶段带来额外的<del>8倍或</del>8ms耗时，给Process阶段带来额外的<del>2倍或</del>11ms耗时</strong>。帧率从60帧坠落到~30帧。</p>
+<ul>
+<li>耗时分析<br>可以看到，主要的额外耗时来自Draw和Process。接下来重点围绕着两part定位问题问题。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Description</th>
+<th>Comp</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Draw</td>
+<td>创建DisplayLists的耗时。Android的View如果支持硬件加速，绘制工作均通过DisplayLists由GPU绘制，可以处理为onDraw的耗时</td>
+<td>额外<del>8ms或</del>8倍</td>
+</tr>
+<tr>
+<td>Prepare</td>
+<td>准备</td>
+<td>没有额外耗时</td>
+</tr>
+<tr>
+<td>Process</td>
+<td>DisplayLists执行耗时。即硬件加速机制下提交给GPU绘制的工作耗时</td>
+<td>额外<del>11ms或</del>2倍</td>
+</tr>
+<tr>
+<td>Execute</td>
+<td>Framebuffer前后缓冲区flip动作的耗时，上屏耗时</td>
+<td>额外不到~1ms</td>
+</tr>
+</tbody></table>
+<p>60Hz下，上述4个步骤合计耗时小于16.67ms为正常情况。case为~29ms。主要<strong>增量来自Draw和Process</strong>。</p>
+<p>经过上述初步分析、观测后，接下来的分析可以围绕Draw和Process开展。由于Android Draw部分涉及较广，包含App 渲染线程（DisplayLists）、UI线程（onDraw方法创建DisplayLists），以及图形栈耗时如SurfaceFlinger、RenderEngine等都可能增加Draw耗时。</p>
+<p>这里一个技巧可以初步判断耗时来自App进程(渲染线程和UI线程)还是来自图形栈。如果能判断耗时来自App或图形栈，那么可以缩小分析范围、减少分析工作量。上述四大阶段的耗时统计分类比较宽，实际上还有更详细的分阶段耗时，它呈现在前文描述过的gfx统计信息柱状图上。gfx柱状图会以蓝色（RGB(66,122,249)）呈现onDraw方法创建和更新DisplayLists的耗时。如果case与正常情况对比后，这部分耗时（蓝柱大小对比）差异很小，即可<strong>说明额外的Draw耗时不是来自App的，极可能来自图形栈</strong>。Besides，结合过度绘制分析，判断case与正常情况下是否有更多的额外绘制次数可以协同判断。</p>
+<p>——根据上述指导思想，排查出了case的<strong>额外Draw耗时与App onDraw无关，多出来的DisplayLists来自App以外的进程，可能是图形栈如SurfaceFlinger</strong>。</p>
+<h2 id="定性问题"><a href="#定性问题" class="headerlink" title="定性问题"></a>定性问题</h2><p>本小节介绍问题追踪过程，通过一些方法定位到各阶段的耗时原因，并定性地得出case性能问题的性质。从本小节开始，围绕Perfetto进行分析。这里贴出perfetto的总览，我将关键的信息排序到顶部。前四行分别为SF负责图形的线程、提交到GPU等待完成的工作、Vsync-App、Vsync-sf，最后两行为case中出现卡顿掉帧的App的主线程(UI)和渲染线程(RenderThread)。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/screen_recording_perfetto_sumary.png"></p>
+<h2 id="跟不上旋律节奏的VSYNC"><a href="#跟不上旋律节奏的VSYNC" class="headerlink" title="跟不上旋律节奏的VSYNC"></a>跟不上旋律节奏的VSYNC</h2><p>容易看到，Vsync-sf非常不规律。Vsync-sf是触发SurfaceFlinger一次合成工作的基于Hardware VSYNC虚拟出来的一个信号。它相对于真实硬件信号（HW_VSYNC）一个规律的偏移（在case设备上，Vsync-app与Vsync-sf都被配置为8.3ms，即硬件VSYNC到达后，虚拟的Vsync-app和Vsync-sf延时8.3ms后发出，分别触发App绘制、SurfaceFlinger合成。</p>
+<blockquote>
+<p>建议阅读 <a href="https://nasdaqgodzilla.github.io/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/">Android图形层垂直同步虚拟VSYNC机制</a></p>
+</blockquote>
+<p>而case的<strong>Vsync-sf交错、残次、不齐、无规律，显然工况不佳</strong>。它将导致SurfaceFlinger不能按照预期的时间间隔将合成的帧提交到Framebuffer（经过Flip后，被提交的Framebuffer将上屏成为显示器的下一帧图像），出现掉帧&#x2F;丢帧。</p>
+<p>As we can see，case的VSYNC-sf出现严重的漂移（见图，第二行的VSYNC-sf残次不齐、跟不上规律、难看且混乱），这导致了丢帧。（但VSYNC-sf的失控<strong>仅表示与丢帧的相关性，并不直接表明因果性</strong>。）</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E6%8E%89%E5%B8%A7%E9%97%AE%E9%A2%98%EF%BC%9ASurfaceFlinger%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E5%AF%BC%E8%87%B4%E7%9A%84VSYNC%E4%BF%A1%E5%8F%B7%E9%94%99%E4%B9%B1.png"></p>
+<ul>
+<li>VSYNC-sf为什么会出现偏差？<br>出于<strong>功耗的考虑，VSYNC-sf合VSYNC-app并不是一定会触发的</strong>。如果app或sf并没有更新画面的需求，那么死板固定地调度它们进行绘制和合成是不必的。编程上，负责触发VSYNC-sf和VSYNC-app的两个<code>EventThread</code>会在<code>requestNextVsync</code>调用后才会将下一个VSYNC-sf或VSYNC-app发出。因此，当（各自EventThread的）<code>requestNextVsync</code>没有调用时，VSYNC-app和VSYNC-sf也就出现漂移。<code>BufferQueueLayer::onFrameAvailable</code>会在应用提交后调用，该方法通过调用SF的<code>signalLayerUpdate</code>触发产生下一个<code>VSYNC-sf</code>。</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC%E8%99%9A%E6%8B%9F%E4%BF%A1%E5%8F%B7%E6%8E%A7%E5%88%B6%E7%9A%84%E7%BB%98%E5%88%B6%E5%90%88%E6%88%90%E6%B5%81%E7%A8%8B.png"></p>
+<p><strong>换而言之，出于功耗，或别的什么原因（比如耗时导致的延期，人家是线程实现的消息队列），SurfaceFlinger的SFEventThread有可能不调用<code>requestNextVsync</code>，这将导致Vsync-sf在窗口期内短暂消失——但是也不会出现参差不齐的情况</strong>。结合case的VSYNC信号报告来看，<strong>VSYNC-sf信号异常切实地提示了性能问题——它的不规律现象表明前后Vsync之间有异常耗时</strong>，而非低功耗机制被激活或无屏幕刷新（case性能问题复现时一直在滑前台应用的屏，它每16ms都有画面更新的需求）。</p>
+<p>VSYNC-sf虽然出现了偏差，但是它与卡顿问题仅有相关性（或者说它是性能问题的结果），并非因果关系。猜测是其他卡顿问题导致了SF延缓了对VSYNC的request，导致其信号出现漂移。<strong>VSYNC-sf信号偏差实质上指导意义重大，因为它能提示我们，问题发生在比App更底层的地方（前文分析的结论），且比SurfaceFlinger提交到Framebuffer更上层的位置（VSYNC-sf用于触发合成，合成完成后提交到屏幕双缓冲区）</strong>。</p>
+<p>这样，将case性能问题的上下界都确定了，问题分析范围从原先的整个图形栈，<strong>有效的缩小到了SurfaceFlinger渲染和合成阶段</strong>了。</p>
+<h2 id="严重异常耗时的dequeueBuffer"><a href="#严重异常耗时的dequeueBuffer" class="headerlink" title="严重异常耗时的dequeueBuffer"></a>严重异常耗时的dequeueBuffer</h2><p>通读Perfetto，可以看到，出了难看的Vsync-sf以外，还可以看到刺眼的超长耗时的draw（App UI线程）以及耗时变态长的dequeueBuffer(App 渲染线程)调用。相对于正常情况，perfetto报告提示的case的<strong>draw方法成倍增长的耗时非常容易被误认为耗时“居然来自一开始就排除掉的App进程”<strong>，这与前文提出的”问题范围“是不能自洽的——它们是相反的结论，肯定哪里不对。仔细分析才能发现，draw方法确实是消耗了更多【墙上】时间（但是不意味着消耗了更多CPU时间，因为等待过程是sleep的），但是draw方法是因为等待渲染线程的<code>dequeueBuffer</code>造成的耗时，</strong>而<code>dequeueBuffer</code>的严重异常耗时却是被底层的图形栈拖累的</strong>。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/dequeueBuffer%E8%80%97%E6%97%B6%E5%BE%88%E9%95%BF.png"></p>
+<blockquote>
+<p>前置知识：draw是UI线程绘制工作，dequeueBuffer是硬件加速条件下渲染线程执行绘制工作的第一步，获取存储绘制内容的buffer。</p>
+</blockquote>
+<ol>
+<li><p>我们看到，draw严重耗时，渲染线程<code>dequeueBuffer</code>消耗掉20ms的时间。As we all known，Android的Graphics buffer是生产者消费者模型，当作为消费者的SF来不及处理buffer并释放，渲染线程也就需要额外耗时等待buffer就绪。上面还有一段”Waiting GPU Completion”的trace没有贴上来（下图），这段耗时比不开启后台录屏的case下高得多（3ms对比15ms），说明了一定的GPU性能问题或SF的性能问题，甚至有可能是Display有问题（HWC release耗时过长也会导致SF释放buf、生产者渲染线程dequeueBuffer额外等待）。</p>
+<p>这里的机制比较复杂，不熟悉底层Graphics buffer的流水线模型就不好理解。In one world, <strong><code>dequeueBuffer</code>申请的buffer不是凭空new出来的，而是在App-SurfaceFlinger-Framebuffer这一流水线中循环使用的。流水线中的buffer不是无限的，而是有穷的几个。当底层的伙计，如SF和HWC，使用了buffer但是没有来得及释放时（它们的工作没做完之前不会释放buffer），流水线（可以理解成头尾相接的单向队列（ring buffer））没有可用的buffer，此时<code>dequeueBuffer</code>就不得不进入等待，出现【耗时看上去很长】的问题</strong>。实际上，<code>dequeueBuffer</code>耗时的唯一原因几乎仅仅只有一个：底层消费太慢了，流水线没有剩余buffer，因此需要等待。</p>
+<p>这个模型抽象理解非常简单。下图，右边消费者是底层图形栈——它每消费完一个buffer就会释放掉，每释放一个buffer应用层能用的buffer就加1。左边生产者是App渲染线程——它调用<code>dequeueBuffer</code>申请一个buffer以将它的画面绘制到这个buffer上。buffer送入BufferQueue后由右边的消费者（图形栈）进行消费（合成、上屏显示），然后释放buffer。<strong>当图形栈来不及release buffer时，<code>dequeueBuffer</code>的调用者（App渲染线程）将由于无可用buffer，就必须挂起等待了，在perfetto上就留下长长的一段”耗时“（实际上是墙上时间，大部分都没有占用CPU）</strong>。</p>
+<p>以上，这就是为什么说App渲染线程<code>dequeueBuffer</code>严重耗时中的耗时为什么要打引号，为什么要说是被图形层拖累了。<br><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/BufferQueue%E6%A8%A1%E5%9E%8B.png"></p>
+</li>
+<li><p>下图可以看到，刨去<code>dequeueBuffer</code>的严重异常耗时，执行<strong>渲染的部分耗时相对于正常的case几乎没有差异</strong>，这可以断言<strong>渲染线程的惨烈耗时主要就是被dequeueBuffer浪费</strong>了。</p>
+<p>从<code>GPU Completion</code>来看，此时GPU正在为SF工作，因为在图中看到（不好意思没有截全，下图你是看不出来的），**<code>dequeueBuffer</code>总是在SF的<code>GPU Completion</code>结束之后结束的，这就表明SF正在通过GPU消费buffer（调用GPU进行合成后提交，然后标记buffer允许被渲染线程dequeue）。<code>dequeueBuffer</code>获取到就绪的buffer此时此刻取决于SF的消费能力——因为case中它是短板<strong>。（当然</strong>图形层的buffer可用不止SurfaceFlinger需要释放，因为SF释放后buffer实质上流转到更底层的HWC，等它将Buffer提交到屏幕后才会释放，这里释放后才能给App再次使用**(上面哪个模型图把SF和HWC合并为流水线的图形层buffer消费者)。</p>
+<p>从perfetto报告看<strong>HWC release非常及时、余量充足，SF的GPU Completion则较紧密地接着dequeueBuffer返回，基本断言是SF太慢了——排除HWC的责任</strong>。（下图看不出来，当时没有截图到HWC的release情况。）</p>
+<p>到这里，除了再次确认排除了前台App的问题外，还可以断言问题来自SurfaceFlinger过分耗时。此外将问题范围的下界从整个SF合成流程（上文的Vsync-sf）缩小到了排除HWC的范围。</p>
+<p>结论：渲染耗时一切正常，问题出现在SF消费buffer（合成图形）失速了，导致没有可用的buffer供渲染线程使用。从下图的SF的工况（第三列）来看，情况确实如此。<br><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E8%99%BD%E7%84%B6drawFrame%E7%9B%B8%E5%AF%B9%E6%AD%A3%E5%B8%B8%E6%83%85%E5%86%B5%E8%80%97%E6%97%B6%E5%BE%88%E9%95%BF%EF%BC%8C%E4%BD%86%E6%98%AF%E9%99%A4dequeueBuffer%E4%BB%A5%E5%A4%96%EF%BC%8C%E6%89%A7%E8%A1%8C%E6%B8%B2%E6%9F%93%E8%80%97%E6%97%B6%E5%8D%B4%E6%B2%A1%E6%9C%89%E5%B7%AE%E5%BC%82.png"></p>
+</li>
+<li><p>既然一口咬定是SF的锅，那就瞧瞧SF。先看SF的INVALIDATE，这没啥好看的，异常case和正常case都是~2.5ms。主要看refresh，正常case ~6.8ms，异常case ~18.8ms。refresh包含SF的合成四件套，包括<code>rebuildLayerStack</code>、<code>CalcuateWorkingSet</code>、<code>Prepare</code>、<code>doComposition</code>。<br><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E4%B8%A4%E6%AC%A1composition%E3%80%81calc%E5%90%8E%E6%9C%89%E7%AD%89%E5%BE%85.png"><br>Perfetto报告直接表明，case的后台录屏导致的额外一次合成和配套工作是主要的耗时增量。</p>
+<p>之所以会执行两次合成，是因为后台录屏工具编程上通过Android SDK提供的<code>MediaProjection</code>配合<code>VirtualDisplay</code>实现一个虚拟的镜像的屏幕。SurfaceFlinger会将画面输送一份到这个虚拟的Display以实现屏幕图像传送到录屏工具，虚拟的屏幕要求额外的一次合成。从上图可以直接得出结论，case带来的<strong>额外工作消耗就是对该录屏用的<code>VirtualDisplay</code>的合成工作(doComposition)带来的</strong>。</p>
+</li>
+</ol>
+<h2 id="VirtualDisplay合成耗时"><a href="#VirtualDisplay合成耗时" class="headerlink" title="VirtualDisplay合成耗时"></a>VirtualDisplay合成耗时</h2><p>上文已经可以断言耗时原因是VirtualDisplay在合成阶段的耗时了。本小节介绍对<code>VirtualDisplay</code>的耗时分析。</p>
+<p>由于问题范围已经缩小到了很小的一个范围，在SurfaceFlinger的Refresh过程中，case相对正常应用有巨大的差异耗时，几乎完全来自于对<code>VirtualDisplay</code>的合成耗时(doComposition)。同时也可以看到，两次合成（一次是设备的物理屏幕，一次是case的后台录屏工具创建的虚拟屏幕）中，虚拟屏幕的耗时远远高于物理屏幕（4倍以上）。</p>
+<p>通过查看ATRACE的tag（上图，Perfetto中SurfaceFlinger中主线程的各个trace point都是用ATRACE打的tag），结合dumpsys SurfaceFlinger，能直接看到的线索是：</p>
+<ol>
+<li>虚拟屏显著耗时，且合成工作通过GLES调用GPU完成</li>
+<li>物理屏合成耗时很小，它通过HWC合成</li>
+</ol>
+<p>结合图中提示的trace tag、耗时，可以得出结论，使用GPU合成的虚拟屏中因GPU合成耗时很长，导致它显著高于物理屏HWC合成耗时。如果GPU合成能够和HWC合成一样快，或者干脆让虚拟屏也使用HWC合成，那么可以预期SurfaceFlinger的合成工作的消耗将显著降低。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>本小节综合上述三个小节的分析，对节”定性问题“下一个结论。</p>
+<p>耗时的本质已经被看透，录屏工具申请创建的<code>VirtualDisplay</code>没有通过HWC进行合成，而是通过GPU进行合成，它耗时很长导致界面卡顿。In one word，<strong>case使用的<code>VirtualDisplay</code>的合成方式不够高效</strong>。</p>
+<blockquote>
+<p>HWC是Hardward Composer。它接收图形数据，类似于往桌面（真的桌面，不是电脑和手机的桌面）上面叠放照片和纸张——即合成过程。这个工作能将界面上几个窗口叠加在一起后送到屏幕上显示。通过GLES调动GPU也能干这活，不过HWC执行合成的动作是纯硬件的——它很快，比GPU快几倍。</p>
+</blockquote>
+<h1 id="定位问题"><a href="#定位问题" class="headerlink" title="定位问题"></a>定位问题</h1><p>本节介绍问题定位过程。前面虽然<strong>定性了问题原因是合成方式不够高效</strong>，但是没有得出其中的原理——为什么虚拟屏不使用高效的HWC进行合成。本节通过<strong>介绍HWC的原理、SurfaceFlinger控制合成方式、虚拟屏Surface特性等来介绍图形栈中合成方式的处理模式。掌握了相关管理后，探讨一些尽量通用的共性的解决方案实现性能优化</strong>。最后着重介绍多套优化方案中的一种<strong>直面根本原因的解决方法——MediaCodec.MediaFormat创建的支持HWC合成的Surface方案</strong>。</p>
+<ul>
+<li>SurfaceFlinger如何决定使用HWC还是GPU合成？<br>SurfaceFlinger合成主要可以依靠两条路径。其中之一是”纯硬“的HWC合成（在dumpsys SurfaceFlinger中可以看到Composition type为DEVICE），另一个是通过OpenGL让GPU进行合成（Composition type为CLIENT）。</li>
+</ul>
+<p>除非是功耗上的设计，否则SurfaceFlinger总是会优先检查本次合成是否支持使用HWC。编程上，在合成阶段之一的prepare过程中，SurfaceFlinger通过<code>prepareFrame</code>在<code>RenderSurface</code>与Hardware Composer（即HWC）的HIDL服务通信，完成hwc layer的创建。但是，layer能够成功创建不意味着一定支持HWC合成。SurfaceFlinger通过<code>getChangedCompositionTypes</code>向HWC查询不支持HWC合成的Layer。该方法返回的layer如果被标记为CLIENT合成，那么这部分Layer无法由HWC进行合成，而只能通过GPU进行合成——case的<code>VirtualDisplay</code>就是这个情况。</p>
+<ul>
+<li>部分layer可能不能由HWC合成的原因（除功耗策略、其他软件策略外）：</li>
+</ul>
+<ol>
+<li>HWC layer达到上限<br>Hardware Composer支持的layer数量是有限的。查阅公开资料可知，HWC合成动作属于硬件提供的能力，它们的合成能力受到硬件本身的限制。Google官方资料对Android设备的要求是，HWC最少应该支持4个Layer，分别用于一个常规页面上最常见的4个层：壁纸、状态栏、导航栏和应用窗口。<br>在case设备中，经过测试，该平台的HWC最多支持7个能进行HWC合成的layer，从第8个layer开始，完完全全只能使用CLIENT合成亦即SurfaceFlinger调用RenderEngine通过OpenGL调动GPU进行合成。<br>正是由于HWC合成layer有上限，因此在弹出多个弹窗、叠加过于复杂时，即使界面简单也有可能出现比较明显的卡顿。</li>
+<li>VirtualDisplay的Surface格式不受HWC支持<br>HWC的硬件合成能力对buffer（Surface封装）内保存的图像的格式有要求。比如，HWC不能处理缩放，仅支持一部分的格式，大多数都还有其他因素会导致不支持，如旋转、部分Alpha等等。In one word，图像格式的数量是远远多于HWC支持的类型数的。当HWC碰到不支持合成的Surface时，就会在前文提过的<code>getChangedCompositionTypes</code>中通知SurfaceFlinger，由SurfaceFlinger转为使用GPU合成。</li>
+</ol>
+<p>结合上述几种情况，设计实验验证。其中通过在物理屏上弹窗来增加Layer以获取HWC Layer上限。确认case无法使用HWC合成不是Layer上限导致的问题后，通过对比来验证Surface格式问题。Surface是对native层的buffer的封装，其类型广泛、实现复杂，一个一个试是不现实的。通过对比性能强劲的类似实现可以一探究竟。Android adb提供一个出厂自带的录屏命令<code>screenrecord</code>、用于测试双屏显示功能的虚拟辅助屏幕（开发者模式-模拟辅助屏）、著名远程窥屏工具<code>scrcpy</code>等三个工具是一系列重要参考。</p>
+<blockquote>
+<p>经过测试，<code>screenrecord</code>和<code>scrcpy</code>创建的<code>VirtualDisplay</code>支持HWC合成——这是优化目标。首先看看它们的实现。</p>
+</blockquote>
+<p>编程上，虚拟辅助屏幕采用了与case一模一样的实现——通过创建<code>VirtualDisplay</code>让图形层额外合成一次屏幕到该虚拟屏幕中。虚拟屏幕本质上将画面发送给录屏功能实现，而非进行显示来完成录屏。</p>
+<p>通读<code>screenrecord</code>源码，逻辑上，它与虚拟辅助屏、case录屏应用是相同的——<code>VirtualDisplay</code>录屏。但是编程上略有差异：</p>
+<ol>
+<li><code>screenrecord</code>直接通过binder与SurfaceFlinger通信，获取了raw <code>VirtualDisplay</code>，而虚拟屏和case应用均通过SDK提供的<code>MediaProjection</code>包装后的<code>VirtualDisplay</code>。这一块经过源码阅读，确认了经过<code>MediaProjetion</code>包装的<code>VirtualDisplay</code>不会对HWC合成有影响。</li>
+<li><code>VirtualDisplay</code>配置略有差异。case录屏工具自定了一个分辨率和dpi，与物理屏不一致，也和<code>screenrecord</code>不一致。</li>
+<li>用于接收图像数据的<code>Surface</code>不一致。<code>screenrecord</code>通过<code>MediaCodec</code>创建了指定格式的Surface，类型是OMX库中定义的<code>OMX_COLOR_FormatAndroidOpaque</code>。</li>
+</ol>
+<p>可能影响HWC合成的最大可能来自第3点的<code>Surface</code>格式。做出这个假设的逻辑是，HWC是否有合成能力是由Layer的格式来决定的（Layer是图形层对Graphics Buffer的抽象，Surface是应用层对Layer的再一次抽象，在分析问题时，可以将它们的底层视为一致的，即都是在各自的层指代Graphics Buffer）。</p>
+<p>因此，编写demo，模仿<code>screenrecord</code>创建Surface的方式<a target="_blank" rel="noopener" href="https://cs.android.com/android/platform/superproject/+/master:frameworks/av/cmds/screenrecord/screenrecord.cpp;l=182?q=screenrecord.cpp">screenrecord::prepareEncoder</a>：</p>
+<ol>
+<li>源码中<code>MediaCodec.MediaFormat</code>创建。重点是设置MIME为<code>Video/AVC</code>，并设置颜色空间为<code>OMX_COLOR_FormatAndroidOpaque</code>。<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">format</span>-&gt;</span>setString(KEY_MIME, kMimeTypeAvc);  </span><br><span class="line"><span class="function"><span class="title">format</span>-&gt;</span>setInt32(KEY_COLOR_FORMAT, OMX_COLOR_FormatAndroidOpaque);</span><br></pre></td></tr></table></figure></li>
+<li><code>MediaCodec</code>创建后通过<code>getInputSurface</code>获取创建的<code>Surface</code>，传递到<code>VirtualDisplay</code>即可接收到<code>VirtualDisplay</code>上显示的内容——即获取到录屏内容。这一段是常规操作，起HWC合成的决定性作用的是第1步中对MIME类型的设置、对颜色空间的设置。</li>
+</ol>
+<p>我们的case是应用层App，因此用Java代码简单表示一下：</p>
+<figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> MediaFormat f = MediaFormat.createVideoFormat(<span class="string">&quot;Video/AVC&quot;</span>, SCREEN_WIDTH, SCREEN_HEIGHT);</span><br><span class="line">f.setInteger(MediaFormat.KEY_COLOR_FORMAT,</span><br><span class="line">		MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);</span><br><span class="line"><span class="comment">// 其他的MediaCodec的常规设置，如I帧、码率帧率就不再赘述</span></span><br><span class="line"><span class="keyword">final</span> MediaCodec c = MediaCodec.createEncoderByType(<span class="string">&quot;Video/AVC&quot;</span>);</span><br><span class="line">codec.configure(format, <span class="literal">null</span>, <span class="literal">null</span>, MediaCodec.CONFIGURE_FLAG_ENCODE);</span><br><span class="line"><span class="comment">// 录屏功能基础操作，这个surface的格式就是前面设置的COLOR_FormatSurface，它作为MediaCodec的输入流进行编码，稍后，它作为VirtualDisplay的参数，传递到VirtualDisplay接收显示数据</span></span><br><span class="line"><span class="keyword">final</span> Surface sf = codec.createInputSurface();  </span><br><span class="line">codec.start();  </span><br><span class="line">mScreenRecorder.setupVirtualDisplay(sf, SCREEN_WIDTH, SCREEN_HEIGHT);</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Java层使用<code>COLOR_FormatSurface</code>，它等同于OMX的<code>OMX_COLOR_FormatAndroidOpaque</code>。</p>
+</blockquote>
+<p>demo如上。简单说明下，核心操作是前两行设置格式。其他的如创建Codec、传递Surface到VirtualDisplay均为常规录屏应用的”死“代码（任谁来写都是这么写的，也是case应用的本来就实现的代码）。case应用之前通过<code>SurfaceTexture</code>创建<code>Surface</code>，它仅支持GPU合成（<code>SurfaceTexture</code>的特性）。</p>
+<p><strong>运行该demo，通过dumpsys SurfaceFlinger查看Virtual Display的各个Layer的合成类型，可以看到从原来的CLIENT类型变成了DEVICE类型。用相同的环境、手法测试，发现帧率按照预期从30帧恢复到了60帧！</strong> 表明我们的方案取得了彻底的成功——通过这个解决方案，不仅验证了HWC合成受到Surface的格式（底层的Graphics Buffer）的限制，还验证了DEVICE合成的性能优化可行性。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>SurfaceFlinger</code>合成中没有利用上HWC可能导致卡顿掉帧。而HWC合成条件比较严格（跟硬件平台本身有关、系统底层实现有关）。应用层尽量使用契合HWC条件的Surface能够尽可能保证使用HWC进行合成——将Surface设置为<code>COLOR_FormatSurface</code>（<code>OMX_COLOR_FormatAndroidOpaque</code>）。</p>
+<h1 id="成果展示"><a href="#成果展示" class="headerlink" title="成果展示"></a>成果展示</h1><ul>
+<li><p>优化后的效果</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Average</span> elapsed <span class="number">8</span>.<span class="number">60</span> ms</span><br><span class="line"><span class="attribute">1</span>.<span class="number">45</span> <span class="number">0</span>.<span class="number">56</span> <span class="number">5</span>.<span class="number">13</span> <span class="number">1</span>.<span class="number">46</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>优化后看看Perfetto<br><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E4%BC%98%E5%8C%96%E5%90%8E_perferro_%E6%80%BB%E8%A7%88.png"></p>
+</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E4%BC%98%E5%8C%96%E5%90%8E_perfetto_%E5%B0%8F%E5%A7%91.png"></p>
+<ul>
+<li><p>验证是HWC合成<br>通过dumpsys SurfaceFlinger可以看到，case创建的虚拟屏从CLIENT合成（GPU合成）转成了DEVICE合成（HWC合成）。</p>
+</li>
+<li><p>通过gfx柱状图非常直观，对比文章开头的一幅图，优化效果极其显著。</p>
+<blockquote>
+<p>注意，屏幕最右边有几个高耸如云的柱子，那个不是case后台录屏干的也不是前台应用干的，不知道这个系统里是不是有什么浮窗什么的干的（不是我没优化好）。</p>
+</blockquote>
+</li>
+</ul>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E4%BC%98%E5%8C%96%E5%90%8E%E6%95%88%E6%9E%9C-gfx%E6%9F%B1%E7%8A%B6%E5%9B%BE.png"></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://kb.cvte.com/pages/viewpage.action?pageId=290145597">Android图形层垂直同步虚拟VSYNC机制</a></li>
+<li><a target="_blank" rel="noopener" href="https://source.android.com/devices/graphics/implement-vsync">显示流水线VSYNC垂直同步</a></li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/04/22/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%9A%E6%80%A7%E5%92%8C%E5%AE%9A%E4%BD%8DAndroid%E5%9B%BE%E5%BD%A2%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94%E4%BB%A5%E5%90%8E%E5%8F%B0%E5%BD%95%E5%B1%8F%E7%9A%84%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B8%BA%E4%BE%8B/">https://nasdaqgodzilla.github.io/2022/04/22/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%9A%E6%80%A7%E5%92%8C%E5%AE%9A%E4%BD%8DAndroid%E5%9B%BE%E5%BD%A2%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94%E4%BB%A5%E5%90%8E%E5%8F%B0%E5%BD%95%E5%B1%8F%E7%9A%84%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B8%BA%E4%BE%8B/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><a class="post-meta__tags" href="/tags/Graphics/">Graphics</a></div><div class="post_share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/git.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/04/22/GDB%E6%95%99%E7%A8%8B-%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5%E6%89%8B%E5%86%8C/"><img class="prev-cover" src= "/loading.gif" data-lazy-src="https://www.sourceware.org/gdb/images/archer.svg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">GDB教程: 命令速查手册</div></div></a></div><div class="next-post pull-right"><a href="/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC偏移.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android图形层垂直同步虚拟VSYNC机制</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/04/20/Android%E5%9B%BE%E5%BD%A2%E5%B1%82%E5%9E%82%E7%9B%B4%E5%90%8C%E6%AD%A5%E8%99%9A%E6%8B%9FVSYNC%E6%9C%BA%E5%88%B6/" title="Android图形层垂直同步虚拟VSYNC机制"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/VSYNC偏移.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-20</div><div class="title">Android图形层垂直同步虚拟VSYNC机制</div></div></a></div><div><a href="/2022/04/20/Android%E5%B9%B3%E5%8F%B0GPU%E8%B4%9F%E8%BD%BD%E8%AE%A1%E7%AE%97%E3%80%81%E5%88%86%E6%9E%90%E6%96%B9%E6%B3%95/" title="Android平台GPU负载计算、分析方法"><img class="cover" src= "/loading.gif" data-lazy-src="https://community.arm.com/cfs-filesystemfile/__key/communityserver-components-secureimagefileviewer/communityserver-blogs-components-weblogfiles-00-00-00-20-66/Mali_2D00_G72-hero-thumbnail_2E00_.png_2D00_900x506x2.png?_=636789250477958139" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-20</div><div class="title">Android平台GPU负载计算、分析方法</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">54</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%91%E7%8E%B0%E3%80%81%E5%AE%9A%E6%80%A7%E4%B8%8E%E5%AE%9A%E4%BD%8D"><span class="toc-number">2.</span> <span class="toc-text">发现、定性与定位</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7"><span class="toc-number">2.1.</span> <span class="toc-text">工具</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#GPU-Loading"><span class="toc-number">2.1.1.</span> <span class="toc-text">GPU Loading</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FPS"><span class="toc-number">2.1.2.</span> <span class="toc-text">FPS</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E6%AD%A5%E5%AE%9A%E4%BD%8D%E9%97%AE%E9%A2%98"><span class="toc-number">2.2.</span> <span class="toc-text">初步定位问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9A%E6%80%A7%E9%97%AE%E9%A2%98"><span class="toc-number">2.3.</span> <span class="toc-text">定性问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B7%9F%E4%B8%8D%E4%B8%8A%E6%97%8B%E5%BE%8B%E8%8A%82%E5%A5%8F%E7%9A%84VSYNC"><span class="toc-number">2.4.</span> <span class="toc-text">跟不上旋律节奏的VSYNC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%A5%E9%87%8D%E5%BC%82%E5%B8%B8%E8%80%97%E6%97%B6%E7%9A%84dequeueBuffer"><span class="toc-number">2.5.</span> <span class="toc-text">严重异常耗时的dequeueBuffer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VirtualDisplay%E5%90%88%E6%88%90%E8%80%97%E6%97%B6"><span class="toc-number">2.6.</span> <span class="toc-text">VirtualDisplay合成耗时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AE%BA"><span class="toc-number">2.7.</span> <span class="toc-text">结论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9A%E4%BD%8D%E9%97%AE%E9%A2%98"><span class="toc-number">3.</span> <span class="toc-text">定位问题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.1.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%88%90%E6%9E%9C%E5%B1%95%E7%A4%BA"><span class="toc-number">4.</span> <span class="toc-text">成果展示</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3rvep.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android SystemWebview Chromoum源码拉取与编译"/></a><div class="content"><a class="title" href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译">Android SystemWebview Chromoum源码拉取与编译</a><time datetime="2022-08-17T03:44:37.000Z" title="发表于 2022-08-17 11:44:37">2022-08-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务"><img src= "/loading.gif" data-lazy-src="https://github.com/Dreamacro/clash/raw/master/docs/logo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Clash配置暴露代理服务"/></a><div class="content"><a class="title" href="/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/" title="Clash配置暴露代理服务">Clash配置暴露代理服务</a><time datetime="2022-08-15T05:16:03.000Z" title="发表于 2022-08-15 13:16:03">2022-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zgyxy.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android系统编译优化: 使用Ninja加快编译"/></a><div class="content"><a class="title" href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译">Android系统编译优化: 使用Ninja加快编译</a><time datetime="2022-08-08T09:16:51.000Z" title="发表于 2022-08-08 17:16:51">2022-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android动态日志ProtoLog原理与架构: How ProtoLogTool works"/></a><div class="content"><a class="title" href="/2022/07/08/Android%E5%8A%A8%E6%80%81%E6%97%A5%E5%BF%97ProtoLog%E5%8E%9F%E7%90%86%E4%B8%8E%E6%9E%B6%E6%9E%84-How-ProtoLogTool-works/" title="Android动态日志ProtoLog原理与架构: How ProtoLogTool works">Android动态日志ProtoLog原理与架构: How ProtoLogTool works</a><time datetime="2022-07-08T07:05:23.000Z" title="发表于 2022-07-08 15:05:23">2022-07-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/04/22/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%9A%E6%80%A7%E5%92%8C%E5%AE%9A%E4%BD%8DAndroid%E5%9B%BE%E5%BD%A2%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94%E4%BB%A5%E5%90%8E%E5%8F%B0%E5%BD%95%E5%B1%8F%E7%9A%84%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B8%BA%E4%BE%8B/'
+    this.page.identifier = '2022/04/22/Android性能优化-定性和定位Android图形性能问题——以后台录屏的性能优化为例/'
+    this.page.title = 'Android性能优化: 定性和定位Android图形性能问题——以后台录屏的性能优化为例'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
