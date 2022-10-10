@@ -6,7 +6,7 @@
   <link href="https://nasdaqgodzilla.github.io/atom.xml" rel="self"/>
   
   <link href="https://nasdaqgodzilla.github.io/"/>
-  <updated>2022-09-30T10:52:37.843Z</updated>
+  <updated>2022-10-10T02:28:10.913Z</updated>
   <id>https://nasdaqgodzilla.github.io/</id>
   
   <author>
@@ -15,6 +15,34 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>紫光展锐展讯SPRD刷机包pac文件解包提取img步骤</title>
+    <link href="https://nasdaqgodzilla.github.io/2022/10/10/%E7%B4%AB%E5%85%89%E5%B1%95%E9%94%90%E5%B1%95%E8%AE%AFSPRD%E5%88%B7%E6%9C%BA%E5%8C%85pac%E6%96%87%E4%BB%B6%E8%A7%A3%E5%8C%85%E6%8F%90%E5%8F%96img%E6%AD%A5%E9%AA%A4/"/>
+    <id>https://nasdaqgodzilla.github.io/2022/10/10/%E7%B4%AB%E5%85%89%E5%B1%95%E9%94%90%E5%B1%95%E8%AE%AFSPRD%E5%88%B7%E6%9C%BA%E5%8C%85pac%E6%96%87%E4%BB%B6%E8%A7%A3%E5%8C%85%E6%8F%90%E5%8F%96img%E6%AD%A5%E9%AA%A4/</id>
+    <published>2022-10-10T02:24:35.000Z</published>
+    <updated>2022-10-10T02:28:10.913Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="UNISOC-SPRD-PAC-UNPAC"><a href="#UNISOC-SPRD-PAC-UNPAC" class="headerlink" title="UNISOC_SPRD_PAC_UNPAC"></a>UNISOC_SPRD_PAC_UNPAC</h1><p>紫光展锐展讯SPRD刷机包pac文件解包提取img文件。</p><p>Extract Images from .pac file from Spreadtrum Unisoc SPRD.</p><h1 id="前置条件"><a href="#前置条件" class="headerlink" title="前置条件"></a>前置条件</h1><ol><li>pac文件 *1</li><li><code>Perl</code>环境</li></ol><h1 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h1><p>展锐官方自带一套分别用Python和Perl实现的将各img打包为pac文件的工具，也实现了对应的解包工具。其中，<code>pac_tools/unpac_perl/unpac.pl</code>是<code>Perl</code>实现的解包工具，能将pac文件中的各img提取出来。</p><p>下载：<a href="https://github.com/NasdaqGodzilla/UNISOC_SPRD_PAC_UNPAC">地址</a>（Clone源码或下载Release包）</p><h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><ul><li>请根据系统权限机制确保unpac.pl具有执行权限</li><li>第一个参数为需要提取的pac文件</li><li>第二个参数为提取产物的存储路径</li></ul><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.<span class="regexp">/pac_tools/u</span>npac_perl<span class="regexp">/unpac.pl ROM/y</span>our_pac_file.pac pac_unpac_path/</span><br></pre></td></tr></table></figure><h2 id="添加-S参数加快提取"><a href="#添加-S参数加快提取" class="headerlink" title="添加-S参数加快提取"></a>添加-S参数加快提取</h2><p><code>unpac.pl</code>在提取之前会校验pac文件的完整性。它非常耗时，可以在命令的最后追加<code>-S</code>跳过CRC校验。</p><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.<span class="regexp">/pac_tools/u</span>npac_perl<span class="regexp">/unpac.pl ROM/y</span>our_pac_file.pac pac_unpac_path/ -S</span><br></pre></td></tr></table></figure><ul><li>注意，-S参数必须放在最后面，不能放置️前两个参数之前</li></ul><h1 id="Troubleshooting"><a href="#Troubleshooting" class="headerlink" title="Troubleshooting"></a>Troubleshooting</h1><p>在命令的最后添加参数<code>-D</code>要求<code>unpac.pl</code>打印调试信息。</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h1 id=&quot;UNISOC-SPRD-PAC-UNPAC&quot;&gt;&lt;a href=&quot;#UNISOC-SPRD-PAC-UNPAC&quot; class=&quot;headerlink&quot; title=&quot;UNISOC_SPRD_PAC_UNPAC&quot;&gt;&lt;/a&gt;UNISOC_SPRD_PAC_UNPAC&lt;/</summary>
+      
+    
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
+    
+  </entry>
   
   <entry>
     <title>记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</title>
@@ -639,35 +667,6 @@
     <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="Linux" scheme="https://nasdaqgodzilla.github.io/tags/Linux/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>归去来兮辞</title>
-    <link href="https://nasdaqgodzilla.github.io/2022/06/14/%E5%BD%92%E5%8E%BB%E6%9D%A5%E5%85%AE%E8%BE%9E/"/>
-    <id>https://nasdaqgodzilla.github.io/2022/06/14/%E5%BD%92%E5%8E%BB%E6%9D%A5%E5%85%AE%E8%BE%9E/</id>
-    <published>2022-06-14T11:47:58.000Z</published>
-    <updated>2022-08-29T11:29:39.203Z</updated>
-    
-    <content type="html"><![CDATA[<p>魏晋陶渊明</p><p>　　余家贫，耕植不足以自给。幼稚盈室，瓶无储粟，生生所资，未见其术。亲故多劝余为长吏，脱然有怀，求之靡途。会有四方之事，诸侯以惠爱为德，家叔以余贫苦，遂见用于小邑。于时风波未静，心惮远役，彭泽去家百里，公田之利，足以为酒。故便求之。及少日，眷然有归欤之情。何则？质性自然，非矫厉所得。饥冻虽切，违己交病。尝从人事，皆口腹自役。于是怅然慷慨，深愧平生之志。犹望一稔，当敛裳宵逝。寻程氏妹丧于武昌，情在骏奔，自免去职。仲秋至冬，在官八十余日。因事顺心，命篇曰《归去来兮》。乙巳岁十一月也。</p><p>　　归去来兮，田园将芜胡不归？既自以心为形役，奚惆怅而独悲？悟已往之不谏，知来者之可追。实迷途其未远，觉今是而昨非。舟遥遥以轻飏，风飘飘而吹衣。问征夫以前路，恨晨光之熹微。</p><p>　　乃瞻衡宇，载欣载奔。僮仆欢迎，稚子候门。三径就荒，松菊犹存。携幼入室，有酒盈樽。引壶觞以自酌，眄庭柯以怡颜。倚南窗以寄傲，审容膝之易安。园日涉以成趣，门虽设而常关。策扶老以流憩，时矫首而遐观。云无心以出岫，鸟倦飞而知还。景翳翳以将入，抚孤松而盘桓。</p><p>　　归去来兮，请息交以绝游。世与我而相违，复驾言兮焉求？悦亲戚之情话，乐琴书以消忧。农人告余以春及，将有事于西畴。或命巾车，或棹孤舟。既窈窕以寻壑，亦崎岖而经丘。木欣欣以向荣，泉涓涓而始流。善万物之得时，感吾生之行休。</p><p>　　已矣乎！寓形宇内复几时？曷不委心任去留？胡为乎遑遑欲何之？富贵非吾愿，帝乡不可期。怀良辰以孤往，或植杖而耘耔。登东皋以舒啸，临清流而赋诗。聊乘化以归尽，乐夫天命复奚疑！</p><p>　　我家贫穷，种田不能够自给。孩子很多，米缸里没有存粮，维持生活所需的一切，没有办法解决。亲友大都劝我去做官，我心里也有这个念头，可是求官缺少门路。正赶上有奉使外出的官吏，地方大吏以爱惜人才为美德，叔父也因为我家境贫苦（替我设法），我就被委任到小县做官。那时社会上动荡不安，心里惧怕到远地当官。彭泽县离家一百里，公田收获的粮食，足够造酒饮用，所以就请求去那里。等到过了一些日子，便产生了留恋故园的怀乡感情。那是为什么？本性任其自然，这是勉强不得的；饥寒虽然来得急迫，但是违背本意去做官，身心都感痛苦。过去为官做事，都是为了吃饭而役使自己。于是惆怅感慨，深深有愧于平生的志愿。只再等上一年，便收拾行装连夜离去。不久，嫁到程家的妹妹在武昌去世，去吊丧的心情像骏马奔驰一样急迫，自己请求免去官职。自立秋第二个月到冬天，在职共八十多天。因辞官而顺遂了心愿，写了一篇文章，题目叫《归去来兮》。这时候正是乙巳年（晋安帝义熙元年）十一月。</p><p>　　回家去吧！田园快要荒芜了，为什么不回去呢？既然自己的心灵为形体所役使，为什么如此失意而独自伤悲？认识到过去的错误已经不可挽回，知道未来的事还来得及补救。确实走入了迷途大概还不远，已觉悟到现在的做法是对的而曾经的行为是错的。船在水上轻轻飘荡，微风吹拂着衣裳。向行人打听前面的路，遗憾的是天刚刚放亮。</p><p>　　刚刚看到自己简陋的家门，我心中欣喜，奔跑过去。童仆欢喜地前来迎接，孩子们守候在门前或院子里。院子里的小路快要荒芜了，松树菊花还长在那里；带着孩子们进了屋，美酒已经盛满了酒樽。我端起酒壶酒杯自斟自饮，观赏着庭树（使我）露出愉快的神色；倚着南窗寄托我的傲世之情，深知这狭小之地容易使我心安。每天（独自）在园中散步，成为乐趣,小园的门经常地关闭着；拄着拐杖走走歇歇，时时抬头望着远方（的天空）。白云自然而然地从山峰飘浮而出，倦飞的小鸟也知道飞回巢中；日光暗淡，即将落山，我流连不忍离去，手抚着孤松徘徊不已。</p><p>　　回去吧！让我同外界断绝交游。他们的一切都跟我的志趣不合，还要驾车出去追求什么？跟亲戚朋友谈心使我愉悦，弹琴读书能使我忘记忧愁；农夫把春天到了的消息告诉了我，将要去西边的田地耕作。有时驾着有布篷的小车，有时划着一条小船，既要探寻那幽深的沟壑，又要走过那高低不平的山丘。树木欣欣向荣，泉水缓缓流动，（我）羡慕万物恰逢繁荣滋长的季节，感叹自己一生行将告终。</p><p>　　算了吧！身体寄托在天地间还能有多少时候？为什么不随心所欲，听凭自然的生死？为什么心神不定，还想去什么地方？富贵不是我所求，升入仙界也没有希望。爱惜那良辰美景我独自去欣赏，要不就扶杖锄草耕种；登上东边山坡我放声长啸，傍着清清的溪流把诗歌吟唱；姑且顺随自然的变化，度到生命的尽头。乐安天命，还有什么可疑虑的呢？</p>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;p&gt;魏晋陶渊明&lt;/p&gt;
-&lt;p&gt;　　余家贫，耕植不足以自给。幼稚盈室，瓶无储粟，生生所资，未见其术。亲故多劝余为长吏，脱然有怀，求之靡途。会有四方之事，诸侯以惠爱为德，家叔以余贫苦，遂见用于小邑。于时风波未静，心惮远役，彭泽去家百里，公田之利，足以为酒。故便求之。及少日，眷然有归</summary>
-      
-    
-    
-    
-    <category term="管理与创业" scheme="https://nasdaqgodzilla.github.io/categories/%E7%AE%A1%E7%90%86%E4%B8%8E%E5%88%9B%E4%B8%9A/"/>
-    
-    <category term="文学" scheme="https://nasdaqgodzilla.github.io/categories/%E6%96%87%E5%AD%A6/"/>
-    
-    
-    <category term="管理与创业" scheme="https://nasdaqgodzilla.github.io/tags/%E7%AE%A1%E7%90%86%E4%B8%8E%E5%88%9B%E4%B8%9A/"/>
-    
-    <category term="文学" scheme="https://nasdaqgodzilla.github.io/tags/%E6%96%87%E5%AD%A6/"/>
     
   </entry>
   
