@@ -1,0 +1,449 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android三方应用UI自动化测试探索 | PeaceMaker</title><meta name="keywords" content="工具,Android"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="3:49 pmThursday, 20 October 2022 (HKT)Time in Hong Kong   三方应用UI自动化的价值 业务痛点   三方应用UI自动化的技术难题和隐患 App UI自动化测试的一般实践 App UI自动化的基础技术 三方App UI自动化的侧重   三方应用UI自动化的选型 1. 自动遍历 2. 图像技术 小结 参考工具   参考  三方应用UI自动化的价">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android三方应用UI自动化测试探索">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2022/11/07/Android%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E6%8E%A2%E7%B4%A2/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="3:49 pmThursday, 20 October 2022 (HKT)Time in Hong Kong   三方应用UI自动化的价值 业务痛点   三方应用UI自动化的技术难题和隐患 App UI自动化测试的一般实践 App UI自动化的基础技术 三方App UI自动化的侧重   三方应用UI自动化的选型 1. 自动遍历 2. 图像技术 小结 参考工具   参考  三方应用UI自动化的价">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg">
+<meta property="article:published_time" content="2022-11-07T11:59:11.000Z">
+<meta property="article:modified_time" content="2022-11-07T12:00:38.558Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="工具">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2022/11/07/Android%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E6%8E%A2%E7%B4%A2/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android三方应用UI自动化测试探索',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-11-07 20:00:38'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">59</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android三方应用UI自动化测试探索</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-11-07T11:59:11.000Z" title="发表于 2022-11-07 19:59:11">2022-11-07</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-11-07T12:00:38.558Z" title="更新于 2022-11-07 20:00:38">2022-11-07</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android三方应用UI自动化测试探索"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><hr>
+<p>3:49 pm<br>Thursday, 20 October 2022 (HKT)<br>Time in Hong Kong</p>
+<hr>
+<ul>
+<li><a href="#%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8ui%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E4%BB%B7%E5%80%BC">三方应用UI自动化的价值</a><ul>
+<li><a href="#%E4%B8%9A%E5%8A%A1%E7%97%9B%E7%82%B9">业务痛点</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8ui%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E6%8A%80%E6%9C%AF%E9%9A%BE%E9%A2%98%E5%92%8C%E9%9A%90%E6%82%A3">三方应用UI自动化的技术难题和隐患</a><ul>
+<li><a href="#app-ui%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E7%9A%84%E4%B8%80%E8%88%AC%E5%AE%9E%E8%B7%B5">App UI自动化测试的一般实践</a></li>
+<li><a href="#app-ui%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E5%9F%BA%E7%A1%80%E6%8A%80%E6%9C%AF">App UI自动化的基础技术</a></li>
+<li><a href="#%E4%B8%89%E6%96%B9app-ui%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E4%BE%A7%E9%87%8D">三方App UI自动化的侧重</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8ui%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E9%80%89%E5%9E%8B">三方应用UI自动化的选型</a><ul>
+<li><a href="#1-%E8%87%AA%E5%8A%A8%E9%81%8D%E5%8E%86">1. 自动遍历</a></li>
+<li><a href="#2-%E5%9B%BE%E5%83%8F%E6%8A%80%E6%9C%AF">2. 图像技术</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+<li><a href="#%E5%8F%82%E8%80%83%E5%B7%A5%E5%85%B7">参考工具</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+<h1 id="三方应用UI自动化的价值"><a href="#三方应用UI自动化的价值" class="headerlink" title="三方应用UI自动化的价值"></a>三方应用UI自动化的价值</h1><p>从设备厂商的视角来看，Android App的UI实现方式错综复杂，采用的UI技术栈层出不穷，以及需要进行显示适配的新型场景（如平行世界、窗口模式、画中画、桌面模式和折叠屏）井喷式涌现。</p>
+<p>大部分的三方应用测试通常仅关注UI功能、冒烟测试，测试流程枯燥、重复，且业界有成熟的UI自动化基础，因此通常在三方应用兼容性测试中接入一定程度的自动化测试。</p>
+<p>在这个大背景下，相对于一方&#x2F;二方应用而言，数量庞大、纯黑盒、架构复杂多样的三方应用，主要<strong>在以下几个场景中存在几个痛点</strong>。</p>
+<h2 id="业务痛点"><a href="#业务痛点" class="headerlink" title="业务痛点"></a>业务痛点</h2><h4 id="1-技术、市场因素等构成的现状，决定了厂商对三方应用的兼容性的工作量是不自主的、单调增长的"><a href="#1-技术、市场因素等构成的现状，决定了厂商对三方应用的兼容性的工作量是不自主的、单调增长的" class="headerlink" title="1. 技术、市场因素等构成的现状，决定了厂商对三方应用的兼容性的工作量是不自主的、单调增长的"></a>1. 技术、市场因素等构成的现状，决定了厂商对三方应用的兼容性的工作量是不自主的、单调增长的</h4><p>三方应用UI测试投入不小，但在没有直接经济效益的前提下又不得不投入。不论测试方法以手工进行、自动化测试、混合进行，对QA资源的消耗都是巨大且不受控的。</p>
+<h4 id="2-效率显著低于一方应用"><a href="#2-效率显著低于一方应用" class="headerlink" title="2. 效率显著低于一方应用"></a>2. 效率显著低于一方应用</h4><p>高效的自动化要求QA<strong>掌握被测应用的业务、版本变更点</strong>，以及与QA配合的<strong>自动化测试友好的应用接口</strong>。</p>
+<p>对于三方应用，业务的不透明决定了QA设计的case<strong>不能紧咬变更点</strong>，<strong>无法设计最符合业务逻辑的测试方案</strong>。</p>
+<p>此外，被测三方应用可能<strong>没有自动化UI测试接口</strong>，或<strong>自动化测试接口本身就不易被非App自身人员使用</strong>。</p>
+<blockquote>
+<p>就算条件成立，也不可能对成百上千的应用都勤力投入，通常舍弃覆盖程度</p>
+</blockquote>
+<p>通常，高效的UI自动化测试会通过POA模型、Page Factory模型等，借助工业级的自动化框架和思想，由RD与QA配合，从设计-开发-测试形成闭环，产出可维可测性高的产品——但仅局限于一方应用之内，厂商和其他外部并不能从中受益，用起来自动测试。</p>
+<blockquote>
+<p>相当一部分应用并未设计自动化基建，即使是应用方自身都需要花费大量精力才能用起自动UI测试</p>
+</blockquote>
+<h4 id="3-测不到位或过度测试"><a href="#3-测不到位或过度测试" class="headerlink" title="3. 测不到位或过度测试"></a>3. 测不到位或过度测试</h4><p>三方应用并非自研，且属于纯黑盒，并在成本因素制约下，对三方应用的UI测试（包括UI自动化测试）<strong>追求高覆盖率是不现实的</strong>、不科学也不可能的，但是仍然尝试追求一定程度的覆盖。这个<strong>覆盖的程度难以衡量、覆盖率目标也难以估量制定</strong>，也不依靠分析和讨论得出。</p>
+<p>三方应用在没有公开或共享其热点流程时，黑盒的UI测试（包括按照一定case进行的手工&#x2F;自动测试、Monkey测试）<strong>通常不能拦截全部的关键流程</strong>。</p>
+<p>当然，也有过度测试或冗余测试的情况。</p>
+<blockquote>
+<p>总结来说就是测试覆盖目标、测试覆盖率、测到什么程度，是非曲直，难以论说</p>
+</blockquote>
+<h4 id="4-投入产出不理想"><a href="#4-投入产出不理想" class="headerlink" title="4. 投入产出不理想"></a>4. 投入产出不理想</h4><p>在三方应用UI自动化测试场景下，有时QA或RD完成一组自动化case的设计、编码、验证后，发现花费的时间是手工测试的10倍甚至更多。这一投入产出比若是常态，则显然不可接受。</p>
+<p>在紧急情况下，有时手工测试一把梭哈更加可靠，甚至可能废弃掉团队积累的自动测试方法。</p>
+<p>这一“轻舟已过万重山”的寓景还不是最严峻的挑战，当三方应用更新后，迫于三方应用实现的多样性、厂商侧的自主性等不可抗力，<strong>自动化脚本&#x2F;工具&#x2F;case可能会很遗憾地失效</strong>，失去其“Once write, run forever”的愿景。</p>
+<blockquote>
+<p>Martin Flower：“GUI测试用例还很脆弱，如对系统的一些修正可能导致很多用例的失败，这时候你需要重新录制。你可以放弃录制的方法来解决这个问题，通过写GUI测试代码，但是这样效率非常低。就算你已经很精通了GUI测试代码的编写，端到端的GUI测试用例也很容易出现不可预期结果的问题，因此，基于GUI的自动化测试是脆弱、耗时（包括用例维护和执行）的。GUI测试用例能覆盖到主业务流程即可。”</p>
+</blockquote>
+<h4 id="5-边际效益递减"><a href="#5-边际效益递减" class="headerlink" title="5. 边际效益递减"></a>5. 边际效益递减</h4><p>根据敏捷开发模型，也出于对三方应用UI测试的展望，随着<strong>UI自动化的加深，其收益是边际递减的</strong>。</p>
+<blockquote>
+<p>参考Mike Cohn，自动化金字塔模型</p>
+</blockquote>
+<p><img src= "/loading.gif" data-lazy-src="https://s1.ax1x.com/2022/10/20/xyzaQI.png" alt="UI边际效益递减.png"></p>
+<p>事实上，三方应用UI测试的收益曲线更加复杂，它可能不是单调简单的，对三方应用UI测试投入地更多，最终综合效率和成果的收益可能不增长甚至反而下降。</p>
+<h4 id="6-支撑自研应用商店"><a href="#6-支撑自研应用商店" class="headerlink" title="6. 支撑自研应用商店"></a>6. 支撑自研应用商店</h4><p>应用合规分析（静态、动态分析）、自动审核&#x2F;上架、UI自动化测试是应用商店运营的重要支撑。此时UI自动化测试将从研发质量、兼容性的范畴扩展到运营、对接层面。</p>
+<p>除此之外，三方应用的UI测试与一方二方应用的UI测试的特点无异：</p>
+<ol>
+<li>枯燥，重复</li>
+<li>成本，时间</li>
+<li>扩展，重用</li>
+<li>探索性case的测试</li>
+</ol>
+<blockquote>
+<p>一方：指的是本团队的项目，如内置应用（易于进行白盒&#x2F;黑盒测试）<br>二方：一方使用的可能是其他部分研发的、外部引入的应用&#x2F;包&#x2F;库（不难进行白盒&#x2F;黑盒测试，通常集成到一方后进行测试）<br>三方：第三方的应用，如应用市场下载的应用（几乎没有通用的白盒方法，黑盒测试囿于复杂性难以实现通用化；不熟悉主程；难以衡量覆盖率；迭代不可控、测试节奏不自主）</p>
+</blockquote>
+<h1 id="三方应用UI自动化的技术难题和隐患"><a href="#三方应用UI自动化的技术难题和隐患" class="headerlink" title="三方应用UI自动化的技术难题和隐患"></a>三方应用UI自动化的技术难题和隐患</h1><p>实现对应用的UI自动化测试将给团队带来效率和体验的提升、研发质量的改善，基于这一类的愿景，业界提出了大量的测试思想，落地了强大了工具、框架。</p>
+<p>但是对于三方应用UI自动化测试的实现，主要受限于纯黑盒的环境、数量众多的各三方App，以及有限的成本预算、紧迫的时间，尚无简单高效的方案可供直接使用或参考。</p>
+<p>本节总结<strong>三方应用UI自动化测试的难点</strong>，并铺垫下文对三方应用UI自动化方案的探索。</p>
+<h2 id="App-UI自动化测试的一般实践"><a href="#App-UI自动化测试的一般实践" class="headerlink" title="App UI自动化测试的一般实践"></a>App UI自动化测试的一般实践</h2><p>UI自动化测试通常要求App具有如下内在特点：</p>
+<ol>
+<li>软件需求变动不频繁<br> 否则建议在UI测试（包括对自动化的开发）中投入占比不超过20%（因为（半）手工方式更快，具体方案见敏捷类方法）</li>
+<li>产品更新维护周期长<br> 否则跑UI自动化的次数不够多，收益不够大</li>
+<li>比较频繁的回归测试<br> 根据自动化金字塔，UI测试属于（相对于金字塔底层的接口测试、单元测试而言）执行效率低、复杂度高（脆弱）、问题出现后分析链路长的一般在回归测试时进行的测试</li>
+<li>自动化测试脚本可以重复使用、易于回放<br> 脚本如果不能重用，无法”回本”，即得不偿失</li>
+</ol>
+<p>也就是说，<strong>UI测试是分场景</strong>的，<strong>场景决定了UI自动化测试是否值得</strong>。</p>
+<p>测试金字塔是一个理想状态下软件测试模型。三层分别是UI测试、集成测试和单元测试。金字塔从下往上，可维可调性越差，效率越低。越接近底层所能达到的覆盖率越高。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://s1.ax1x.com/2022/10/20/x6ZM6S.png" alt="测试金字塔.png"></p>
+<blockquote>
+<p>UI测试应该投入的资源就如金字塔塔尖一样，占比最小，且靠后进行</p>
+</blockquote>
+<p><img src= "/loading.gif" data-lazy-src="https://s1.ax1x.com/2022/10/20/x6mmM8.png" alt="测试金字塔及反模式.png"></p>
+<blockquote>
+<p>对三方应用的UI自动化测试无法像一方应用那样易于进行，投入占比也很难有成熟的模型来衡量。但三方应用本身的“三方”特性，我们可以肯定，三方应用相关的UI自动化测试代码越少越好，总体投入越少越好。</p>
+</blockquote>
+<p>对于三方应用UI自动化的场景，其更加尖锐的效率要求、恶劣的自动化条件（业务是黑盒、逻辑是黑盒、Apk内建自动化接口是黑盒），使之<strong>具有了象征更高要求的特点</strong>：</p>
+<ol>
+<li>自动化设施必须是跨UI技术栈的<br> 要满足各种UI技术栈，不像单个应用的UI自动化那样支持单一的特定的自动化框架即可。</li>
+<li>低代码乃至于无代码<br> 三方应用众多且迭代不受控，自动化代码越多，其保值能力就越脆弱。</li>
+</ol>
+<p>在尽可能满足以上几点要求、兼顾低代码、高效率，可以推导出符合三方应用UI自动化测试需求的方案应该满足以下几点：</p>
+<ol>
+<li>具备识别各类型UI的能力：原生、WebView、Flutter、Cocos、Unity、React…</li>
+<li>具备各类型UI的点击能力</li>
+<li>对三方应用，不关注业务流程，只关注一定程度的不要太低的覆盖率（“界面点点点的深度、广度”）：要有自动“点点点”的能力，能划屏更佳</li>
+<li>低代码，不&#x2F;少写保质期短、制作耗时的测试脚本</li>
+</ol>
+<p>那么总结来说，这个工具应该是<strong>自动遍历各类界面并点点点</strong>。</p>
+<p>Android单个应用的UI自动化具有完善的工业级技术，我们看看这些基础技术能否使用或参考。</p>
+<h2 id="App-UI自动化的基础技术"><a href="#App-UI自动化的基础技术" class="headerlink" title="App UI自动化的基础技术"></a>App UI自动化的基础技术</h2><p>Android UI自动化框架的主要能力是界面感知和界面操作。一个完整的自动化UI测试操作是首先完成<strong>待点击、滑动区域的识别</strong>，然后完成<strong>界面操作和导航</strong>。</p>
+<p>对于业界先进的方案，主要如下。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://s1.ax1x.com/2022/10/21/x6cvWj.png" alt="AndroidUI自动化.png"></p>
+<p>UI自动化测试中重要也是耗费精力的一环，就是借助UI技术提供的机制编写代码、操作、录制，实现UI感知，即UI控件识别、定位。主要分为如下两种类型的实现。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://s1.ax1x.com/2022/10/21/xcixZn.png" alt="UI自动化测试定位方法.png"></p>
+<table>
+<thead>
+<tr>
+<th>分类</th>
+<th>原理</th>
+<th>兼容能力</th>
+<th>优点</th>
+<th>缺点</th>
+<th>代表作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>图像技术</td>
+<td>通过图像识别来分析和查找操作区域</td>
+<td>应用无侵入，依靠图像因而可以无视UI技术差异，兼容能力强</td>
+<td>避免繁琐的界面分析定位、自动化脚本，上手更快；兼容各UI栈</td>
+<td>图像识别在准确率、耗时、模型大小等需要投入</td>
+<td>Airtest + Poco</td>
+</tr>
+<tr>
+<td>原生定位能力</td>
+<td>Android内置无障碍服务提供ViewTree解析能力，自动化工具借助它来分析UI结构、发出操作事件</td>
+<td>三方应用UI实现具有随意性，存在相当比例的应用难以编写自动化脚本</td>
+<td>定位准确；在稳定迭代的项目中发挥更佳</td>
+<td>借助无障碍服务提供的ViewTree，存在IPC耗时、ViewTree解析耗时，测试速度慢；自动化脚本保质期短（尤其是三方应用）</td>
+<td>Appium</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>兼容能力：Android UI技术栈众多，UI自动化测试得以进行的基础是这个UI技术栈维护的ViewTree或DOM易于获取、解析。多种不同技术栈之间差异较大，主要分为原生、WebView、React、Cocos、Unity、Flutter等。</p>
+</blockquote>
+<blockquote>
+<p>应用侵入：为了满足自动化测试，必须注入到应用进程中，或者要求应用接入SDK</p>
+</blockquote>
+<h2 id="三方App-UI自动化的侧重"><a href="#三方App-UI自动化的侧重" class="headerlink" title="三方App UI自动化的侧重"></a>三方App UI自动化的侧重</h2><p>从上文两类界面感知方法及其配套的界面操作方法各有千秋，在不同的场景下各有优劣。在这些特性的基础上，三方应用UI自动化实际上更依赖于以下几个特性来确保效率。</p>
+<ul>
+<li>跨UI技术栈的兼容性</li>
+<li>低代码</li>
+<li>自动遍历Clickable、Scrollable控件并完成操作</li>
+<li>进行的UI测试具有一定的深度、广度，能够测试到足够多的UI界面</li>
+</ul>
+<p>对于图像技术而言，实现上述功能在整体难度上暂且不表，而逻辑上则较简单——即通过图像技术分析画面，分类出符合的控件，并按照一定逻辑组织自动测试（深度优先、广度优先）流程。</p>
+<p>前面分析过，图像技术本身的原理以及对UI的实现技术栈的独立性，天生就决定了其在跨UI技术栈兼容性会表现更佳，且模型的成熟度影响测试深度、广度。此外，由于图像分析避免了原生定位中要求的繁琐代码实现，因此其低代码属性也是与生俱来。</p>
+<p>对比来看，在针对三方应用UI自动化而言，由于客观上UI技术的多样性、碎片化，以及主观上对原生定位接口即自动化脚本的开发具有脆弱性，原生定位方案在跨UI技术栈兼容性这一方面较弱，同时针对一个应用的一个场景，所投入的资源、产出的代码量也较大，不适合与大量三方应用的场景。</p>
+<p>为了在三方应用UI自动化这种要求低代码、高兼容性的黑盒场景中取得更高的效率、更低的投入，要求自动化设施必须具有下面这些特性。</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>目的</th>
+<th>原理</th>
+<th>技术方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>兼容多UI技术栈</td>
+<td>应对三方应用多样、脆弱的UI技术栈</td>
+<td>同时具有原生定位能力和图像技术定位能力</td>
+<td>原生定位方案+机器学习&#x2F;视觉方案</td>
+</tr>
+<tr>
+<td>低代码甚至无代码</td>
+<td>减少自动化脚本成本、防止陷入过低的投入产出比</td>
+<td>避免进行界面定位工作、自动化脚本编码工作</td>
+<td>将原生能力、图像技术能力得到的界面信息转化为树、图等进行遍历，抛弃xpath、图像匹配等的遍历</td>
+</tr>
+</tbody></table>
+<h4 id="小结：放弃xpath等“精确定位”的编码工作，通过自动遍历实现低代码；结合机器学习、机器视觉提高对多种UI技术栈的兼容性。"><a href="#小结：放弃xpath等“精确定位”的编码工作，通过自动遍历实现低代码；结合机器学习、机器视觉提高对多种UI技术栈的兼容性。" class="headerlink" title="小结：放弃xpath等“精确定位”的编码工作，通过自动遍历实现低代码；结合机器学习、机器视觉提高对多种UI技术栈的兼容性。"></a>小结：放弃xpath等“精确定位”的编码工作，通过自动遍历实现低代码；结合机器学习、机器视觉提高对多种UI技术栈的兼容性。</h4><h1 id="三方应用UI自动化的选型"><a href="#三方应用UI自动化的选型" class="headerlink" title="三方应用UI自动化的选型"></a>三方应用UI自动化的选型</h1><p>在常规的传统的UI自动化测试的基础上，由于原生定位能力相关的技术较完善成熟，对三方应用的UI自动化重点关注“自动遍历”和“图像技术”辅助。</p>
+<h2 id="1-自动遍历"><a href="#1-自动遍历" class="headerlink" title="1. 自动遍历"></a>1. 自动遍历</h2><p>对于非图像处理技术的定位方案，通常自动化测试的主要投入是对界面的分析工作、对界面的自动化编码。这两大步骤是UI自动化测试中最大的投入之一，同时也是“脆弱性”即自动化脚本时效性的来源。</p>
+<p>事实上，App的界面和控件可以被抽象成树型结构。</p>
+<ul>
+<li>App的所有UI界面可以抽象成树，界面之间的跳转即树的连接路径，各个界面为叶子或根节点</li>
+<li>App的一个UI界面中的所有控件是树形结构组织的（ViewRootImpl树），各个控件总是能够从父节点经过路径到达</li>
+<li>部分UI技术提供的“树”可能需要结合图像技术才能完整确定</li>
+</ul>
+<p>基于原生定位能力实现的自动化设施主要的耗时点（尤其是针对三方应用）在于分析该UI树，找到关键控件的关键信息，编写自动化脚本完成定位、操作和导航。</p>
+<p>自动遍历的核心在于忽略“树”的细节，从根节点开始，遍历整个UI树和控件树，在摒弃自动化脚本的同时实现对UI的遍历，达成和自动化脚本接近的自动操作效果。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://s1.ax1x.com/2022/10/25/xRRqtP.png" alt="二叉树_前序遍历"></p>
+<p>从策略上看，遍历通常有DFS（深度优先）和BFS（广度优先）。对大多数应用而言，DFS效率更高，需要跳转界面的频次较低。</p>
+<p>从方案上看，由于原生定位能力和图像技术均能建立抽象UI树，因此自动遍历也有这两种方案。一般而言，原生定位能力实现的难度较低（因为UI树是App现成的自带的），但是考虑到UI多样性和跨UI栈兼容能力的脆弱性，图像技术是很重要的补充（尤其是针对三方应用）。</p>
+<h2 id="2-图像技术"><a href="#2-图像技术" class="headerlink" title="2. 图像技术"></a>2. 图像技术</h2><p>图像技术最直接的作用是支持那些无法被原生定位能力所支撑的应用的自动化测试。但实践来看，图像技术对测试效率的提升、测试时长方面有显著的优势，这超出了其增强UI兼容性的最基本需要。</p>
+<p>出于原生定位能力自身的局限、三方应用UI的脆弱性（技术栈多、保质期短、自动化不友好），为了提升原生定位能力不够用的多技术栈兼容能力，通过图像技术来识别和分析界面的研究已经在业界取得众多成果。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://s1.ax1x.com/2022/10/25/xRf6G6.png" alt="UI视觉分析.png"></p>
+<p>图像技术超脱了UI技术实现的细节，因而摆脱了基于原生定位能力的自动化设施的脆弱性。在针对数量广大的三方应用的自动化测试场景中不可或缺，决定了自动遍历阶段的输入的完整性和高效性。</p>
+<p>同时，图像技术在辅助甚至主导界面感知之外，还可能提供不菲的效率提升。原生定位能力所提供的界面感知能力的优点是精细，适合一方应用开发使用。在数量众多的三方应用的自动化测试方面，除了存在效率、脆弱性等隐患以外，其测试速度也较低。</p>
+<p>原生定位能力基于UI树来进行界面感知、界面点击。由于对树（或图）的分析非常耗时（对树的节点们都进行分析若干个属性），且在设备端无障碍服务需要通过IPC（Binder）来与App交互。因此，从原理上（树的分析）和工程上（IPC）导致其效率不高。实践数据来看，其测试速度慢于图像技术。分部分来看，其界面感知速度较慢（树的分析慢于图像分析），操作速度也慢于直接发送触摸事件。</p>
+<blockquote>
+<p>原生定位能力对混合应用存在较大兼容问题。如React虚拟DOM的情况，每当页面更新会触发生成新的DOM，导致UI树变化，需要重新进行分析。</p>
+</blockquote>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>三方应用的自动化测试工具，通过同时支持原生定位能力和图像能力作为界面感知技术来应对三方应用UI自动化的脆弱性，并在界面操作方面通过自动遍历来实现低代码，解决在投入产出比、效率方面的隐患。</p>
+<h2 id="参考工具"><a href="#参考工具" class="headerlink" title="参考工具"></a>参考工具</h2><p>对于原生定位能力、图像技术、自动遍历等技术，较适合三方应用场景的有如下几个工具。</p>
+<table>
+<thead>
+<tr>
+<th>分类</th>
+<th>方案</th>
+<th>原理</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>原生定位能力</td>
+<td>Appium</td>
+<td>通过无障碍服务取得UI树</td>
+<td>提供界面感知能力，对多种UI技术栈兼容性较佳，但是没有完整达到三方应用自动化的需求</td>
+</tr>
+<tr>
+<td>自动遍历</td>
+<td>AppCrawler</td>
+<td>基于Appium，对UI树进行自动遍历</td>
+<td>UI兼容性没有完整达到三方应用自动化的需求；测试速度较慢</td>
+</tr>
+<tr>
+<td>图像技术</td>
+<td>Poco Airtest</td>
+<td>Poco进行图像匹配，Airtest进行测试流程</td>
+<td>编码较原生定位能力更少，但是仍然需要编码</td>
+</tr>
+<tr>
+<td>图像技术+自动遍历+原生定位能力混合</td>
+<td>Fastbot</td>
+<td>多种技术结合</td>
+<td>兼容性强，能够自动遍历；但是自动遍历方案不是完整的深度遍历</td>
+</tr>
+</tbody></table>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ol>
+<li>RD: 研发</li>
+<li>QA: 质量（包括测试、测开）</li>
+<li>《Succeeding with Agile: Software Development using Scrum 》(Scrum敏捷软件开发) Mike Cohn</li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/training/testing/fundamentals">Android Developer 测试最佳实践</a></li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2022/11/07/Android%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E6%8E%A2%E7%B4%A2/">https://nasdaqgodzilla.github.io/2022/11/07/Android%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E6%8E%A2%E7%B4%A2/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%B7%A5%E5%85%B7/">工具</a><a class="post-meta__tags" href="/tags/Android/">Android</a></div><div class="post_share"><div class="social-share" data-image="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2022/11/03/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9A%E5%88%86%E6%9E%90%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BA%8B%E5%8A%A1%E6%80%A7%E8%83%BD%E7%93%B6%E9%A2%88%E4%B8%8E%E4%BC%98%E5%8C%96%E6%96%B9%E6%A1%88/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/cover1.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android性能优化：分析数据库事务性能瓶颈与优化方案</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2019/12/10/Android-Jack-Server%E5%A4%9A%E7%94%A8%E6%88%B7%E7%BC%96%E8%AF%91%E6%97%B6Communication-error-with-Jack-server-60-try-jack-di/" title="Android Jack-Server多用户编译时Communication error with Jack server (60), try 'jack-di"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/57486f1069401b46430ac71f.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-12-10</div><div class="title">Android Jack-Server多用户编译时Communication error with Jack server (60), try 'jack-di</div></div></a></div><div><a href="/2022/08/17/Android-SystemWebview-Chromoum%E6%BA%90%E7%A0%81%E6%8B%89%E5%8F%96%E4%B8%8E%E7%BC%96%E8%AF%91/" title="Android SystemWebview Chromoum源码拉取与编译"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.chromium.org/_assets/customLogo.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-08-17</div><div class="title">Android SystemWebview Chromoum源码拉取与编译</div></div></a></div><div><a href="/2022/05/31/AndroidStudio-in-Docker-%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3/" title="AndroidStudio in Docker: 使用文档"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-y8w3zl.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-05-31</div><div class="title">AndroidStudio in Docker: 使用文档</div></div></a></div><div><a href="/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/" title="Android系统编译优化: 使用Ninja加快编译"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/57486f6c69401b4690618cb8.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-08-08</div><div class="title">Android系统编译优化: 使用Ninja加快编译</div></div></a></div><div><a href="/2022/06/21/Android%E7%BC%96%E8%AF%91AOSP%E6%BA%90%E7%A0%81%E5%B9%B6%E7%94%9F%E6%88%90%E6%A8%A1%E6%8B%9F%E5%99%A8%E9%95%9C%E5%83%8F%E5%B9%B6%E8%BF%90%E8%A1%8C/" title="Android编译AOSP源码并生成模拟器镜像并运行"><img class="cover" src= "/loading.gif" data-lazy-src="https://fossbytes.com/wp-content/uploads/2018/07/Best-Android-Emulator-of-2018.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android编译AOSP源码并生成模拟器镜像并运行</div></div></a></div><div><a href="/2022/04/22/GDB%E6%95%99%E7%A8%8B-%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5%E6%89%8B%E5%86%8C/" title="GDB教程: 命令速查手册"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.sourceware.org/gdb/images/archer.svg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-22</div><div class="title">GDB教程: 命令速查手册</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">59</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">26</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">21</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E4%BB%B7%E5%80%BC"><span class="toc-number">1.</span> <span class="toc-text">三方应用UI自动化的价值</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%9A%E5%8A%A1%E7%97%9B%E7%82%B9"><span class="toc-number">1.1.</span> <span class="toc-text">业务痛点</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E6%8A%80%E6%9C%AF%E3%80%81%E5%B8%82%E5%9C%BA%E5%9B%A0%E7%B4%A0%E7%AD%89%E6%9E%84%E6%88%90%E7%9A%84%E7%8E%B0%E7%8A%B6%EF%BC%8C%E5%86%B3%E5%AE%9A%E4%BA%86%E5%8E%82%E5%95%86%E5%AF%B9%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8%E7%9A%84%E5%85%BC%E5%AE%B9%E6%80%A7%E7%9A%84%E5%B7%A5%E4%BD%9C%E9%87%8F%E6%98%AF%E4%B8%8D%E8%87%AA%E4%B8%BB%E7%9A%84%E3%80%81%E5%8D%95%E8%B0%83%E5%A2%9E%E9%95%BF%E7%9A%84"><span class="toc-number">1.1.0.1.</span> <span class="toc-text">1. 技术、市场因素等构成的现状，决定了厂商对三方应用的兼容性的工作量是不自主的、单调增长的</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%95%88%E7%8E%87%E6%98%BE%E8%91%97%E4%BD%8E%E4%BA%8E%E4%B8%80%E6%96%B9%E5%BA%94%E7%94%A8"><span class="toc-number">1.1.0.2.</span> <span class="toc-text">2. 效率显著低于一方应用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E6%B5%8B%E4%B8%8D%E5%88%B0%E4%BD%8D%E6%88%96%E8%BF%87%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="toc-number">1.1.0.3.</span> <span class="toc-text">3. 测不到位或过度测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E6%8A%95%E5%85%A5%E4%BA%A7%E5%87%BA%E4%B8%8D%E7%90%86%E6%83%B3"><span class="toc-number">1.1.0.4.</span> <span class="toc-text">4. 投入产出不理想</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E8%BE%B9%E9%99%85%E6%95%88%E7%9B%8A%E9%80%92%E5%87%8F"><span class="toc-number">1.1.0.5.</span> <span class="toc-text">5. 边际效益递减</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-%E6%94%AF%E6%92%91%E8%87%AA%E7%A0%94%E5%BA%94%E7%94%A8%E5%95%86%E5%BA%97"><span class="toc-number">1.1.0.6.</span> <span class="toc-text">6. 支撑自研应用商店</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E6%8A%80%E6%9C%AF%E9%9A%BE%E9%A2%98%E5%92%8C%E9%9A%90%E6%82%A3"><span class="toc-number">2.</span> <span class="toc-text">三方应用UI自动化的技术难题和隐患</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#App-UI%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E7%9A%84%E4%B8%80%E8%88%AC%E5%AE%9E%E8%B7%B5"><span class="toc-number">2.1.</span> <span class="toc-text">App UI自动化测试的一般实践</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#App-UI%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E5%9F%BA%E7%A1%80%E6%8A%80%E6%9C%AF"><span class="toc-number">2.2.</span> <span class="toc-text">App UI自动化的基础技术</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E6%96%B9App-UI%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E4%BE%A7%E9%87%8D"><span class="toc-number">2.3.</span> <span class="toc-text">三方App UI自动化的侧重</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93%EF%BC%9A%E6%94%BE%E5%BC%83xpath%E7%AD%89%E2%80%9C%E7%B2%BE%E7%A1%AE%E5%AE%9A%E4%BD%8D%E2%80%9D%E7%9A%84%E7%BC%96%E7%A0%81%E5%B7%A5%E4%BD%9C%EF%BC%8C%E9%80%9A%E8%BF%87%E8%87%AA%E5%8A%A8%E9%81%8D%E5%8E%86%E5%AE%9E%E7%8E%B0%E4%BD%8E%E4%BB%A3%E7%A0%81%EF%BC%9B%E7%BB%93%E5%90%88%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E3%80%81%E6%9C%BA%E5%99%A8%E8%A7%86%E8%A7%89%E6%8F%90%E9%AB%98%E5%AF%B9%E5%A4%9A%E7%A7%8DUI%E6%8A%80%E6%9C%AF%E6%A0%88%E7%9A%84%E5%85%BC%E5%AE%B9%E6%80%A7%E3%80%82"><span class="toc-number">2.3.0.1.</span> <span class="toc-text">小结：放弃xpath等“精确定位”的编码工作，通过自动遍历实现低代码；结合机器学习、机器视觉提高对多种UI技术栈的兼容性。</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E9%80%89%E5%9E%8B"><span class="toc-number">3.</span> <span class="toc-text">三方应用UI自动化的选型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E8%87%AA%E5%8A%A8%E9%81%8D%E5%8E%86"><span class="toc-number">3.1.</span> <span class="toc-text">1. 自动遍历</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%9B%BE%E5%83%8F%E6%8A%80%E6%9C%AF"><span class="toc-number">3.2.</span> <span class="toc-text">2. 图像技术</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">3.3.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E5%B7%A5%E5%85%B7"><span class="toc-number">3.4.</span> <span class="toc-text">参考工具</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/11/07/Android%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E6%8E%A2%E7%B4%A2/" title="Android三方应用UI自动化测试探索"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android三方应用UI自动化测试探索"/></a><div class="content"><a class="title" href="/2022/11/07/Android%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E6%8E%A2%E7%B4%A2/" title="Android三方应用UI自动化测试探索">Android三方应用UI自动化测试探索</a><time datetime="2022-11-07T11:59:11.000Z" title="发表于 2022-11-07 19:59:11">2022-11-07</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/11/03/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9A%E5%88%86%E6%9E%90%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BA%8B%E5%8A%A1%E6%80%A7%E8%83%BD%E7%93%B6%E9%A2%88%E4%B8%8E%E4%BC%98%E5%8C%96%E6%96%B9%E6%A1%88/" title="Android性能优化：分析数据库事务性能瓶颈与优化方案"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/cover1.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android性能优化：分析数据库事务性能瓶颈与优化方案"/></a><div class="content"><a class="title" href="/2022/11/03/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9A%E5%88%86%E6%9E%90%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BA%8B%E5%8A%A1%E6%80%A7%E8%83%BD%E7%93%B6%E9%A2%88%E4%B8%8E%E4%BC%98%E5%8C%96%E6%96%B9%E6%A1%88/" title="Android性能优化：分析数据库事务性能瓶颈与优化方案">Android性能优化：分析数据库事务性能瓶颈与优化方案</a><time datetime="2022-11-03T13:08:48.000Z" title="发表于 2022-11-03 21:08:48">2022-11-03</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/11/03/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%B7%A5%E5%85%B7%EF%BC%9ACPU%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E3%80%81%E8%B0%83%E8%AF%95%E5%92%8C%E5%AE%9A%E9%A2%91%EF%BC%88MTK%EF%BC%89/" title="性能优化工具：CPU性能分析、调试和定频（MTK）"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-v93vw3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="性能优化工具：CPU性能分析、调试和定频（MTK）"/></a><div class="content"><a class="title" href="/2022/11/03/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%B7%A5%E5%85%B7%EF%BC%9ACPU%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E3%80%81%E8%B0%83%E8%AF%95%E5%92%8C%E5%AE%9A%E9%A2%91%EF%BC%88MTK%EF%BC%89/" title="性能优化工具：CPU性能分析、调试和定频（MTK）">性能优化工具：CPU性能分析、调试和定频（MTK）</a><time datetime="2022-11-03T12:02:29.000Z" title="发表于 2022-11-03 20:02:29">2022-11-03</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/10/10/%E7%B4%AB%E5%85%89%E5%B1%95%E9%94%90%E5%B1%95%E8%AE%AFSPRD%E5%88%B7%E6%9C%BA%E5%8C%85pac%E6%96%87%E4%BB%B6%E8%A7%A3%E5%8C%85%E6%8F%90%E5%8F%96img%E6%AD%A5%E9%AA%A4/" title="紫光展锐展讯SPRD刷机包pac文件解包提取img步骤"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3r1zl.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="紫光展锐展讯SPRD刷机包pac文件解包提取img步骤"/></a><div class="content"><a class="title" href="/2022/10/10/%E7%B4%AB%E5%85%89%E5%B1%95%E9%94%90%E5%B1%95%E8%AE%AFSPRD%E5%88%B7%E6%9C%BA%E5%8C%85pac%E6%96%87%E4%BB%B6%E8%A7%A3%E5%8C%85%E6%8F%90%E5%8F%96img%E6%AD%A5%E9%AA%A4/" title="紫光展锐展讯SPRD刷机包pac文件解包提取img步骤">紫光展锐展讯SPRD刷机包pac文件解包提取img步骤</a><time datetime="2022-10-10T02:24:35.000Z" title="发表于 2022-10-10 10:24:35">2022-10-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善"/></a><div class="content"><a class="title" href="/2022/09/30/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%B8%A6%E5%AE%BD%E5%8E%8B%E6%A6%A8%EF%BC%9A%E5%A4%9A%E7%BA%BF%E5%A4%9A%E6%8B%A8%EF%BC%88%E5%A4%9AWAN%E5%8F%A3%EF%BC%89%E5%AE%9E%E7%8E%B0%E7%BD%91%E7%BB%9C%E6%80%A7%E8%83%BD%E6%94%B9%E5%96%84/" title="记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善">记一次带宽压榨：多线多拨（多WAN口）实现网络性能改善</a><time datetime="2022-09-30T10:51:06.000Z" title="发表于 2022-09-30 18:51:06">2022-09-30</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2022 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2022/11/07/Android%E4%B8%89%E6%96%B9%E5%BA%94%E7%94%A8UI%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E6%8E%A2%E7%B4%A2/'
+    this.page.identifier = '2022/11/07/Android三方应用UI自动化测试探索/'
+    this.page.title = 'Android三方应用UI自动化测试探索'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
