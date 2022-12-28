@@ -6,7 +6,7 @@
   <link href="https://nasdaqgodzilla.github.io/atom.xml" rel="self"/>
   
   <link href="https://nasdaqgodzilla.github.io/"/>
-  <updated>2022-11-07T12:00:38.558Z</updated>
+  <updated>2022-12-28T01:47:57.411Z</updated>
   <id>https://nasdaqgodzilla.github.io/</id>
   
   <author>
@@ -15,6 +15,38 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Android单条日志太长导致被截断的问题分析和解决</title>
+    <link href="https://nasdaqgodzilla.github.io/2022/12/28/Android%E5%8D%95%E6%9D%A1%E6%97%A5%E5%BF%97%E5%A4%AA%E9%95%BF%E5%AF%BC%E8%87%B4%E8%A2%AB%E6%88%AA%E6%96%AD%E7%9A%84%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90%E5%92%8C%E8%A7%A3%E5%86%B3/"/>
+    <id>https://nasdaqgodzilla.github.io/2022/12/28/Android%E5%8D%95%E6%9D%A1%E6%97%A5%E5%BF%97%E5%A4%AA%E9%95%BF%E5%AF%BC%E8%87%B4%E8%A2%AB%E6%88%AA%E6%96%AD%E7%9A%84%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90%E5%92%8C%E8%A7%A3%E5%86%B3/</id>
+    <published>2022-12-28T01:45:16.000Z</published>
+    <updated>2022-12-28T01:47:57.411Z</updated>
+    
+    <content type="html"><![CDATA[<hr><p>9:20 AM<br>Wednesday, December 28, 2022 (GMT+8)<br>Time in Guangzhou, Guangdong Province, China</p><hr><p>[toc]</p><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>通常在Android中使用<code>logcat</code>输出查阅日志，但有时日志很长，可能会被截断，显示不完整。</p><blockquote><p>注意，这里指的是单条日志太长了被截断了，不是指日志太多了被冲掉了</p></blockquote><p>本文研究日志被截断的原因，并给出修改方法。</p><p>首先日志被截断的原因有如下几种，其中第一种是首要原因：</p><ol><li>单条日志长度上限，日志如果太长，触及上限则会被截断</li><li>日志如果涉及序列化、binder传输，则受到binder传输上限的限制</li><li>底层（Linux、log设备）限制、系统调用限制</li></ol><p>注意，单条日志长度上限是指一次打印的日志的长度，不是指设置-开发者选项-日志缓冲区大小。</p><h1 id="查看日志缓冲区大小、单条日志大小"><a href="#查看日志缓冲区大小、单条日志大小" class="headerlink" title="查看日志缓冲区大小、单条日志大小"></a>查看日志缓冲区大小、单条日志大小</h1><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#:/ logcat -g</span><br><span class="line">main: ring <span class="keyword">buffer</span> <span class="keyword">is</span> <span class="number">16</span> MiB (<span class="number">15</span> MiB consumed), <span class="built_in">max</span> entry <span class="keyword">is</span> <span class="number">5120</span> B, <span class="built_in">max</span> payload <span class="keyword">is</span> <span class="number">4068</span> B</span><br><span class="line"><span class="built_in">system</span>: ring <span class="keyword">buffer</span> <span class="keyword">is</span> <span class="number">16</span> MiB (<span class="number">6</span> MiB consumed), <span class="built_in">max</span> entry <span class="keyword">is</span> <span class="number">5120</span> B, <span class="built_in">max</span> payload <span class="keyword">is</span> <span class="number">4068</span> B</span><br><span class="line">crash: ring <span class="keyword">buffer</span> <span class="keyword">is</span> <span class="number">16</span> MiB (<span class="number">13</span> KiB consumed), <span class="built_in">max</span> entry <span class="keyword">is</span> <span class="number">5120</span> B, <span class="built_in">max</span> payload <span class="keyword">is</span> <span class="number">4068</span> B</span><br><span class="line">kerne<span class="variable">l:</span> ring <span class="keyword">buffer</span> <span class="keyword">is</span> <span class="number">16</span> MiB (<span class="number">3</span> MiB consumed), <span class="built_in">max</span> entry <span class="keyword">is</span> <span class="number">5120</span> B, <span class="built_in">max</span> payload <span class="keyword">is</span> <span class="number">4068</span> B</span><br></pre></td></tr></table></figure><p>通过<code>logcat -g</code>指令可以读到各个分类的缓冲区上限、目前用量、每次读取量、单条日志长度的上限。</p><h1 id="调节日志缓冲区大小"><a href="#调节日志缓冲区大小" class="headerlink" title="调节日志缓冲区大小"></a>调节日志缓冲区大小</h1><ul><li>法1: 开发者模式-设置日志缓冲区大小</li><li>法2: 通过<code>logcat -G</code>即可设置，等同于法1</li></ul><h1 id="调节单条日志大小"><a href="#调节单条日志大小" class="headerlink" title="调节单条日志大小"></a>调节单条日志大小</h1><p>修改代码根目录下的<code>system/core/liblog/include/log/log_read.h</code>下的<code>LOGGER_ENTRY_MAX_PAYLOAD</code>和<code>LOGGER_ENTRY_MAX_LEN</code>。</p><p>修改后，需要重新编译如下三个模块: <code>liblog logd logcat</code>，推入设备，重启方能生效。(通过<code>logcat -g</code>可以验证修改)</p><p>不同Android版本在不同位置，<a href="https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/log/log_read.h;l=55?q=LOGGER_ENTRY_&sq=">比如这个</a>。</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;hr&gt;
+&lt;p&gt;9:20 AM&lt;br&gt;Wednesday, December 28, 2022 (GMT+8)&lt;br&gt;Time in Guangzhou, Guangdong Province, China&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;[toc]&lt;/p&gt;
+&lt;h1 id=&quot;背景&quot;&gt;&lt;a</summary>
+      
+    
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
+    
+  </entry>
   
   <entry>
     <title>Android三方应用UI自动化测试探索</title>
@@ -37,14 +69,14 @@
     
     
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
     
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
   </entry>
   
@@ -139,14 +171,14 @@
     
     
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
     
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
   </entry>
   
@@ -195,14 +227,14 @@
     
     
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
     
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
   </entry>
   
@@ -252,20 +284,20 @@
     
     
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="Android稳定性" scheme="https://nasdaqgodzilla.github.io/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
     
     <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
     
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
     
     <category term="Android稳定性" scheme="https://nasdaqgodzilla.github.io/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
     
@@ -451,14 +483,14 @@
     
     
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
     
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
   </entry>
   
@@ -592,9 +624,9 @@
     
     
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="Docker" scheme="https://nasdaqgodzilla.github.io/categories/Docker/"/>
     
@@ -603,9 +635,9 @@
     <category term="虚拟化" scheme="https://nasdaqgodzilla.github.io/categories/%E8%99%9A%E6%8B%9F%E5%8C%96/"/>
     
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="Docker" scheme="https://nasdaqgodzilla.github.io/tags/Docker/"/>
     
@@ -646,31 +678,6 @@
     <category term="Android稳定性" scheme="https://nasdaqgodzilla.github.io/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
     
     <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>git rebase时显示作者信息</title>
-    <link href="https://nasdaqgodzilla.github.io/2022/06/20/git-rebase%E6%97%B6%E6%98%BE%E7%A4%BA%E4%BD%9C%E8%80%85%E4%BF%A1%E6%81%AF/"/>
-    <id>https://nasdaqgodzilla.github.io/2022/06/20/git-rebase%E6%97%B6%E6%98%BE%E7%A4%BA%E4%BD%9C%E8%80%85%E4%BF%A1%E6%81%AF/</id>
-    <published>2022-06-20T07:06:23.000Z</published>
-    <updated>2022-08-29T11:29:39.202Z</updated>
-    
-    <content type="html"><![CDATA[<p>常常碰见需要借助<code>git rebase -i &lt;COMMIT_ID&gt;</code>来处理分支和提交的情况。默认的git rebase -i展示的历史提交是简洁的、不带有作者信息的。</p><p>使用下面这个命令，<strong>将当前仓库的git配置为在git rebase -i时展示作者信息</strong>。执行该命令后在此使用git rebase -i即可看到作者信息。</p><figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">config</span> --global --<span class="keyword">add </span>rebase.<span class="keyword">instructionFormat </span><span class="string">&quot;(%an &lt;%ae&gt;) %s&quot;</span></span><br></pre></td></tr></table></figure>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;p&gt;常常碰见需要借助&lt;code&gt;git rebase -i &amp;lt;COMMIT_ID&amp;gt;&lt;/code&gt;来处理分支和提交的情况。默认的git rebase -i展示的历史提交是简洁的、不带有作者信息的。&lt;/p&gt;
-&lt;p&gt;使用下面这个命令，&lt;strong&gt;将当前仓库的git配置</summary>
-      
-    
-    
-    
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
-    
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     
   </entry>
   
