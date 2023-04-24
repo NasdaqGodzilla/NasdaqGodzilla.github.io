@@ -6,7 +6,7 @@
   <link href="https://nasdaqgodzilla.github.io/atom.xml" rel="self"/>
   
   <link href="https://nasdaqgodzilla.github.io/"/>
-  <updated>2023-02-10T08:52:05.042Z</updated>
+  <updated>2023-04-24T08:15:12.590Z</updated>
   <id>https://nasdaqgodzilla.github.io/</id>
   
   <author>
@@ -15,6 +15,35 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>LutFilter：3D LUT简介与应用</title>
+    <link href="https://nasdaqgodzilla.github.io/2023/04/24/LutFilter%EF%BC%9A3D-LUT%E7%AE%80%E4%BB%8B%E4%B8%8E%E5%BA%94%E7%94%A8/"/>
+    <id>https://nasdaqgodzilla.github.io/2023/04/24/LutFilter%EF%BC%9A3D-LUT%E7%AE%80%E4%BB%8B%E4%B8%8E%E5%BA%94%E7%94%A8/</id>
+    <published>2023-04-24T08:13:00.000Z</published>
+    <updated>2023-04-24T08:15:12.590Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>LUT是“Look-Up-Table”——查找表的缩写。它是数据的一种容器，类似字典、map等，将索引与值对应起来的一种描述方式。</p><p>3D LUT，顾名思义，描述索引与值之间的对应方式是三维的，可以被理解为三个维度的索引-值对应方式的结合，通过三个维度的索引，可以查找到一个值。与一本普通的字典一样，输入固定的值作为索引，可以查到固定的结果作为输出。</p><p>3D LUT被广泛地在电影工业和显示工业广泛使用，用于在不同的显示器、不同的颜色空间之间做色彩校正、显示调节、效果和优化等方面。也就是说，3D LUT实际上是颜色的转换，是RGB的映射。借助3D LUT的颜色映射，将颜色进行调节，达成3D LUT即定的显示效果。</p><p>1D LUT只能控制gamma值、RGB平衡（灰阶）和白场（white point），而3D LUT能以全立体色彩空间的控制方式影响色相、饱和度、亮度等。简单描述来说3D LUT可以影响到颜色，而1D LUT只能影响亮度值。</p><p>由于颜色空间、gamma、色域等会影响颜色的呈现效果，因此想要让LUT有较好的效果，一般要求输入的颜色和输出的颜色在同一个显示环境下（颜色空间、色域、伽马一致）。</p><p>得益于颜色映射，富有创意的艺术家们能调出效果绝伦的LUT，通常会用于显示效果调节、色彩管理、美颜P图、显示器校正等方面，有很大的实用价值。</p><ul><li>技术型LUT：用于颜色转换，校准显示器，显示补偿，硬件矫正，色彩管理，色彩过滤，失真弥补，硬件偏色改善</li><li>创意型LUT（风格LUT）：用于显示风格的转换、美化、调色、多图合成（图像叠加）</li></ul><h1 id="直观了解3D-LUT"><a href="#直观了解3D-LUT" class="headerlink" title="直观了解3D LUT"></a>直观了解3D LUT</h1><p>先来看看LUT能达到的效果，看上去就是平平无奇的滤镜。</p><p>下图为两位特邀模特的演示图，图的右半部分分别应用了一个黑白化、鲜艳化的3D LUT：</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LutFilter%E6%A1%88%E4%BE%8BW%E6%88%AA%E5%9B%BE.png"></p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUT%E5%AF%B9%E6%AF%94.png"></p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUT%E5%AF%B9%E6%AF%942.png"></p><p>一个调整对比度的案例：</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUT%E5%AF%B9%E6%AF%94_%E5%AF%B9%E6%AF%94%E5%BA%A6%E8%B0%83%E8%8A%82.png"></p><p>一个调整对比度+明度的案例：</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUT%E5%AF%B9%E6%AF%94_%E5%AF%B9%E6%AF%94%E5%BA%A6+%E6%98%8E%E5%BA%A6%E8%B0%83%E8%8A%82.png"></p><h1 id="3D-LUT的基本结构和表示方法"><a href="#3D-LUT的基本结构和表示方法" class="headerlink" title="3D LUT的基本结构和表示方法"></a>3D LUT的基本结构和表示方法</h1><p>3D LUT是一种统称，表示RGB三个维度的颜色映射规则表，有很多种文件格式，包括文本类型的cube，图片类型的png等。</p><p>立体地来理解3D LUT，就像一个有X、Y、Z三轴的三维坐标系，分别是RGB三个分量：</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/3DLUT%E7%AB%8B%E4%BD%93%E5%9B%BE.png"></p><p>颜色的查找实际上就是将RGB当作XYZ，在表中查找得到映射后的RGB值：</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E9%A2%9C%E8%89%B2%E6%98%A0%E5%B0%84%E7%A4%BA%E6%84%8F%E5%9B%BE.png"></p><p>如前述，3D LUT有不同的文件格式，不同的文件格式有不同的使用方式和性能表现，在工业界平台的技术栈和性能要求，对3D LUT的文件格式的选型有决定性的影响。<br>实际应用时，3D LUT往往使用cube格式，其便利性、性能表现有明显优势，下文会简单介绍，其结构如下。</p><p>将LUT按立方体进行面分割并平铺每一个面，如下。</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUTCUBE%E7%BB%93%E6%9E%84%E5%9B%BE.png"></p><p>cube格式的核心思想是，将三维维度转换为二维维度。将R与G分量组成小的二维坐标系（小方片），整个cube有N个小方片，每个小方片内部B分量固定，小方片B分量互相之间自然增长。<br>通俗来说，每一个小方格子里面的内部横坐标是红色，纵坐标是绿色。蓝色是固定不变的，只会随着小方片的序号的增长而增长。</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUTCUBE%E7%BB%93%E6%9E%84%E8%AF%B4%E6%98%8E.png"></p><p>左上角一点蓝色都没有，所以很红很绿；右下角蓝色很多，看上去很蓝。<br>3D LUT按照面划分就是16x16x16，32x32x32，64x64x64，256x256x256……，我们知道面由线段围成，而一根线段有两个端点，因此一个3D LUT按照端点来计算深度，那么就有17x17x17，33x33x33，65x65x65，257x257x257的表示方法。</p><p>上图的cube是一个64x64x64的3D LUT。我们知道RGB颜色空间取值有256个（0~255），因此64x64x64的3D LUT实际上是不能表示所有颜色的。</p><p>因此它有如下特点：</p><ul><li>每个输入的RGB，如果不是刚好落到整数点上，此时换算不那么直接（比如输入的R分量刚好是点1和点2中间的位置，此时到底用点1还是点2，还是点1和点2的平均值，还是插值计算）来映射</li><li>换算不那么直接，意味着有一定的精度差异，低精度误差大，高精度消耗内存、消耗LUT文件解析时间（256<em>256</em>256的cube大约占据48M左右的空间）</li><li>不论LUT层数是否足够高，都会碰见需要插值或降低采样的场景</li><li>人眼分辨能力、颜色学、内容颜色精度、显示器屏幕质素等因素客观上决定了，颜色的轻微偏差不会被察觉，不会对显示效果造成影响</li></ul><p>下图为256层的LUT：</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUTCUBE256%E7%BB%93%E6%9E%84%E5%9B%BE.png"></p><p>还有一种竖直排列各层的形式（这里将它做了旋转，变成横向排列。按照B分量的方向来看，它是竖向排列的）：</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUTCUBE%E7%BB%93%E6%9E%84%E5%9B%BE%E7%AB%96%E7%9B%B41.png"></p><p>通过图片来存储的3D LUT，有个很突出的特点，就是图片本身的外观就是3D LUT提供的调色风格，如上面一个LUT的风格看上去是让图片更加鲜艳，而如下这个LUT则看上去让图片变的带有棕褐色色调：</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUTCUBE%E7%BB%93%E6%9E%84%E5%9B%BE%E7%AB%96%E7%9B%B42.png"></p><p>这个则一眼能看出来可以抹掉色彩，让图片变成黑白图。</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LUTCUBE%E7%BB%93%E6%9E%84%E5%9B%BE%E7%AB%96%E7%9B%B43.png"></p><h1 id="3D-LUT的优势"><a href="#3D-LUT的优势" class="headerlink" title="3D LUT的优势"></a>3D LUT的优势</h1><p>3D LUT具有一些突出的特性和优势。</p><ul><li>性能</li></ul><p>3D LUT本身是查找表，将本该经过计算得到的映射结果预先存储下来，用于直接读取，避免了对像素点的映射计算。是一种空间换时间的算法，有高响应速度的保证。</p><ul><li>灵活程度大，带来更好的效果</li></ul><p>常规的滤镜是单一映射，通常会将整个图像的所有像素机械地进行映射。如一个暖色调的普通滤镜会让图像内原本已经很暖的颜色变的更暖，甚至失真。而3D LUT则可以实现控制，不同像素值会有不同的非线性的映射效果。</p><ul><li>支持硬件加速</li></ul><p>高响应速度的图像处理通常需要GPU或FPGA进行加速。3D LUT可以加载为纹理，通过OpenGL进行绘图</p><ul><li>风格和效果的自定义自由度大、简单</li></ul><p>LUT文件的制作比较简单，风格和效果可以由富有创意的艺术家们随心所欲地随时创建</p><ul><li>用户自定义自由度大</li></ul><p>用户可以随时下载或制作符合规范的LUT，在不修改软件的前提下，任意地设置LUT，实现不同的效果</p><ul><li>兼容性高</li></ul><p>3D LUT实现的调色可以在任意没有接入调色功能的应用（如系统应用、三方应用、浏览器、视频流、相机流），无感、无侵入的实现调色，被调色的目标不会出现任何兼容性问题，也没有任何侵入性，跨平台的移植性也很高</p><ul><li>LUT的基本使用</li></ul><p>LUT的基本应用流程主要为创建LUT、导入LUT、根据LUT映射新的像素值并绘制三大流程。其中对于Android平台，流程的重点难点在于绘制过程，通常借助OpenGL在GPU进行绘制。</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/OpenGL%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B.png"></p><p>OpenGL绘图的基本流程如上。使用3D LUT进行调色，可以实现为在片段着色器中读取原图像素的颜色值，根据LUT映射为新的颜色值，实现绘图</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h1 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h1&gt;&lt;p&gt;LUT是“Look-Up-Table”——查找表的缩写。它是数据的一种容器，类似字典、map等，将索引与值对应起来的一种描述方式。&lt;/p&gt;
+</summary>
+      
+    
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
+    
+    <category term="Graphics" scheme="https://nasdaqgodzilla.github.io/categories/Graphics/"/>
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="Graphics" scheme="https://nasdaqgodzilla.github.io/tags/Graphics/"/>
+    
+  </entry>
   
   <entry>
     <title>Android性能优化：getResources()与Binder交火导致的界面卡顿优化</title>
@@ -608,42 +637,6 @@
 &lt;hr&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&quot;#%E6%A6%82%E8</summary>
-      
-    
-    
-    
-    <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
-    
-    <category term="Android稳定性" scheme="https://nasdaqgodzilla.github.io/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
-    
-    <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
-    
-    
-    <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
-    
-    <category term="Android稳定性" scheme="https://nasdaqgodzilla.github.io/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
-    
-    <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Android WindowManager continueSurfaceLayout流程</title>
-    <link href="https://nasdaqgodzilla.github.io/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/"/>
-    <id>https://nasdaqgodzilla.github.io/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/</id>
-    <published>2022-06-21T12:40:58.000Z</published>
-    <updated>2022-08-29T11:29:39.195Z</updated>
-    
-    <content type="html"><![CDATA[<hr><p>4:33 pm<br>Tuesday, 21 June 2022 (GMT+8)<br>Time in Guangzhou, Guangdong Province, China</p><hr><ul><li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li><li><a href="#windowmanagerservice.continuesurfacelayout">WindowManagerService.continueSurfaceLayout</a></li><li><a href="#rootwindowcontainer.performsurfaceplacement">RootWindowContainer.performSurfacePlacement</a><ul><li><a href="#handleresizingwindows-to-windowstate%E6%B5%81%E7%A8%8B">handleResizingWindows to WidnowState流程</a></li><li><a href="#viewrootimpl.dispatchresized()%E6%B5%81%E7%A8%8B">ViewRootImpl.dispatchResized()流程</a></li></ul></li><li><a href="#requesttraversal">requestTraversal</a></li><li><a href="#%E6%80%BB%E7%BB%93">总结</a></li></ul><h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>分析Android 10的<code>WindowManagerService.continueSurfaceLayout()</code>流程。</p><h1 id="WindowManagerService-continueSurfaceLayout"><a href="#WindowManagerService-continueSurfaceLayout" class="headerlink" title="WindowManagerService.continueSurfaceLayout"></a>WindowManagerService.continueSurfaceLayout</h1><!--```uml@startumlparticipant WindowManagerService as WMSparticipant WindowPlacerLocked as WPLparticipant RootWindowContainer as RWC-> WMS : continueSurfaceLayout()WMS -> WPL : continueLayout()activate WPLWPL -> WPL : performSurfacePlacement()activate WPLWPL -> WPL : performSurfacePlacementLoop()WPL -> RWC : performSurfacePlacement()deactivate WPLalt RootWindowContainer.isLayoutNeeded()WPL -> WPL : requestTraversal()enddeactivate WPL@enduml```--><p><img src="//www.plantuml.com/plantuml/png/dP2nJiCm54NtV8L76E03652bhYwA6gJCJ_Ojid3ymlDp47-FtI2ge8gXauTpxlMrTrb9j4onc-iPN9WfgHb3ylnve4Hla06o10T3sOo7uOhNHt8Go-uT_cprTcCTcNKrzvoKGe8qxJZkk-xXkPMQ9-Cg2gbWA78Y1qjVNFJklckqIRszI1TAJiD2YiQxvlogC-J4CltKdITEI3TbBFDSSwlQPlzRxx6vWEBL3tWCUNt42-3XQswpHF1HaFLLQ85aYfKZ-R_TEoHVflWD" alt="WindowManagerService.continueSurfaceLayout流程"></p><p>WMS.<code>continueSurfaceLayout()</code>首先完成窗口、Surface的位置计算和摆放，并当<code>RootWindowContainer.isLayoutNeeded()</code>时<code>requestTraversal()</code>触发绘制流程。</p><h1 id="RootWindowContainer-performSurfacePlacement"><a href="#RootWindowContainer-performSurfacePlacement" class="headerlink" title="RootWindowContainer.performSurfacePlacement"></a>RootWindowContainer.performSurfacePlacement</h1><!--```uml@startumlparticipant RootWindowContainer as RWCparticipant WindowManagerService as WMSparticipant WindowState as Wparticipant DisplayContent as DC-> RWC : performSurfacePlacement()RWC -> RWC : performSurfacePlacementNoTrace()activate RWCalt mWmService.mFocusMayChangeRWC -> WMS : updateFocusedWindowLocked()endRWC -> WMS : openSurfaceTransaction()RWC -> RWC : applySurfaceChangesTransaction()activate RWCdeactivate RWCRWC -> WMS : closeSurfaceTransaction()alt mWmService.mFocusMayChangeRWC -> WMS : updateFocusedWindowLocked()endRWC -> RWC : handleResizingWindows()activate RWCdeactivate RWCRWC -> W : destroySurfaceUnchecked()note right : Destroy the surface of any windows that are no longer visibleRWC -> WMS : setHoldScreenLocked()alt mUpdateRotationRWC -> RWC : updateRotationUnchecked()endRWC -> DC : assignWindowLayers()RWC -> WMS : enableScreenIfNeededLocked()RWC -> WMS : scheduleAnimationLocked()deactivate RWC@enduml```--><p><img src="//www.plantuml.com/plantuml/png/jP31ZXCn38RlVOeSuG0Fm04jQeL0eYlKOTMpITnfH697YQUhuUbncb0frKfmsKkhaR_u_tu_584iImoRfF_U-WGavi0iHq-EdxTC0fum6oZcSDmEM4FsG31ZdZ1VlCNA7VVJ2zma86qy37U-f01h3KAIEjzjDvjt7skQ-M0IvXFdE2tv11Q_1_s9ohrvkwdpVs6F_2E3HQN1YhzKWLe2WfXuZ5tvVVpCTYbxbJW3pTWtrngwUKaE1Ay4kjRa6zjVw7GfaXjXJaZTGOEfr5IcUrb8AQmTQv5bf0TPXyFda6S35tmny1KgDdbzxm8UiFZVdkP6b_zqrkSEYsJ-s_w9x1bx4h7IsSzdKMpNC2DdDAMnXay6Q3NFBL9780Oo6c8JM4jbS_75_mntxGhA5mvkiXcHUgz-dwThyGCBrAkDFPTXTXCTJxAh99JYP-ftWnMpdcDKG0BLQWPVJu-83jtDP9JL6BS4_4G-NeDlsDr97v3S4iCV" alt="performSurfacePlacement流程"></p><h2 id="handleResizingWindows-to-WindowState流程"><a href="#handleResizingWindows-to-WindowState流程" class="headerlink" title="handleResizingWindows to WindowState流程"></a>handleResizingWindows to WindowState流程</h2><p><code>handleResizingWindows()</code>主要是将<code>mResizingWindows</code>即大小改变的窗口回调<code>resized()</code>方法，计算新的merged configuration后，通过<code>IWindow</code>这个Binder发送到应用。其中，应用侧是<code>ViewRootImpl</code>管理这个Binder并执行对应的业务逻辑。最终会回调<code>ViewRootImpl.dispatchResized()</code>。</p><ul><li><code>IWindow</code>是Framework调用ViewRootImpl时使用的（由<code>ViewRootImpl.W</code>实现）</li><li><code>IWindowSession</code>是ViewRootImpl调用Framework services使用的Binder。</li></ul><!--```uml@startumlparticipant RootWindowContainer as RWCparticipant WindowState as WSparticipant IWindow as IWparticipant Wparticipant ViewRootImpl as VRInote over W : W is a inner class of ViewRootImpl extends IWindow.Stub.-> RWC : handleResizingWindows()note right : For mWmService.mResizingWindowsRWC -> WS : reportResized()activate WSWS -> WS : setLastReportedMergedConfiguration()WS -> WS : dispatchResized()note left : Calculate new frame size and dispatchWS -> IW : resized()deactivate WSIW -\-> W : resized()W -> VRI : dispatchResized()@enduml```--><p><img src="//www.plantuml.com/plantuml/png/RP3DQkim48NtUWejxrqa3z152GGAXdPZGxIUMcDdG1ePQPoKFdr7THEYqeKnudpdXpaKWInh36RHFusq08ljKn97xDFrc5Y06BE5OdjtRB0D6GG4g-o6HkqskIgTQvJsTIAyri8kBg72fxupXfDcfelsElka7nKBbhWE6GEKOjFK6l53a7svjUu7MT_tnkoUwsgDE0FxW3qM-YIUDwZy-xyLPPhFej1BoZQwE62-q8Zx-0itDKeJtQ1inYLb-IRGQn2CGXSGLDKeSCCAoYiKvIgD_WtpZ5wlEj6yPX1AhDu7tbDPGCRpFNXR670ILOyGnZNK5iQhdJ94j9MpmFvk_OdhN5rvZ_7uk535dJ8jugfDp__dZ0EoNsFu0W00" alt="handleResizingWindows流程"></p><h2 id="ViewRootImpl-dispatchResized-流程"><a href="#ViewRootImpl-dispatchResized-流程" class="headerlink" title="ViewRootImpl.dispatchResized()流程"></a>ViewRootImpl.dispatchResized()流程</h2><p><code>dispatchResized()</code>主要流程是将Binder传递的信息通过Message发送到Handler。其中，当<code>reportDraw</code>为true时会发送不同的Message。这两个不同的Message的差异在于，<code>reportDraw</code>为false时会检查Message内带的信息是否与当前的有差异。如果没有差异会忽略本次dispatch resized，否则执行流程和<code>reportDraw</code>为true时一致。</p><p>可以这么认为，当信息没有更新时，<code>MSG_RESIZED</code>跳过后面的工作，而<code>MSG_RESIZED_REPORT</code>则一定会执行。其中，两个MSG对应的回调handle流程是一致的。</p><p>首先检查merged conf是否有更新并更新之。将新的Configuration通过<code>sConfigCallback</code>回调到<code>ActivityThread</code>，<code>ActivityThread</code>执行<code>handleConfigurationChanged()</code>流程，回调Activity、Service、Provider等的<code>onConfigurationChanged()</code>。</p><p>然后更新<code>mWinFrames</code>。接着按照条件触发report、layout等。</p><!--```uml@startumlparticipant ViewRootImpl as VRIparticipant ActivityThread as AT-> VRI : dispatchResized()alt reportDrawVRI -> VRI : sendMessage(MSG_RESIZED_REPORT)elseVRI -> VRI : sendMessage(MSG_RESIZED)end--\> VRI : handleMessage()alt mLastReportedMergedConfiguration != mergedConfVRI -> VRI : performConfigurationChange()activate VRIVRI -> AT : sConfigCallbacks.get() -> onConfigurationChanged()AT -> AT : mPendingConfiguration = newConfigAT -> AT : sendMessage(CONFIGURATION_CHANGED)AT -\-> AT : handleConfigurationChanged()VRI -> VRI : setConfiguration() -> mLastReportedMergedConfiguration.setConfiguration()alt null != mActivityConfigCallbackVRI -> VRI : mActivityConfigCallback.onConfigurationChange()note right : Callback set by ActivityelseVRI -> VRI : updateConfiguration()endenddeactivate VRIVRI -> VRI : setFrame() -> mWinFrame.set()alt MSG_RESIZED_REPORTVRI -> VRI : reportNextDraw() -> mReportNextDraw = truenote right : To acquire layout in next traversalendalt framesChanged || configChangedVRI -> VRI : forceLayout()note right : Call API of View to force layout in next traversalendVRI -> VRI : requestLayout()@enduml```--><p><img src="//www.plantuml.com/plantuml/png/ZPJ1Rjim38RlVWhkbXoM1nZGeKRQPWRQ972z3jYbO2t64IPBhaGtoz27dsGb1fHaw0w14VaZ-VCdvMl7QBblLTRvfwnbXvhXITAkD8QBjbE03fxA8dcVropV9E-hhIKKWSYhBFlyDO3m1OHq7NAzBSd9FoGcqmmLWwNEMBwnkCi2DjAEj7WWvx2XoSFZuhcyVIn-tjxuvtfLLjECbAF_Yl2e5bx6o6rH2qL7Cgfexz5nEKWXdyGs9EP6RsJJMsHfD7owWdOyJkjsP3V6jWa_zqLYyk09CWNs69PNGMtavwZK2zQ_tAmXdap3QwFFKmrsvTKOtQv92wcRLEGLQDh5en4-CMQ-MjuLY-zbNXMhvVFyMxvS18i2FU2ZFvSrd3hE2HRrV-Jbx2mipa3tIWq-7_SeTIWf_IzePlJbEMZ315OsM_R1Hpeq02_xSN4lB5NV2MGwbKjQ33z1oNpFtBcpsDB1bHzI3tz3-px5qFBvOgSfukLOqk_XWXmIbScX7phRdj86AmDOl_RI4YZScvv1Qj0-mhFuHjQX2lgZY4rGvGuZXlTtgAEbyI0Lj36sfliXvILJ8LyNO3R3bmBOHFm32ISDl_RaUAoGNNkcRzLV" alt="ViewRootImpl.dispatchResized流程"></p><h1 id="requestTraversal"><a href="#requestTraversal" class="headerlink" title="requestTraversal"></a>requestTraversal</h1><p>最后如果满足条件还会再进行一次traversal。<code>requestRraversal()</code>实际上就是通过Handler向<code>AnimationThread</code>调度一次<code>performSurfacePlacemtn()</code>。</p><h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>Surface Layout过程主要是摆放Surface、回调WindowState、通过Binder发送回到ViewRootImpl，并最终通过ActivityThread回调应用的onConfigurationChanged()。</p>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;hr&gt;
-&lt;p&gt;4:33 pm&lt;br&gt;Tuesday, 21 June 2022 (GMT+8)&lt;br&gt;Time in Guangzhou, Guangdong Province, China&lt;/p&gt;
-&lt;hr&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;#%E6%A6%82%E8%BF</summary>
       
     
     
