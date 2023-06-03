@@ -1,0 +1,257 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android后台驻留：保活和回收的机制 | PeaceMaker</title><meta name="keywords" content="Android,性能优化,功耗续航"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="简介众所周知，Android平台的管理机制下，App进入后台后，为了提供持续的及时服务（如推送、音乐），或进行驻留获取收益（跟踪、信息收集、广告）等，会利用一些方法来让自身保持活跃，躲过被Android系统或用户发觉、清理，实现后台驻留。 其中，后台驻留的广义概念，除了保持在后台运行外，被其他组件拉起也属于驻留（唤醒）。 由于驻留会对系统的性能、响应延迟、续航、发热等带来负面影响，令系统的资源管理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android后台驻留：保活和回收的机制">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="简介众所周知，Android平台的管理机制下，App进入后台后，为了提供持续的及时服务（如推送、音乐），或进行驻留获取收益（跟踪、信息收集、广告）等，会利用一些方法来让自身保持活跃，躲过被Android系统或用户发觉、清理，实现后台驻留。 其中，后台驻留的广义概念，除了保持在后台运行外，被其他组件拉起也属于驻留（唤醒）。 由于驻留会对系统的性能、响应延迟、续航、发热等带来负面影响，令系统的资源管理">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nasdaqgodzilla.github.io/gallery/cover/56a77a4e69401b756c748b33.jpg">
+<meta property="article:published_time" content="2023-06-03T07:10:56.000Z">
+<meta property="article:modified_time" content="2023-06-03T07:11:51.025Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="性能优化">
+<meta property="article:tag" content="功耗续航">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nasdaqgodzilla.github.io/gallery/cover/56a77a4e69401b756c748b33.jpg"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android后台驻留：保活和回收的机制',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-06-03 15:11:51'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">64</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">27</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">22</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://nasdaqgodzilla.github.io/gallery/cover/56a77a4e69401b756c748b33.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android后台驻留：保活和回收的机制</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-06-03T07:10:56.000Z" title="发表于 2023-06-03 15:10:56">2023-06-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-06-03T07:11:51.025Z" title="更新于 2023-06-03 15:11:51">2023-06-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%8A%9F%E8%80%97%E7%BB%AD%E8%88%AA/">功耗续航</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android后台驻留：保活和回收的机制"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>众所周知，Android平台的管理机制下，App进入后台后，为了提供持续的及时服务（如推送、音乐），或进行驻留获取收益（跟踪、信息收集、广告）等，会利用一些方法来让自身保持活跃，躲过被Android系统或用户发觉、清理，实现后台驻留。</p>
+<p>其中，后台驻留的广义概念，除了保持在后台运行外，被其他组件拉起也属于驻留（唤醒）。</p>
+<p>由于驻留会对系统的性能、响应延迟、续航、发热等带来负面影响，令系统的资源管理效果降低，属于违背用户意愿和知情的恶劣行为，因此将这些App称为顽固（Diehard）应用，其利用的方法称为顽固方法。</p>
+<p>除了App利用的一些黑科技（甚至是在违法边缘的擦边手段）以外，Android系统本身自带的机制也可以实现保活和拉起。这些保活、拉起机制，粗略划分为两类：</p>
+<ol>
+<li>保持活跃，在后台运行不被清理、回收</li>
+<li>被其他组件唤醒，包括被其他App唤醒、被系统提供的功能唤醒</li>
+</ol>
+<p>本文总结上述这两类会被顽固App利用的机制。</p>
+<h1 id="进程和Task管理"><a href="#进程和Task管理" class="headerlink" title="进程和Task管理"></a>进程和Task管理</h1><p>首先简单梳理一下Android Framework层基本的进程管理。</p>
+<p>Android平台基于Linux，除了基于Linux的“进程”维度来进行管理外，还按照Task的概念来管理应用进程，分别为ProcessRecord和TaskRecord。系统可以按Task也可以按Process来管理进程。</p>
+<p>Android提供接口直接杀死Linux进程：1. ProcessRecord的kill()方法，其实现是向对应的进程发送SIGNAL_KILL信号；2. libc的kill()函数，也是发送信号</p>
+<h2 id="OOM终止进程（LMK）"><a href="#OOM终止进程（LMK）" class="headerlink" title="OOM终止进程（LMK）"></a>OOM终止进程（LMK）</h2><p>App进程在系统中根据OOM（Out of Memory）ADJ（Adjustment）级别和进程状态来确定优先级，当系统需要杀死进程来释放内存时，优先级越低的会优先终止。OOM ADJ分数越小优先级越高。</p>
+<p>由于顽固App进程后台驻留时可能会被系统回收，因此顽固App通常通过一些手段（services、弹窗）等来降低OOM（提高优先级），减少自身被系统回收的几率。</p>
+<h2 id="最近任务列表结束Task"><a href="#最近任务列表结束Task" class="headerlink" title="最近任务列表结束Task"></a>最近任务列表结束Task</h2><p>用户在多任务界面（Recents）移除应用，系统会结束应用对应的Task：Removing Recent Task Item（RRT）。</p>
+<p>该操作会结束掉与Task关联的进程，但在一些场景下仍然会有对应App的进程没有被杀死。</p>
+<ol>
+<li>当App通过”Exclude from recents”功能（不在最近任务列表显示自己）时，没有提供给用户结束的机会，就没有手动结束掉Task的入口</li>
+<li>当一个进程属于多个Task时（该进程还需要为其他Task服务）</li>
+</ol>
+<p>这类终止机制由用户操作触发，当顽固应用借助多进程、多任务、唤醒拉起、互拉等操作，被终止后仍在后台运行（或后续又被唤醒），给用户感受为“杀不干净”。</p>
+<h2 id="强制结束App"><a href="#强制结束App" class="headerlink" title="强制结束App"></a>强制结束App</h2><p>强制结束（Force-Stop）时Android内建的功能，由ActivityManagerService提供接口，可以在设置-应用程序界面由用户手动调用。</p>
+<p>强制结束的范畴是App对应的所有Task（即可以杀死一般App所有进程）。FSA还额外会将App设置为“STOPPED“状态，禁止应用在下一次被用户手动启用或应用跳转前被广播、服务等唤醒。强制结束对顽固App的效果不佳，许多顽固App具备Native保活能力、互拉保活、唤醒拉起等对抗措施。</p>
+<p>此外，Android提供KILL_BACKGROUND_PROCESSES权限，允许具备权限的App调用API杀死ADJ大于SERVICE_ADJ的后台进程（即没有Service的后台进程可以被杀掉）。</p>
+<h1 id="保持活跃或唤醒"><a href="#保持活跃或唤醒" class="headerlink" title="保持活跃或唤醒"></a>保持活跃或唤醒</h1><h2 id="从最近任务隐藏或多个最近任务"><a href="#从最近任务隐藏或多个最近任务" class="headerlink" title="从最近任务隐藏或多个最近任务"></a>从最近任务隐藏或多个最近任务</h2><p>Android平台提供的excludeFromRecents功能可以让App的Task在多任务中隐藏。此外一个进程可以属于不同的Task，产生多个Task并隐藏其中几个Task可以实现”杀不干净“的效果。</p>
+<h2 id="提升App进程优先级、阻止部分回收场景"><a href="#提升App进程优先级、阻止部分回收场景" class="headerlink" title="提升App进程优先级、阻止部分回收场景"></a>提升App进程优先级、阻止部分回收场景</h2><p>LMK和OOM ADJ会受到进程状态和优先级的影响，提高优先级可以降低被系统回收的几率，阻止部分会杀进程的场景。</p>
+<p>其中，将借助前台进程绑定后台服务进程保活的手段，是较常见的“杀不死、杀不干净”的情况（最近任务移除后仍有进程）。</p>
+<ol>
+<li>接收广播，启动Receiver，具有Receiver的后台进程优先级高于无Receiver的后台进程</li>
+<li>创建前台Service（高版本Android前台service需要带有通知），OOM ADJ更低（SERVICE_ADJ），杀死概率更低，此时进程不会被“杀死后台进程”杀掉（会跳过ADJ小于等于SERVICE_ADJ的进程）</li>
+<li>保持前台Activity，OOM ADJ更低（用户可见的Task）</li>
+<li>创建前台窗口（悬浮窗）或覆盖窗口（将窗口盖在前台App上面）</li>
+<li>将后台服务绑定到前台进程，赋予后台服务在的进程更低的OOM，提升该进程的优先级，减少被杀的几率；同时对应进程不再属于后台进程，不会被“杀死后台进程”杀死，且该进程转为“需要为其他Task服务”，同样不会被最近任务移除时杀死</li>
+<li>对于涉及Service的场景，ContentProvider也适用</li>
+</ol>
+<h2 id="借助Sticky-Service唤醒"><a href="#借助Sticky-Service唤醒" class="headerlink" title="借助Sticky Service唤醒"></a>借助Sticky Service唤醒</h2><p>黏性Service是系统提供的机制，被杀死后会由系统调度进行重启。前述的force-stop杀死的进程，由于设置的“STOPPED”状态是会被跳过的，因此这种情况杀死的进程不会再自动重启。大多数ROM对此都有限制（次数、频率）。</p>
+<h2 id="借助广播唤醒"><a href="#借助广播唤醒" class="headerlink" title="借助广播唤醒"></a>借助广播唤醒</h2><p>通过系统或其他App、组件发出的广播可以唤醒应用，顽固应用可以借助广播来完成唤醒自启。同样的，force-stop设置的“STOPPED”状态也会让广播跳过这些App，不会唤醒这些App来传递广播。但广播带有一个特例功能，带有FLAG_INCLUDE_STOPPED_PACKAGES的广播可以无视“STOPPED状态”，仍会唤醒force-stop的App。通常系统广播没有这个FLAG，基本上是其他应用发出的广播带有。</p>
+<p>高版本的Android已经不再触发静态广播和隐式广播，这种唤醒方式少了很多。（但有FLAG_RECEIVER_INCLUDE_BACKGROUND和FLAG_INCLUDE_STOPPED_PACKAGES规避）</p>
+<h2 id="借助Alarm-Service定时器唤醒"><a href="#借助Alarm-Service定时器唤醒" class="headerlink" title="借助Alarm Service定时器唤醒"></a>借助Alarm Service定时器唤醒</h2><p>Alarm是Android提供的定时器功能，定时器timeout时会唤醒App。被force-stop的应用会自动移除掉注册的定时器，因此不会被唤醒。</p>
+<h2 id="借助Job-Scheduling-Service任务调度唤醒"><a href="#借助Job-Scheduling-Service任务调度唤醒" class="headerlink" title="借助Job Scheduling Service任务调度唤醒"></a>借助Job Scheduling Service任务调度唤醒</h2><p>与Alarm类似，定时唤醒App。但是受到电源管理策略、功耗管理策略、系统休眠状态、WorkManager等的影响，唤醒的定时精度较低，且不同ROM可能表现一致性较差。同样的，会跳过被force-stop的App。</p>
+<h2 id="借助其他App拉起唤醒"><a href="#借助其他App拉起唤醒" class="headerlink" title="借助其他App拉起唤醒"></a>借助其他App拉起唤醒</h2><p>这是国内互联网App最恶心的一种机制，一群App（或集成的SDK）互相拉起对方、互相绑定提高优先级、互相拉起唤醒。其中，唤醒方式除了常规的四大组件外，还有一些黑科技、Native的方法。其中，App发出的广播带上FLAG_RECEIVER_INCLUDE_BACKGROUND和FLAG_INCLUDE_STOPPED_PACKAGES完全可以规避force-stop后”STOPPED”的应用，实现唤醒。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>可以说，Android本身的管理机、提供的组件间通信功能，叠加App们的流氓行为，可以说后台驻留、拉起唤醒是防不胜防的，实现较好的后台驻留管理需要较高的投入，且对系统稳定性、App基本功能的影响较大，是高投入高难度的研究方向。其中，App互拉唤醒和保活的机制，让force-stop机制做不到太好的效果，其”STOPPED”实现的类似的轻度冻结状态几乎报废，也是各大ROM厂商在后台管理部分大展身手的重要因素。</p>
+<p>为了实现好的功耗、续航、性能，就需要在应用唤醒、冻结、暂停执行等方面下功夫了。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/">https://nasdaqgodzilla.github.io/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><a class="post-meta__tags" href="/tags/%E5%8A%9F%E8%80%97%E7%BB%AD%E8%88%AA/">功耗续航</a></div><div class="post_share"><div class="social-share" data-image="https://nasdaqgodzilla.github.io/gallery/cover/56a77a4e69401b756c748b33.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2023/05/05/Android%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%EF%BC%9A%E4%B8%BB%E5%BE%AA%E7%8E%AF%E6%80%A7%E8%83%BD%E7%BB%9F%E8%AE%A1LooperStatsService%E8%AF%A6%E8%A7%A3/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/141575555790_.pic_hd.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android性能监控：主循环性能统计LooperStatsService详解</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android bindService流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-e7rpko.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-15</div><div class="title">Android bindService流程详解</div></div></a></div><div><a href="/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setTaskWindowingMode流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/AndroidFileTransfer.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android setTaskWindowingMode流程详解</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div><div><a href="/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android resizeTask流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/peek_device.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-23</div><div class="title">Android resizeTask流程详解</div></div></a></div><div><a href="/2022/06/13/Android-startForegroundService%E8%AF%A6%E8%A7%A3/" title="Android startForegroundService详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://images.viblo.asia/2370c6a3-6499-44f1-8701-be440160b6a8.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-13</div><div class="title">Android startForegroundService详解</div></div></a></div><div><a href="/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LinuxPenguin.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android setRequestedOrientation流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">64</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">27</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">22</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E5%92%8CTask%E7%AE%A1%E7%90%86"><span class="toc-number">2.</span> <span class="toc-text">进程和Task管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#OOM%E7%BB%88%E6%AD%A2%E8%BF%9B%E7%A8%8B%EF%BC%88LMK%EF%BC%89"><span class="toc-number">2.1.</span> <span class="toc-text">OOM终止进程（LMK）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E8%BF%91%E4%BB%BB%E5%8A%A1%E5%88%97%E8%A1%A8%E7%BB%93%E6%9D%9FTask"><span class="toc-number">2.2.</span> <span class="toc-text">最近任务列表结束Task</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%BA%E5%88%B6%E7%BB%93%E6%9D%9FApp"><span class="toc-number">2.3.</span> <span class="toc-text">强制结束App</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BF%9D%E6%8C%81%E6%B4%BB%E8%B7%83%E6%88%96%E5%94%A4%E9%86%92"><span class="toc-number">3.</span> <span class="toc-text">保持活跃或唤醒</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E6%9C%80%E8%BF%91%E4%BB%BB%E5%8A%A1%E9%9A%90%E8%97%8F%E6%88%96%E5%A4%9A%E4%B8%AA%E6%9C%80%E8%BF%91%E4%BB%BB%E5%8A%A1"><span class="toc-number">3.1.</span> <span class="toc-text">从最近任务隐藏或多个最近任务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%90%E5%8D%87App%E8%BF%9B%E7%A8%8B%E4%BC%98%E5%85%88%E7%BA%A7%E3%80%81%E9%98%BB%E6%AD%A2%E9%83%A8%E5%88%86%E5%9B%9E%E6%94%B6%E5%9C%BA%E6%99%AF"><span class="toc-number">3.2.</span> <span class="toc-text">提升App进程优先级、阻止部分回收场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%9F%E5%8A%A9Sticky-Service%E5%94%A4%E9%86%92"><span class="toc-number">3.3.</span> <span class="toc-text">借助Sticky Service唤醒</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%9F%E5%8A%A9%E5%B9%BF%E6%92%AD%E5%94%A4%E9%86%92"><span class="toc-number">3.4.</span> <span class="toc-text">借助广播唤醒</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%9F%E5%8A%A9Alarm-Service%E5%AE%9A%E6%97%B6%E5%99%A8%E5%94%A4%E9%86%92"><span class="toc-number">3.5.</span> <span class="toc-text">借助Alarm Service定时器唤醒</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%9F%E5%8A%A9Job-Scheduling-Service%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E5%94%A4%E9%86%92"><span class="toc-number">3.6.</span> <span class="toc-text">借助Job Scheduling Service任务调度唤醒</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%9F%E5%8A%A9%E5%85%B6%E4%BB%96App%E6%8B%89%E8%B5%B7%E5%94%A4%E9%86%92"><span class="toc-number">3.7.</span> <span class="toc-text">借助其他App拉起唤醒</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/" title="Android后台驻留：保活和回收的机制"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/56a77a4e69401b756c748b33.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android后台驻留：保活和回收的机制"/></a><div class="content"><a class="title" href="/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/" title="Android后台驻留：保活和回收的机制">Android后台驻留：保活和回收的机制</a><time datetime="2023-06-03T07:10:56.000Z" title="发表于 2023-06-03 15:10:56">2023-06-03</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/05/05/Android%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%EF%BC%9A%E4%B8%BB%E5%BE%AA%E7%8E%AF%E6%80%A7%E8%83%BD%E7%BB%9F%E8%AE%A1LooperStatsService%E8%AF%A6%E8%A7%A3/" title="Android性能监控：主循环性能统计LooperStatsService详解"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/141575555790_.pic_hd.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android性能监控：主循环性能统计LooperStatsService详解"/></a><div class="content"><a class="title" href="/2023/05/05/Android%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%EF%BC%9A%E4%B8%BB%E5%BE%AA%E7%8E%AF%E6%80%A7%E8%83%BD%E7%BB%9F%E8%AE%A1LooperStatsService%E8%AF%A6%E8%A7%A3/" title="Android性能监控：主循环性能统计LooperStatsService详解">Android性能监控：主循环性能统计LooperStatsService详解</a><time datetime="2023-05-05T09:38:02.000Z" title="发表于 2023-05-05 17:38:02">2023-05-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/04/24/LutFilter%EF%BC%9A3D-LUT%E7%AE%80%E4%BB%8B%E4%B8%8E%E5%BA%94%E7%94%A8/" title="LutFilter：3D LUT简介与应用"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/141575555790_.pic_hd.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="LutFilter：3D LUT简介与应用"/></a><div class="content"><a class="title" href="/2023/04/24/LutFilter%EF%BC%9A3D-LUT%E7%AE%80%E4%BB%8B%E4%B8%8E%E5%BA%94%E7%94%A8/" title="LutFilter：3D LUT简介与应用">LutFilter：3D LUT简介与应用</a><time datetime="2023-04-24T08:13:00.000Z" title="发表于 2023-04-24 16:13:00">2023-04-24</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/02/10/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9AgetResources-%E4%B8%8EBinder%E4%BA%A4%E7%81%AB%E5%AF%BC%E8%87%B4%E7%9A%84%E7%95%8C%E9%9D%A2%E5%8D%A1%E9%A1%BF%E4%BC%98%E5%8C%96/" title="Android性能优化：getResources()与Binder交火导致的界面卡顿优化"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-0w2qz6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android性能优化：getResources()与Binder交火导致的界面卡顿优化"/></a><div class="content"><a class="title" href="/2023/02/10/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9AgetResources-%E4%B8%8EBinder%E4%BA%A4%E7%81%AB%E5%AF%BC%E8%87%B4%E7%9A%84%E7%95%8C%E9%9D%A2%E5%8D%A1%E9%A1%BF%E4%BC%98%E5%8C%96/" title="Android性能优化：getResources()与Binder交火导致的界面卡顿优化">Android性能优化：getResources()与Binder交火导致的界面卡顿优化</a><time datetime="2023-02-10T08:51:13.000Z" title="发表于 2023-02-10 16:51:13">2023-02-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/01/25/Android-13-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 13 WindowContainer窗口模型详解"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-49y9vk.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android 13 WindowContainer窗口模型详解"/></a><div class="content"><a class="title" href="/2023/01/25/Android-13-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 13 WindowContainer窗口模型详解">Android 13 WindowContainer窗口模型详解</a><time datetime="2023-01-25T12:29:37.000Z" title="发表于 2023-01-25 20:29:37">2023-01-25</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2023 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/'
+    this.page.identifier = '2023/06/03/Android后台驻留：保活和回收的机制/'
+    this.page.title = 'Android后台驻留：保活和回收的机制'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

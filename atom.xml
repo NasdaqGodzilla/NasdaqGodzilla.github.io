@@ -6,7 +6,7 @@
   <link href="https://nasdaqgodzilla.github.io/atom.xml" rel="self"/>
   
   <link href="https://nasdaqgodzilla.github.io/"/>
-  <updated>2023-05-05T09:39:14.055Z</updated>
+  <updated>2023-06-03T07:11:51.025Z</updated>
   <id>https://nasdaqgodzilla.github.io/</id>
   
   <author>
@@ -15,6 +15,38 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Android后台驻留：保活和回收的机制</title>
+    <link href="https://nasdaqgodzilla.github.io/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/"/>
+    <id>https://nasdaqgodzilla.github.io/2023/06/03/Android%E5%90%8E%E5%8F%B0%E9%A9%BB%E7%95%99%EF%BC%9A%E4%BF%9D%E6%B4%BB%E5%92%8C%E5%9B%9E%E6%94%B6%E7%9A%84%E6%9C%BA%E5%88%B6/</id>
+    <published>2023-06-03T07:10:56.000Z</published>
+    <updated>2023-06-03T07:11:51.025Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>众所周知，Android平台的管理机制下，App进入后台后，为了提供持续的及时服务（如推送、音乐），或进行驻留获取收益（跟踪、信息收集、广告）等，会利用一些方法来让自身保持活跃，躲过被Android系统或用户发觉、清理，实现后台驻留。</p><p>其中，后台驻留的广义概念，除了保持在后台运行外，被其他组件拉起也属于驻留（唤醒）。</p><p>由于驻留会对系统的性能、响应延迟、续航、发热等带来负面影响，令系统的资源管理效果降低，属于违背用户意愿和知情的恶劣行为，因此将这些App称为顽固（Diehard）应用，其利用的方法称为顽固方法。</p><p>除了App利用的一些黑科技（甚至是在违法边缘的擦边手段）以外，Android系统本身自带的机制也可以实现保活和拉起。这些保活、拉起机制，粗略划分为两类：</p><ol><li>保持活跃，在后台运行不被清理、回收</li><li>被其他组件唤醒，包括被其他App唤醒、被系统提供的功能唤醒</li></ol><p>本文总结上述这两类会被顽固App利用的机制。</p><h1 id="进程和Task管理"><a href="#进程和Task管理" class="headerlink" title="进程和Task管理"></a>进程和Task管理</h1><p>首先简单梳理一下Android Framework层基本的进程管理。</p><p>Android平台基于Linux，除了基于Linux的“进程”维度来进行管理外，还按照Task的概念来管理应用进程，分别为ProcessRecord和TaskRecord。系统可以按Task也可以按Process来管理进程。</p><p>Android提供接口直接杀死Linux进程：1. ProcessRecord的kill()方法，其实现是向对应的进程发送SIGNAL_KILL信号；2. libc的kill()函数，也是发送信号</p><h2 id="OOM终止进程（LMK）"><a href="#OOM终止进程（LMK）" class="headerlink" title="OOM终止进程（LMK）"></a>OOM终止进程（LMK）</h2><p>App进程在系统中根据OOM（Out of Memory）ADJ（Adjustment）级别和进程状态来确定优先级，当系统需要杀死进程来释放内存时，优先级越低的会优先终止。OOM ADJ分数越小优先级越高。</p><p>由于顽固App进程后台驻留时可能会被系统回收，因此顽固App通常通过一些手段（services、弹窗）等来降低OOM（提高优先级），减少自身被系统回收的几率。</p><h2 id="最近任务列表结束Task"><a href="#最近任务列表结束Task" class="headerlink" title="最近任务列表结束Task"></a>最近任务列表结束Task</h2><p>用户在多任务界面（Recents）移除应用，系统会结束应用对应的Task：Removing Recent Task Item（RRT）。</p><p>该操作会结束掉与Task关联的进程，但在一些场景下仍然会有对应App的进程没有被杀死。</p><ol><li>当App通过”Exclude from recents”功能（不在最近任务列表显示自己）时，没有提供给用户结束的机会，就没有手动结束掉Task的入口</li><li>当一个进程属于多个Task时（该进程还需要为其他Task服务）</li></ol><p>这类终止机制由用户操作触发，当顽固应用借助多进程、多任务、唤醒拉起、互拉等操作，被终止后仍在后台运行（或后续又被唤醒），给用户感受为“杀不干净”。</p><h2 id="强制结束App"><a href="#强制结束App" class="headerlink" title="强制结束App"></a>强制结束App</h2><p>强制结束（Force-Stop）时Android内建的功能，由ActivityManagerService提供接口，可以在设置-应用程序界面由用户手动调用。</p><p>强制结束的范畴是App对应的所有Task（即可以杀死一般App所有进程）。FSA还额外会将App设置为“STOPPED“状态，禁止应用在下一次被用户手动启用或应用跳转前被广播、服务等唤醒。强制结束对顽固App的效果不佳，许多顽固App具备Native保活能力、互拉保活、唤醒拉起等对抗措施。</p><p>此外，Android提供KILL_BACKGROUND_PROCESSES权限，允许具备权限的App调用API杀死ADJ大于SERVICE_ADJ的后台进程（即没有Service的后台进程可以被杀掉）。</p><h1 id="保持活跃或唤醒"><a href="#保持活跃或唤醒" class="headerlink" title="保持活跃或唤醒"></a>保持活跃或唤醒</h1><h2 id="从最近任务隐藏或多个最近任务"><a href="#从最近任务隐藏或多个最近任务" class="headerlink" title="从最近任务隐藏或多个最近任务"></a>从最近任务隐藏或多个最近任务</h2><p>Android平台提供的excludeFromRecents功能可以让App的Task在多任务中隐藏。此外一个进程可以属于不同的Task，产生多个Task并隐藏其中几个Task可以实现”杀不干净“的效果。</p><h2 id="提升App进程优先级、阻止部分回收场景"><a href="#提升App进程优先级、阻止部分回收场景" class="headerlink" title="提升App进程优先级、阻止部分回收场景"></a>提升App进程优先级、阻止部分回收场景</h2><p>LMK和OOM ADJ会受到进程状态和优先级的影响，提高优先级可以降低被系统回收的几率，阻止部分会杀进程的场景。</p><p>其中，将借助前台进程绑定后台服务进程保活的手段，是较常见的“杀不死、杀不干净”的情况（最近任务移除后仍有进程）。</p><ol><li>接收广播，启动Receiver，具有Receiver的后台进程优先级高于无Receiver的后台进程</li><li>创建前台Service（高版本Android前台service需要带有通知），OOM ADJ更低（SERVICE_ADJ），杀死概率更低，此时进程不会被“杀死后台进程”杀掉（会跳过ADJ小于等于SERVICE_ADJ的进程）</li><li>保持前台Activity，OOM ADJ更低（用户可见的Task）</li><li>创建前台窗口（悬浮窗）或覆盖窗口（将窗口盖在前台App上面）</li><li>将后台服务绑定到前台进程，赋予后台服务在的进程更低的OOM，提升该进程的优先级，减少被杀的几率；同时对应进程不再属于后台进程，不会被“杀死后台进程”杀死，且该进程转为“需要为其他Task服务”，同样不会被最近任务移除时杀死</li><li>对于涉及Service的场景，ContentProvider也适用</li></ol><h2 id="借助Sticky-Service唤醒"><a href="#借助Sticky-Service唤醒" class="headerlink" title="借助Sticky Service唤醒"></a>借助Sticky Service唤醒</h2><p>黏性Service是系统提供的机制，被杀死后会由系统调度进行重启。前述的force-stop杀死的进程，由于设置的“STOPPED”状态是会被跳过的，因此这种情况杀死的进程不会再自动重启。大多数ROM对此都有限制（次数、频率）。</p><h2 id="借助广播唤醒"><a href="#借助广播唤醒" class="headerlink" title="借助广播唤醒"></a>借助广播唤醒</h2><p>通过系统或其他App、组件发出的广播可以唤醒应用，顽固应用可以借助广播来完成唤醒自启。同样的，force-stop设置的“STOPPED”状态也会让广播跳过这些App，不会唤醒这些App来传递广播。但广播带有一个特例功能，带有FLAG_INCLUDE_STOPPED_PACKAGES的广播可以无视“STOPPED状态”，仍会唤醒force-stop的App。通常系统广播没有这个FLAG，基本上是其他应用发出的广播带有。</p><p>高版本的Android已经不再触发静态广播和隐式广播，这种唤醒方式少了很多。（但有FLAG_RECEIVER_INCLUDE_BACKGROUND和FLAG_INCLUDE_STOPPED_PACKAGES规避）</p><h2 id="借助Alarm-Service定时器唤醒"><a href="#借助Alarm-Service定时器唤醒" class="headerlink" title="借助Alarm Service定时器唤醒"></a>借助Alarm Service定时器唤醒</h2><p>Alarm是Android提供的定时器功能，定时器timeout时会唤醒App。被force-stop的应用会自动移除掉注册的定时器，因此不会被唤醒。</p><h2 id="借助Job-Scheduling-Service任务调度唤醒"><a href="#借助Job-Scheduling-Service任务调度唤醒" class="headerlink" title="借助Job Scheduling Service任务调度唤醒"></a>借助Job Scheduling Service任务调度唤醒</h2><p>与Alarm类似，定时唤醒App。但是受到电源管理策略、功耗管理策略、系统休眠状态、WorkManager等的影响，唤醒的定时精度较低，且不同ROM可能表现一致性较差。同样的，会跳过被force-stop的App。</p><h2 id="借助其他App拉起唤醒"><a href="#借助其他App拉起唤醒" class="headerlink" title="借助其他App拉起唤醒"></a>借助其他App拉起唤醒</h2><p>这是国内互联网App最恶心的一种机制，一群App（或集成的SDK）互相拉起对方、互相绑定提高优先级、互相拉起唤醒。其中，唤醒方式除了常规的四大组件外，还有一些黑科技、Native的方法。其中，App发出的广播带上FLAG_RECEIVER_INCLUDE_BACKGROUND和FLAG_INCLUDE_STOPPED_PACKAGES完全可以规避force-stop后”STOPPED”的应用，实现唤醒。</p><h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>可以说，Android本身的管理机、提供的组件间通信功能，叠加App们的流氓行为，可以说后台驻留、拉起唤醒是防不胜防的，实现较好的后台驻留管理需要较高的投入，且对系统稳定性、App基本功能的影响较大，是高投入高难度的研究方向。其中，App互拉唤醒和保活的机制，让force-stop机制做不到太好的效果，其”STOPPED”实现的类似的轻度冻结状态几乎报废，也是各大ROM厂商在后台管理部分大展身手的重要因素。</p><p>为了实现好的功耗、续航、性能，就需要在应用唤醒、冻结、暂停执行等方面下功夫了。</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h1 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h1&gt;&lt;p&gt;众所周知，Android平台的管理机制下，App进入后台后，为了提供持续的及时服务（如推送、音乐），或进行驻留获取收益（跟踪、信息收集、广告</summary>
+      
+    
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
+    
+    <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
+    
+    <category term="功耗续航" scheme="https://nasdaqgodzilla.github.io/categories/%E5%8A%9F%E8%80%97%E7%BB%AD%E8%88%AA/"/>
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
+    
+    <category term="功耗续航" scheme="https://nasdaqgodzilla.github.io/tags/%E5%8A%9F%E8%80%97%E7%BB%AD%E8%88%AA/"/>
+    
+  </entry>
   
   <entry>
     <title>Android性能监控：主循环性能统计LooperStatsService详解</title>
@@ -403,9 +435,9 @@
     
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
     
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
     <category term="Android稳定性" scheme="https://nasdaqgodzilla.github.io/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
+    
+    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
     
     <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
     
@@ -608,43 +640,6 @@
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
     
     <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Android resizeTask流程详解</title>
-    <link href="https://nasdaqgodzilla.github.io/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/"/>
-    <id>https://nasdaqgodzilla.github.io/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</id>
-    <published>2022-06-23T08:38:30.000Z</published>
-    <updated>2022-08-29T11:29:39.197Z</updated>
-    
-    <content type="html"><![CDATA[<hr><p>3:09 pm<br>Thursday, 23 June 2022 (HKT)<br>Time in Hong Kong</p><hr><ul><li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li><li><a href="#atms.resizetask--%3E-taskrecord.resize">ATMS.resizeTask -&gt; TaskRecord.resize</a><ul><li><a href="#task.resize">Task.resize</a></li></ul></li><li><a href="#%E6%80%BB%E7%BB%93">总结</a></li></ul><h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><h1 id="ATMS-resizeTask-gt-TaskRecord-resize"><a href="#ATMS-resizeTask-gt-TaskRecord-resize" class="headerlink" title="ATMS.resizeTask -&gt; TaskRecord.resize"></a>ATMS.resizeTask -&gt; TaskRecord.resize</h1><p>与<code>setWindowingMode()</code>在窗口模式下是对<code>ActivityStack</code>操作<code>resize()</code>不同，<code>resizeTask()</code>是对<code>TaskRecord</code>的<code>resize()</code>进行操作的。</p><p><code>TaskRecord</code>设置bounds，更新Configuration并触发children同步更新，最后调用<code>Task.resize()</code>。</p><!--```uml@startumlparticipant ActivityTaskManagerService as ATMSparticipant TaskRecord as TRparticipant ActivityRecord as ARparticipant Task as Tparticipant WindowManagerService as WMS-> ATMS : resizeTask()ATMS -> TR : resize()TR -> WMS : deferSurfaceLayout()TR -> TR : updateOverrideConfiguration()activate TRTR -> TR : setBounds()TR -> TR : onRequestedOverrideConfigurationChanged()TR -> TR : onConfigurationChanged()TR -> AR : onConfigurationChanged()deactivate TRTR -> T : resize()TR -> WMS : continueSurfaceLayout()@enduml```--><p><img src="//www.plantuml.com/plantuml/png/VP91JuD048Nl_0gEUl0FU335NcrCW8JpPFU14tKMTsSnzTSxSAZIqfu8xttlpJ1XbvIYvi-FOhGdEnv9jAoSyiHwR2cz7qXeG6mG9tOeAPLLUsXM-8pLS27wsMxhpQu_eAelqajkfNOiFdnV3kziTl7mj2nHFfOHYNymLzpT5ujcNbkV75FjpRHkmJrwn2R7dXnUw1Yode0bb4TFYjS9CRB7FaZFGuwa7CH0cZ_5V6F_XnBqEMJnQTqLfCPNHbBupSBz6ya0VnwwoLGt6O-D3Q-TmWLHbeppQ-mWtlw7Nm00" alt="resizeTask.TaskRecord.resize流程"></p><h2 id="Task-resize"><a href="#Task-resize" class="headerlink" title="Task.resize"></a>Task.resize</h2><p><code>Task.resize()</code>的主要工作是，借助<code>WindowContainer</code>的体系，将resize bounds通过<code>onConfigurationChanged()</code>传递到children(<code>AppWindowToken</code>、<code>WindowState</code>)。并在此过程中通过Surface Transaction将Surface设置为指定的大小、摆放到指定位置。</p><p>最后，<code>WindowState</code>如果发现窗口大小改变，会将自身添加到<code>WindowManagerService.mResizingWindows</code>中。在一下一次traversal中，会有额外操作回调到<code>WindowState</code>（在<code>handleResizingWindows()</code>中回调<code>WindowState.reportResized()</code>，这个方法内部通过<code>IWindow</code>这个Binder回调到应用的<code>ViewRootImpl.W.resized()</code>，最终将窗口大小回调到App的<code>ViewRootImpl</code>）。</p><!--```uml@startumlparticipant Task as Tparticipant DisplayContent as DCparticipant ConfigurationContainer as CCparticipant AppWindowToken as AWTparticipant WindowState as WSparticipant WindowManagerService as WMS-> T : resize()T -> T : setBounds()activate TT -> CC : setBounds()CC -> AWT : onConfigurationChanged()AWT -> WS : onConfigurationChanged()WS -> WS : updateSurfacePosition()WS -> WS : setPosition()WS -> WMS : scheduleAnimation()T -> T : updateSurfacePosition()deactivate TT -> T : onResize()activate TT -> AWT : onResize()AWT -> WS : onResize()WS -> WMS : mResizingWindows.add()note left : 将自身添加到WMS的mResizingWindows中deactivate TT -> DC : layoutAndAssignWindowLayersIfNeeded()@enduml```--><p><img src="//www.plantuml.com/plantuml/png/VP8nJiCm58Rtd28Z37001jJGBaWK8H8fyrFyabfDdoFRAIep0iGHc9X1IDr0S1qAFGRFTOjmMtMg-d-VxVV7xXWBshQZEchuLnQo0R9n1cOOWucp8Er9qzGmwIgoo7-Pzxg1mAIKLQl1IaLE0qcedTWDnQHfSab2NMLgYEI490_FyZYrOD7XFDr2-q1GeKvHZsNXjNuQHGV7SHOVnHgDlCQz_IZAucLaq9webeJX50ehnsxtp0iyufh10SSy6EUAmcu3e0e5IuoTbQUx9AOhfsq4M4nRNKA15yf8PuOApx09-WjI352qDIOaH-3vijoEdGLkLFMDBbSVw1_FVEL024l-nU5eeqKggV9NOmv1kEQaUDiQIylAR7exltkUVxnylttE7fvczrDU-lDuixxqw_rrsz0zTp_y_5Hh4nA9CR8Yl-8C9gZDQNcEAD2Tsa4I_AH_0G00" alt="Task.resize流程"></p><h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p><code>resizeTask()</code>以<code>TaskRecord</code>为起点，根据resize bounds计算对应的Configuration，并通过<code>ConfigurationContainer</code>体系分发。通过<code>Task</code>与<code>WindowContainer</code>体系分发到<code>AppWindowToken</code>和<code>WindowState</code>中。<code>WindowContainer</code>体系会在更新Configuration和bounds的同时，通过Surface Transaction更新Surface大小和位置。在一下次WMS的traversal时，就会完成窗口layout，最终完成resize。</p>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;hr&gt;
-&lt;p&gt;3:09 pm&lt;br&gt;Thursday, 23 June 2022 (HKT)&lt;br&gt;Time in Hong Kong&lt;/p&gt;
-&lt;hr&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&quot;#%E6%A6%82%E8%BF%B0&quot;&gt;概述&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href</summary>
-      
-    
-    
-    
-    <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
-    
-    <category term="Android稳定性" scheme="https://nasdaqgodzilla.github.io/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
-    
-    <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
-    
-    
-    <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
-    
-    <category term="Android稳定性" scheme="https://nasdaqgodzilla.github.io/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
-    
-    <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
     
   </entry>
   
