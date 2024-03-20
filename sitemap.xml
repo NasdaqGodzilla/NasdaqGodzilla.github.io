@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://nasdaqgodzilla.github.io/2024/03/20/%E5%9C%A8Apple-Mac-M1%E4%B8%8A%E7%BC%96%E8%AF%91AOSP-ARM-Android%E6%A8%A1%E6%8B%9F%E5%99%A8/</loc>
+    
+    <lastmod>2024-03-20</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://nasdaqgodzilla.github.io/2024/03/19/%E6%8B%89%E5%8F%96%E5%B9%B6%E7%BC%96%E8%AF%91AOSP-Android-14%E6%A8%A1%E6%8B%9F%E5%99%A8/</loc>
     
     <lastmod>2024-03-20</lastmod>
@@ -137,7 +146,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/tags/index.html</loc>
+    <loc>https://nasdaqgodzilla.github.io/talking/index.html</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -146,7 +155,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/talking/index.html</loc>
+    <loc>https://nasdaqgodzilla.github.io/tags/index.html</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -209,15 +218,6 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/2022/02/24/%E6%90%AD%E5%BB%BASPICE%E4%BA%91%E6%A1%8C%E9%9D%A2%EF%BC%9ADocker-QEMU-KVM-SPICE-Windows10%E4%BA%91%E6%A1%8C%E9%9D%A2/</loc>
-    
-    <lastmod>2022-08-29</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://nasdaqgodzilla.github.io/2022/06/14/%E5%BD%92%E5%8E%BB%E6%9D%A5%E5%85%AE%E8%BE%9E/</loc>
     
     <lastmod>2022-08-29</lastmod>
@@ -227,7 +227,25 @@
   </url>
   
   <url>
+    <loc>https://nasdaqgodzilla.github.io/2022/02/24/%E6%90%AD%E5%BB%BASPICE%E4%BA%91%E6%A1%8C%E9%9D%A2%EF%BC%9ADocker-QEMU-KVM-SPICE-Windows10%E4%BA%91%E6%A1%8C%E9%9D%A2/</loc>
+    
+    <lastmod>2022-08-29</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://nasdaqgodzilla.github.io/baidu_verify_code-A8AqzE4W82.html</loc>
+    
+    <lastmod>2022-08-29</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/about/index.html</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -246,15 +264,6 @@
   
   <url>
     <loc>https://nasdaqgodzilla.github.io/categories/index.html</loc>
-    
-    <lastmod>2022-08-29</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://nasdaqgodzilla.github.io/about/index.html</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -362,7 +371,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/</loc>
+    <loc>https://nasdaqgodzilla.github.io/2022/06/21/Android%E7%BC%96%E8%AF%91AOSP%E6%BA%90%E7%A0%81%E5%B9%B6%E7%94%9F%E6%88%90%E6%A8%A1%E6%8B%9F%E5%99%A8%E9%95%9C%E5%83%8F%E5%B9%B6%E8%BF%90%E8%A1%8C/</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -371,7 +380,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/2022/06/21/Android%E7%BC%96%E8%AF%91AOSP%E6%BA%90%E7%A0%81%E5%B9%B6%E7%94%9F%E6%88%90%E6%A8%A1%E6%8B%9F%E5%99%A8%E9%95%9C%E5%83%8F%E5%B9%B6%E8%BF%90%E8%A1%8C/</loc>
+    <loc>https://nasdaqgodzilla.github.io/2022/08/08/Android%E7%B3%BB%E7%BB%9F%E7%BC%96%E8%AF%91%E4%BC%98%E5%8C%96-%E4%BD%BF%E7%94%A8Ninja%E5%8A%A0%E5%BF%AB%E7%BC%96%E8%AF%91/</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -407,15 +416,6 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
-    
-    <lastmod>2022-08-29</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://nasdaqgodzilla.github.io/2022/06/23/Android-resizeTask%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
     
     <lastmod>2022-08-29</lastmod>
@@ -425,7 +425,16 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
+    <loc>https://nasdaqgodzilla.github.io/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
+    
+    <lastmod>2022-08-29</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/2022/06/15/Android-bindService%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -435,15 +444,6 @@
   
   <url>
     <loc>https://nasdaqgodzilla.github.io/2022/06/13/Android-startForegroundService%E8%AF%A6%E8%A7%A3/</loc>
-    
-    <lastmod>2022-08-29</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://nasdaqgodzilla.github.io/2022/06/21/Android-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -471,6 +471,15 @@
   
   <url>
     <loc>https://nasdaqgodzilla.github.io/2022/05/31/AndroidStudio-in-Docker-%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3/</loc>
+    
+    <lastmod>2022-08-29</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/2022/06/23/Android-setTaskWindowingMode%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -524,7 +533,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
+    <loc>https://nasdaqgodzilla.github.io/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -533,7 +542,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/</loc>
+    <loc>https://nasdaqgodzilla.github.io/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/</loc>
     
     <lastmod>2022-08-29</lastmod>
     
@@ -736,13 +745,6 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/</loc>
-    <lastmod>2024-03-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://nasdaqgodzilla.github.io/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
@@ -751,6 +753,13 @@
   
   <url>
     <loc>https://nasdaqgodzilla.github.io/tags/%E5%8A%9F%E8%80%97%E7%BB%AD%E8%88%AA/</loc>
+    <lastmod>2024-03-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -799,20 +808,6 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/tags/LeetCode/</loc>
-    <lastmod>2024-03-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://nasdaqgodzilla.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
-    <lastmod>2024-03-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://nasdaqgodzilla.github.io/tags/%E5%AE%B9%E5%99%A8/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
@@ -841,14 +836,21 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/tags/Postman/</loc>
+    <loc>https://nasdaqgodzilla.github.io/tags/LeetCode/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/tags/Web/</loc>
+    <loc>https://nasdaqgodzilla.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
+    <lastmod>2024-03-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/tags/Postman/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -863,6 +865,20 @@
   
   <url>
     <loc>https://nasdaqgodzilla.github.io/tags/OTA/</loc>
+    <lastmod>2024-03-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/tags/Web/</loc>
+    <lastmod>2024-03-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/tags/Shell/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -897,13 +913,6 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/tags/Shell/</loc>
-    <lastmod>2024-03-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://nasdaqgodzilla.github.io/tags/QEMU/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
@@ -927,13 +936,6 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/</loc>
-    <lastmod>2024-03-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://nasdaqgodzilla.github.io/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
@@ -941,7 +943,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</loc>
+    <loc>https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -955,7 +957,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/categories/%E5%8A%9F%E8%80%97%E7%BB%AD%E8%88%AA/</loc>
+    <loc>https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -969,21 +971,14 @@
   </url>
   
   <url>
+    <loc>https://nasdaqgodzilla.github.io/categories/%E5%8A%9F%E8%80%97%E7%BB%AD%E8%88%AA/</loc>
+    <lastmod>2024-03-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://nasdaqgodzilla.github.io/categories/Graphics/</loc>
-    <lastmod>2024-03-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://nasdaqgodzilla.github.io/categories/LeetCode/</loc>
-    <lastmod>2024-03-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://nasdaqgodzilla.github.io/categories/KVM/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -1004,7 +999,14 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/categories/%E8%99%9A%E6%8B%9F%E5%8C%96/</loc>
+    <loc>https://nasdaqgodzilla.github.io/categories/LeetCode/</loc>
+    <lastmod>2024-03-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/categories/KVM/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -1046,7 +1048,7 @@
   </url>
   
   <url>
-    <loc>https://nasdaqgodzilla.github.io/categories/%E4%BA%91%E6%A1%8C%E9%9D%A2/</loc>
+    <loc>https://nasdaqgodzilla.github.io/categories/%E8%99%9A%E6%8B%9F%E5%8C%96/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -1061,6 +1063,13 @@
   
   <url>
     <loc>https://nasdaqgodzilla.github.io/categories/%E6%96%87%E5%AD%A6/</loc>
+    <lastmod>2024-03-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://nasdaqgodzilla.github.io/categories/%E4%BA%91%E6%A1%8C%E9%9D%A2/</loc>
     <lastmod>2024-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
