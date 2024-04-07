@@ -1,0 +1,886 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>MTK LED驱动节点创建和读写流程 | PeaceMaker</title><meta name="keywords" content="Android,驱动"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="简介本文分析MTK平台对LED（指示灯）驱动节点部分的创建、处理流程。MTK Android平台遵循Linux的规范惯例，和常规的Linux一样，将发光的二极管等设备抽象为一个sysfs class（驱动里面的一种类），诸如指示灯、LED灯、背光等都属于这一类，因此都在同一个class（&#x2F;sys&#x2F;class&#x2F;leds）下管理。MTK平台在该目录下提供了对LED进行操作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MTK LED驱动节点创建和读写流程">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="简介本文分析MTK平台对LED（指示灯）驱动节点部分的创建、处理流程。MTK Android平台遵循Linux的规范惯例，和常规的Linux一样，将发光的二极管等设备抽象为一个sysfs class（驱动里面的一种类），诸如指示灯、LED灯、背光等都属于这一类，因此都在同一个class（&#x2F;sys&#x2F;class&#x2F;leds）下管理。MTK平台在该目录下提供了对LED进行操作">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg">
+<meta property="article:published_time" content="2024-04-07T06:11:40.000Z">
+<meta property="article:modified_time" content="2024-04-07T06:12:56.777Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="驱动">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'MTK LED驱动节点创建和读写流程',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-04-07 14:12:56'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">70</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">29</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">MTK LED驱动节点创建和读写流程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-04-07T06:11:40.000Z" title="发表于 2024-04-07 14:11:40">2024-04-07</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-04-07T06:12:56.777Z" title="更新于 2024-04-07 14:12:56">2024-04-07</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E9%A9%B1%E5%8A%A8/">驱动</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="MTK LED驱动节点创建和读写流程"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>本文分析MTK平台对LED（指示灯）驱动节点部分的创建、处理流程。MTK Android平台遵循Linux的规范惯例，和常规的Linux一样，将发光的二极管等设备抽象为一个sysfs class（驱动里面的一种类），诸如指示灯、LED灯、背光等都属于这一类，因此都在同一个class（&#x2F;sys&#x2F;class&#x2F;leds）下管理。MTK平台在该目录下提供了对LED进行操作的驱动节点。</p>
+<p>其中，和常规的Linux一样，也是通过trigger节点来控制LED灯的触发。</p>
+<pre><code>android:/ # ls /sys/class/leds/*
+/sys/class/leds/blue:
+brightness device max_brightness power subsystem trigger uevent 
+
+/sys/class/leds/green:
+brightness device max_brightness power subsystem trigger uevent 
+
+/sys/class/leds/lcd-backlight:
+brightness device max_brightness power subsystem trigger uevent 
+
+/sys/class/leds/red:
+brightness device max_brightness power subsystem trigger uevent 
+
+/sys/class/leds/vibrator:
+activate brightness device duration max_brightness power state subsystem trigger uevent
+</code></pre>
+<blockquote>
+<p>Linux标准规范下对LED设备节点名称的命名格式为：devicename:colour:function，而MTK Android平台不遵循这一规则，通常直接用简单直观的名字命名。</p>
+</blockquote>
+<h1 id="1-LED模式、驱动方式和基本数据结构"><a href="#1-LED模式、驱动方式和基本数据结构" class="headerlink" title="1. LED模式、驱动方式和基本数据结构"></a>1. LED模式、驱动方式和基本数据结构</h1><p>对于MTK Android平台各个LED驱动节点而言，设备中各LED均按照一个既定的类型和模式来管理并驱动。对于一个LED设备驱动而言，指定了其类型、模式和输出方式，就是完整的一个LED控制方法的配置了。</p>
+<p>MTK Android平台将设备中对LED归类为如下几种类型，主要是RGB三色灯、键盘灯按键灯、LCD背光等。</p>
+<pre><code>enum mt65xx_led_type            
+&#123;
+        MT65XX_LED_TYPE_RED = 0,
+        MT65XX_LED_TYPE_GREEN,
+        MT65XX_LED_TYPE_BLUE,
+        MT65XX_LED_TYPE_JOGBALL,
+        MT65XX_LED_TYPE_KEYBOARD,
+        MT65XX_LED_TYPE_BUTTON,
+        MT65XX_LED_TYPE_LCD,
+        MT65XX_LED_TYPE_TOTAL,
+&#125;;
+</code></pre>
+<p>而驱动这些能发光的器件，主要是通过GPIO输出、PWM输出、借助PMIC（iSink）输出等几种方式。</p>
+<pre><code>enum mt65xx_led_mode
+&#123;
+        MT65XX_LED_MODE_NONE,
+        MT65XX_LED_MODE_PWM,
+        MT65XX_LED_MODE_GPIO,
+        MT65XX_LED_MODE_PMIC,
+        MT65XX_LED_MODE_CUST_LCM,
+        MT65XX_LED_MODE_CUST_BLS_PWM
+&#125;;
+
+// PMIC iSink的输出方式
+enum mt65xx_led_pmic
+&#123;
+        MT65XX_LED_PMIC_LCD_ISINK = 0,
+        MT65XX_LED_PMIC_NLED_ISINK_MIN = MT65XX_LED_PMIC_LCD_ISINK,
+        MT65XX_LED_PMIC_NLED_ISINK0,
+        MT65XX_LED_PMIC_NLED_ISINK1,
+        MT65XX_LED_PMIC_NLED_ISINK_MAX,
+&#125;;
+
+// PWM方式的定义
+struct PWM_config
+&#123;
+        int clock_source;
+        int div;
+        int low_duration;
+        int High_duration;
+        BOOL pmic_pad;
+&#125;;
+</code></pre>
+<p>LED设备配置模式的一个完整的描述如下，完整的LED包含名称、模式、输出方式。</p>
+<pre><code>/*
+ * name : must the same as lights HAL
+ * mode : control mode
+ * data :
+ *    PWM:  pwm number
+ *    GPIO: gpio id
+ *    PMIC: enum mt65xx_led_pmic
+ *    CUST: custom set brightness function pointer
+*/
+struct cust_mt65xx_led &#123;
+        char                 *name;
+        enum mt65xx_led_mode  mode;
+        int                   data;
+        struct PWM_config config_data;
+&#125;;
+</code></pre>
+<p>对于上述data成员，当mode是<code>MT65XX_LED_MODE_CUST_LCM</code>时，data存储控制屏幕亮度的函数指针（一般这种屏幕是接收BB端的指令来自行调节亮度的，而不是BB端来控制背光，如OLED等自发光的屏幕）。</p>
+<p>小结：通过<code>cust_mt65xx_led</code>来描述一个LED类型和驱动模式。</p>
+<blockquote>
+<p>cust_mt65xx_led只是LED类型和驱动模式的封装，还不是真正使用的驱动的数据结构。</p>
+</blockquote>
+<h1 id="2-驱动节点配置"><a href="#2-驱动节点配置" class="headerlink" title="2. 驱动节点配置"></a>2. 驱动节点配置</h1><p>为了方便不同的主板对自己的LED进行适配，MTK Android平台提供了dts的方式来允许用户方便的配置支持的LED数量和类型，不需要用户手动去创建和初始化<code>cust_mt65xx_led</code>。</p>
+<p>其中，当dts没有配置时，会从一个数组（列表）中获取LED配置。如果不进行dts配置，仅修改这个列表，效果也是一样的，但不推荐。</p>
+<h2 id="2-1-列表配置"><a href="#2-1-列表配置" class="headerlink" title="2.1. 列表配置"></a>2.1. 列表配置</h2><p>前面讲过，<code>cust_mt65xx_led</code>即是LED模式和驱动方式的完整抽象，<code>cust_leds.c</code>定义了该类型的数组，用来包含保存所有LED配置实例，外部文件通过<code>get_cust_led_list</code>获得这个列表。</p>
+<blockquote>
+<p>没有定义dts时才会获取这个列表</p>
+</blockquote>
+<pre><code>static struct cust_mt65xx_led cust_led_list[MT65XX_LED_TYPE_TOTAL] = &#123;
+    &#123;&quot;red&quot;,               MT65XX_LED_MODE_PWM, 1,&#123;0,0,0,0,1&#125;&#125;,
+    &#123;&quot;green&quot;,             MT65XX_LED_MODE_PWM, 0,&#123;0,0,0,0,1&#125;&#125;,
+    &#123;&quot;blue&quot;,              MT65XX_LED_MODE_PWM, -1,&#123;0,0,0,0,1&#125;&#125;,
+    &#123;&quot;jogball-backlight&quot;, MT65XX_LED_MODE_NONE, -1,&#123;0,0,0,0,0&#125;&#125;,
+    &#123;&quot;keyboard-backlight&quot;,MT65XX_LED_MODE_NONE, -1,&#123;0,0,0,0,0&#125;&#125;,
+    &#123;&quot;button-backlight&quot;,  MT65XX_LED_MODE_NONE, -1,&#123;0,0,0,0,0&#125;&#125;,
+    &#123;&quot;lcd-backlight&quot;,     MT65XX_LED_MODE_CUST_BLS_PWM, (int)disp_bls_set_backlight,&#123;0&#125;&#125;,
+&#125;;
+
+struct cust_mt65xx_led *get_cust_led_list(void)
+&#123;
+        return cust_led_list;
+&#125;
+</code></pre>
+<h2 id="2-2-dts配置"><a href="#2-2-dts配置" class="headerlink" title="2.2. dts配置"></a>2.2. dts配置</h2><p>LED dts的配置如下。由于dts中配置的命名非常直观，且和前述LED数据结构变量名都能刚好对应，不再赘述。由于LED节点的创建流程中会首先判断是否存在dts配置，然后再检查列表配置。因此dts配置优先级高于列表配置。</p>
+<pre><code>&amp;odm &#123;
+        led0:led@0 &#123;
+                compatible = &quot;mediatek,red&quot;;
+                led_mode = &lt;1&gt;;
+                data = &lt;1&gt;;
+                pwm_config = &lt;0 0 0 0 0&gt;;
+        &#125;;
+
+        led1:led@1 &#123;
+                compatible = &quot;mediatek,green&quot;;
+                led_mode = &lt;1&gt;;
+                data = &lt;0&gt;;
+                pwm_config = &lt;0 0 0 0 0&gt;;
+        &#125;;
+        ...
+&#125;;
+</code></pre>
+<h2 id="2-3-dts解析"><a href="#2-3-dts解析" class="headerlink" title="2.3. dts解析"></a>2.3. dts解析</h2><p>LED配置的解析和加载是懒加载的形式。即运行流程中发生了对LED相关操作（如<code>mt65xx_leds_brightness_set()函数调用</code>）后，检查是否完成了dts的解析，使得LED dts配置是在使用时才解析，且仅进行首次解析。</p>
+<pre><code>int mt65xx_leds_brightness_set(enum mt65xx_led_type type, enum led_brightness level)
+&#123;
+        struct cust_mt65xx_led *cust_led_list = get_cust_led_dtsi();
+
+        // dts没有配置时，加载列表配置
+        if (cust_led_list == NULL) &#123;
+                cust_led_list = get_cust_led_list();
+                LEDS_DEBUG(&quot;Cannot not get the LED info from device tree. \n&quot;);
+        &#125;
+
+        if (type &gt;= MT65XX_LED_TYPE_TOTAL)
+                return -1;
+        
+        ...
+&#125;
+</code></pre>
+<p><code>get_cust_led_dtsi()</code>通过缓存解析结果来实现仅首次解析一次的目的。其中，缓存结果存储到pled_dtsi中。它是以指针类型存储的数组。</p>
+<pre><code>struct cust_mt65xx_led pled_dtsi[MT65XX_LED_TYPE_TOTAL];
+</code></pre>
+<p>前面dts的配置可以确定LED dts配置的解析路径，以及相匹配的LED名称。</p>
+<pre><code>char *leds_name[MT65XX_LED_TYPE_TOTAL] = &#123;
+        &quot;red&quot;,
+        &quot;green&quot;,
+        &quot;blue&quot;,
+        &quot;jogball-backlight&quot;,
+        &quot;keyboard-backlight&quot;,
+        &quot;button-backlight&quot;,
+        &quot;lcd-backlight&quot;,
+&#125;;
+
+char *leds_node[MT65XX_LED_TYPE_TOTAL] = &#123;
+        &quot;/odm/led@0&quot;,
+        &quot;/odm/led@1&quot;,
+        &quot;/odm/led@2&quot;,
+        &quot;/odm/led@3&quot;,
+        &quot;/odm/led@4&quot;,
+        &quot;/odm/led@5&quot;,
+        &quot;/odm/led@6&quot;,
+&#125;;
+</code></pre>
+<p>解析函数如下。它的逻辑很简单，就是按照<code>leds_name[]</code>数组来按顺序解析dts，对数据结构初始化。如果是CUST系列的两个mode，则对data赋值为对应函数指针。</p>
+<pre><code>struct cust_mt65xx_led *get_cust_led_dtsi(void)
+&#123;
+        static bool isDTinited = false;
+        int i, offset;
+        int pwm_config[5] = &#123;0&#125;;
+
+#if defined(USE_DTB_NO_DWS)
+        if ( isDTinited == true )
+                goto out;
+        for (i = 0; i &lt; MT65XX_LED_TYPE_TOTAL; i++) &#123;
+                pled_dtsi[i].name = leds_name[i];
+                offset = fdt_path_offset(get_lk_overlayed_dtb(), leds_node[i]);
+                if (offset &lt; 0) &#123;
+                        LEDS_DEBUG(&quot;[LEDS]LK:Cannot find LED node from dts\n&quot;);
+                        pled_dtsi[i].mode = 0;
+                        pled_dtsi[i].data = -1;
+                &#125; else &#123;
+                        isDTinited = true;
+                        pled_dtsi[i].mode = led_fdt_getprop_u32(get_lk_overlayed_dtb(), offset, &quot;led_mode&quot;);
+                        pled_dtsi[i].data = led_fdt_getprop_u32(get_lk_overlayed_dtb(), offset, &quot;data&quot;);
+                        led_fdt_getprop_char_array(get_lk_overlayed_dtb(), offset, &quot;pwm_config&quot;, (char *)pwm_config);
+                        pled_dtsi[i].config_data.clock_source = pwm_config[0];
+                        pled_dtsi[i].config_data.div = pwm_config[1];
+                        pled_dtsi[i].config_data.low_duration = pwm_config[2];
+                        pled_dtsi[i].config_data.High_duration = pwm_config[3];
+                        pled_dtsi[i].config_data.pmic_pad = pwm_config[4];
+                        switch (pled_dtsi[i].mode) &#123;
+                                case MT65XX_LED_MODE_CUST_LCM:
+                                        pled_dtsi[i].data = (long)primary_display_setbacklight;
+                                        LEDS_DEBUG(&quot;[LEDS]LK:The backlight hw mode is LCM.\n&quot;);
+                                        break;
+                                case MT65XX_LED_MODE_CUST_BLS_PWM:
+                                        pled_dtsi[i].data = (long)disp_bls_set_backlight;
+                                        LEDS_DEBUG(&quot;[LEDS]LK:The backlight hw mode is BLS.\n&quot;);
+                                        break;
+                                default:
+                                        break;
+                        &#125;
+                        LEDS_INFO(&quot;[LEDS]LK:led[%d] offset is %d,mode is %d,data is %d .\n&quot;,    \
+                                  i,offset,pled_dtsi[i].mode,pled_dtsi[i].data);
+                &#125;
+        &#125;
+#endif
+        if ( isDTinited == false )
+                return NULL;
+out:
+        return pled_dtsi;
+&#125;
+</code></pre>
+<h1 id="3-驱动的初始化和驱动节点创建"><a href="#3-驱动的初始化和驱动节点创建" class="headerlink" title="3. 驱动的初始化和驱动节点创建"></a>3. 驱动的初始化和驱动节点创建</h1><p>MTK LED驱动是一个独立的module，由<code>CONFIG_MTK_LEDS</code>控制，在系统中注册LED设备驱动，并初始化节点。实际上，完整的LED节点创建过程中，创建LED节点本身是第二步，第一步是Linux原生创建的LED sysfs class。因此Kernel中有一些Linux定义好的用来创建对应class的KConfig配置也和LED驱动节点有关。下表列出相关的一些KConfig配置（这些配置是需要打开以支持LED驱动的），列出的顺序和Module加载顺序是一致的。</p>
+<blockquote>
+<p>除CONFIG_MTK_LEDS是MTK加入的，其他都是Linux原生的</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>定义</th>
+<th>包含模块</th>
+<th>加载</th>
+<th>简介</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CONFIG_NEW_LEDS</td>
+<td>led-core.o</td>
+<td>exported symbols</td>
+<td>提供LED操作函数的抽象和这些函数的symbol export，定义了leds_list、锁并export。主要是将通用函数和公共全局变量symbol export出来，并挂接到真正的ledclass_cdev实现中。相当于将通用API和实际设备驱动进行胶水层粘合</td>
+</tr>
+<tr>
+<td>CONFIG_LEDS_CLASS</td>
+<td>led-class.o</td>
+<td>subsys_initcall</td>
+<td>加载、初始化LED类（class），让系统中出现这一类的sysfs驱动节点，初始化对应attribute。注册电源管理函数、group attribute等。</td>
+</tr>
+<tr>
+<td>CONFIG_LEDS_TRIGGERS</td>
+<td>led-triggers.o</td>
+<td>exported symbols</td>
+<td>类似led-core，提供并export trigger相关的通用API ｜</td>
+</tr>
+<tr>
+<td>CONFIG_LEDS_TRIGGER_TIMER</td>
+<td>ledtrig-timer.o</td>
+<td>module_init</td>
+<td>用于trigger实现blink，创建delay_on&#x2F;off节点并通过它们来运行调用者设置、实现blink</td>
+</tr>
+<tr>
+<td>CONFIG_MTK_LEDS</td>
+<td>mtk_leds_drv.o mtk_leds.o</td>
+<td>late_initcall，在led-class加载完成后才加载，先加载mtk_leds_drv后加载mtk_leds</td>
+<td>mtk_leds_drv完成LED dts配置解析，并创建LED在sysfs class的节点，注册了LED brightness、blink等节点设置亮度、blink的处理函数块。其中，mtk_leds_drv注册的各处理函数，都是调用了mtk_leds.o</td>
+</tr>
+</tbody></table>
+<h2 id="3-1-sysfs-LED-Class驱动"><a href="#3-1-sysfs-LED-Class驱动" class="headerlink" title="3.1. sysfs LED Class驱动"></a>3.1. sysfs LED Class驱动</h2><p>在分析LED驱动前，先分析sysfs下LED class。led-class.o在subsys_initcall阶段初始化，主要完成创建class类、注册电源管理函数、注册groups。</p>
+<h3 id="3-1-1-创建sysfs-LED-class"><a href="#3-1-1-创建sysfs-LED-class" class="headerlink" title="3.1.1. 创建sysfs LED class"></a>3.1.1. 创建sysfs LED class</h3><p>创建一个class比较简单，调用<code>class_create()</code>就会在对应路径创建class目录了。led-class.o模块通过这个方法在sysfs下创建了<code>leds</code>目录。</p>
+<h3 id="3-1-2-注册sysfs-class-dev-pm-ops"><a href="#3-1-2-注册sysfs-class-dev-pm-ops" class="headerlink" title="3.1.2. 注册sysfs class dev_pm_ops"></a>3.1.2. 注册sysfs class dev_pm_ops</h3><p><code>dev_pm_ops</code>是设备电源管理的操作函数，当LED驱动挂起和恢复时调用，用于LED电源的管理。其中，注册的操作函数包含<code>led_suspend</code>和<code>led_resume</code>。</p>
+<p>其中suspend的过程非常简单，通过<code>dev_get_drvdata(struct device*)</code>，根据电源管理子系统传入的<code>device</code>取得存储于<code>device-&gt;driver_data</code>的<code>led_classdev</code>指针，然后调用<code>led-core.o</code>定义好的API，把LED的brightness设置为0，关掉了灯即进入了suspend。</p>
+<blockquote>
+<p>如前所述，led class、led core、led device中间通过框架抽象粘合在了一起，这里的suspend过程就是这个框架在发挥作用。led device如何加入到框架中，稍后分析。</p>
+</blockquote>
+<p>resume的流程也是一样的，把之前LED灯的brightness level恢复点亮就行了。其中brightness level（即对应LED device当前生效的亮度）存储在<code>led_classdev-&gt;brightness</code>。</p>
+<h3 id="3-1-3-注册sysfs-class-dev-groups，为设备添加属性节点"><a href="#3-1-3-注册sysfs-class-dev-groups，为设备添加属性节点" class="headerlink" title="3.1.3. 注册sysfs class dev_groups，为设备添加属性节点"></a>3.1.3. 注册sysfs class dev_groups，为设备添加属性节点</h3><p>dev_groups的类型是<code>struct attribute_group</code>，它是class给其包含的设备添加的属性。LED class添加了brightness、max_brightness、trigger等节点，这里仅看看brightness节点。</p>
+<pre><code>static ssize_t brightness_show(struct device *dev,                         
+                struct device_attribute *attr, char *buf)                  
+&#123;                                                                            
+        struct led_classdev *led_cdev = dev_get_drvdata(dev);                 
+
+        /* no lock needed for this */
+        led_update_brightness(led_cdev);
+
+        return sprintf(buf, &quot;%u\n&quot;, led_cdev-&gt;brightness);
+&#125;
+
+static ssize_t brightness_store(struct device *dev,
+                struct device_attribute *attr, const char *buf, size_t size)
+&#123;
+        struct led_classdev *led_cdev = dev_get_drvdata(dev);
+        unsigned long state;
+        ssize_t ret;
+
+        mutex_lock(&amp;led_cdev-&gt;led_access);
+
+        if (led_sysfs_is_disabled(led_cdev)) &#123;
+                ret = -EBUSY;
+                goto unlock;
+        &#125;
+
+        ret = kstrtoul(buf, 10, &amp;state);
+        if (ret)
+                goto unlock;
+
+        if (state == LED_OFF)
+                led_trigger_remove(led_cdev);
+        led_set_brightness(led_cdev, state);
+
+        ret = size;
+unlock:
+        mutex_unlock(&amp;led_cdev-&gt;led_access);
+        return ret;
+&#125;
+static DEVICE_ATTR_RW(brightness);
+</code></pre>
+<p><code>brightness_show()</code>的逻辑是通过<code>led_update_brightness()</code>调用LED设备驱动，获取brightness。</p>
+<p><code>brightness_store()</code>的逻辑会进行加锁、拷贝用户空间的输入值，调用<code>led_set_brightness()</code>，他是led-core提供的抽象API。</p>
+<pre><code>void led_set_brightness(struct led_classdev *led_cdev,
+                        enum led_brightness brightness)             
+&#123;
+        /*                                  
+         * If software blink is active, delay brightness setting
+         * until the next timer tick.
+         */                                                                  
+        if (test_bit(LED_BLINK_SW, &amp;led_cdev-&gt;work_flags)) &#123;
+                /*                         
+                 * If we need to disable soft blinking delegate this to the
+                 * work queue task to avoid problems in case we are called
+                 * from hard irq context.
+                 */ 
+                if (brightness == LED_OFF) &#123;
+                        set_bit(LED_BLINK_DISABLE, &amp;led_cdev-&gt;work_flags);
+                        schedule_work(&amp;led_cdev-&gt;set_brightness_work);
+                &#125; else &#123;       
+                        set_bit(LED_BLINK_BRIGHTNESS_CHANGE,
+                                &amp;led_cdev-&gt;work_flags);
+                        led_cdev-&gt;new_blink_brightness = brightness;
+                &#125;
+                return;
+        &#125;          
+
+        led_set_brightness_nosleep(led_cdev, brightness);
+&#125;
+EXPORT_SYMBOL_GPL(led_set_brightness);
+
+void led_set_brightness_nopm(struct led_classdev *led_cdev,
+                              enum led_brightness value)
+&#123;
+        /* Use brightness_set op if available, it is guaranteed not to sleep */
+        if (!__led_set_brightness(led_cdev, value))
+                return;
+
+        /* If brightness setting can sleep, delegate it to a work queue task */
+        led_cdev-&gt;delayed_set_value = value;
+        schedule_work(&amp;led_cdev-&gt;set_brightness_work);
+&#125;
+EXPORT_SYMBOL_GPL(led_set_brightness_nopm);
+
+void led_set_brightness_nosleep(struct led_classdev *led_cdev,
+                                enum led_brightness value)
+&#123;
+        led_cdev-&gt;brightness = min(value, led_cdev-&gt;max_brightness);
+
+        if (led_cdev-&gt;flags &amp; LED_SUSPENDED)
+                return;
+
+        led_set_brightness_nopm(led_cdev, led_cdev-&gt;brightness);
+&#125;
+EXPORT_SYMBOL_GPL(led_set_brightness_nosleep);
+</code></pre>
+<p>如果此时LED是软件实现的Blink（通过一个工作队列实现的），则设置对应标志位，由工作队列来更新亮度。否则调用<code>led_set_brightness_nosleep()</code>。</p>
+<p><code>led_set_brightness_nosleep()</code>的作用是跳过<code>LED_SUSPENDED</code>状态，设置brightness的操作仅在此之外的状态中生效。实际调用<code>led_set_brightness_nopm()</code>来设置brightness。</p>
+<p><code>led_set_brightness_nopm()</code>首先通过<code>__led_set_brightness()</code>检查LED是否注册了<code>brightness_set</code>函数。有则调用，完成brightness设置。否则调用<code>set_brightness_work</code>工作队列来完成。</p>
+<pre><code>static int __led_set_brightness(struct led_classdev *led_cdev,              
+                                enum led_brightness value)                 
+&#123;                                               
+        if (!led_cdev-&gt;brightness_set)
+                return -ENOTSUPP;                                
+                                                                        
+        led_cdev-&gt;brightness_set(led_cdev, value);
+                                                                       
+        return 0;                                                                             
+&#125;
+</code></pre>
+<blockquote>
+<p>brightness_set是mtk_leds_drv.o模块在probe时，解析LED dts、创建mt65xx_led_data的时候赋值为mt65xx_led_set()</p>
+</blockquote>
+<blockquote>
+<p>set_brightness_work是led-class.o在初始化led class时创建的，该延时队列执行的是set_brightness_delayed()。它首先调用和_nopm()相同的__led_set_brightness()，在失败的情况下会再尝试__led_set_brightness_blocking()</p>
+</blockquote>
+<h3 id="3-1-4-小结"><a href="#3-1-4-小结" class="headerlink" title="3.1.4. 小结"></a>3.1.4. 小结</h3><p>led-class.o创建了LED class，并为即将加入到该class的子节点们准备了brightness、max_brightness、trigger等属性（attribute），并将这些属性与对应的读写函数挂接起来。其中，挂接的函数实际是mtk_leds_drv.o和mtk_leds.o模块实现的。</p>
+<h2 id="3-2-LED驱动基础数据结构"><a href="#3-2-LED驱动基础数据结构" class="headerlink" title="3.2. LED驱动基础数据结构"></a>3.2. LED驱动基础数据结构</h2><p>我们知道Android启动过程实际上是经历了LK和Kernel两个阶段的。其中Kernel阶段会创建LED驱动节点。Kernel中除了定义了与LK一致的用于抽象LED模式和驱动方式的struct外，主要在此基础上增加了设备驱动模型的抽象，当前亮度等级，以及用于blink的支持。</p>
+<pre><code>struct mt65xx_led_data &#123;
+        struct led_classdev cdev;
+        struct cust_mt65xx_led cust;
+        struct work_struct work;
+        int level;
+        int delay_on;
+        int delay_off;
+&#125;;
+</code></pre>
+<p>其中<code>led_classdev</code>包含了blink、timer、trigger等除brightness等的功能，比较庞大。</p>
+<pre><code>struct led_classdev &#123;                                          
+        const char              *name;                
+        enum led_brightness      brightness;                                   
+        enum led_brightness      max_brightness;          
+        int                      flags;                        
+                                                            
+        /* set_brightness_work / blink_timer flags, atomic, private. */    
+        unsigned long           work_flags;            
+                                                          
+        /* Set LED brightness level                             
+         * Must not sleep. Use brightness_set_blocking for drivers     
+         * that can sleep while setting brightness.                      
+         */                                                        
+        void            (*brightness_set)(struct led_classdev *led_cdev,  
+                                          enum led_brightness brightness);
+        /*                                                              
+         * Set LED brightness level immediately - it can block the caller for
+         * the time required for accessing a LED device register.                    
+         */                                                             
+        int (*brightness_set_blocking)(struct led_classdev *led_cdev,
+                                       enum led_brightness brightness);
+        /* Get LED brightness level */
+        enum led_brightness (*brightness_get)(struct led_classdev *led_cdev);
+
+        /*
+         * Activate hardware accelerated blink, delays are in milliseconds
+         * and if both are zero then a sensible default should be chosen.
+         * The call should adjust the timings in that case and if it can&#39;t
+         * match the values specified exactly.
+         * Deactivate blinking again when the brightness is set to LED_OFF
+         * via the brightness_set() callback.
+         */
+        int             (*blink_set)(struct led_classdev *led_cdev,
+                                     unsigned long *delay_on,
+                                     unsigned long *delay_off);
+
+        struct device           *dev;
+        const struct attribute_group    **groups;
+
+        struct list_head         node;                  /* LED Device list */
+        const char              *default_trigger;       /* Trigger to use */
+
+        unsigned long            blink_delay_on, blink_delay_off;
+        struct timer_list        blink_timer;
+        int                      blink_brightness;
+        int                      new_blink_brightness;
+        void                    (*flash_resume)(struct led_classdev *led_cdev);
+
+        struct work_struct      set_brightness_work;
+        int                     delayed_set_value;
+
+#ifdef CONFIG_LEDS_TRIGGERS
+        /* Protects the trigger data below */
+        struct rw_semaphore      trigger_lock;
+
+        struct led_trigger      *trigger;
+        struct list_head         trig_list;
+        void                    *trigger_data;
+        /* true if activated - deactivate routine uses it to do cleanup */
+        bool                    activated;
+#endif
+
+#ifdef CONFIG_LEDS_BRIGHTNESS_HW_CHANGED
+        int                      brightness_hw_changed;
+        struct kernfs_node      *brightness_hw_changed_kn;
+#endif
+
+        /* Ensures consistent access to the LED Flash Class device */
+        struct mutex            led_access;
+</code></pre>
+<h2 id="3-3-LED驱动初始化"><a href="#3-3-LED驱动初始化" class="headerlink" title="3.3. LED驱动初始化"></a>3.3. LED驱动初始化</h2><p><code>mtk_leds_drv.o</code>模块的<code>mt65xx_leds_probe</code>完成对LED驱动的初始化。</p>
+<p>首先读取LED配置（dts配置或列表配置），为配置的每个LED创建驱动数据结构，设置操作函数指针，初始化工作队列，最后调用LED节点注册函数。</p>
+<pre><code>static int mt65xx_leds_probe(struct platform_device *pdev)
+&#123;                
+        int i;
+        int ret;
+        struct cust_mt65xx_led *cust_led_list = mt_get_cust_led_list();
+                                              
+        if (!cust_led_list) &#123;               
+                pr_info(&quot;[LED] get dts fail! Probe exit.\n&quot;);
+                ret = -1;                                              
+                goto err_dts;                                   
+        &#125;                                     
+                                              
+#ifdef CONFIG_BACKLIGHT_SUPPORT_LP8557
+        /*i2c_register_board_info(4, &amp;leds_board_info, 1);*/
+        if (i2c_add_driver(&amp;led_i2c_driver)) &#123;
+                LEDS_DRV_DEBUG(&quot;unable to add led-i2c driver.\n&quot;);
+                ret = -1;
+                goto err_dts;
+        &#125;
+#endif                                                     
+ 
+        for (i = 0; i &lt; TYPE_TOTAL; i++) &#123;
+                if (cust_led_list[i].mode == MT65XX_LED_MODE_NONE) &#123;
+                        g_leds_data[i] = NULL;
+                        continue;
+                &#125;
+
+                g_leds_data[i] =
+                    kzalloc(sizeof(struct mt65xx_led_data), GFP_KERNEL);
+                if (!g_leds_data[i]) &#123;
+                        ret = -ENOMEM;
+                        goto err;
+                &#125;
+
+                g_leds_data[i]-&gt;cust.mode = cust_led_list[i].mode;
+                g_leds_data[i]-&gt;cust.data = cust_led_list[i].data;
+                g_leds_data[i]-&gt;cust.name = cust_led_list[i].name;
+
+                g_leds_data[i]-&gt;cdev.name = cust_led_list[i].name;
+                g_leds_data[i]-&gt;cust.config_data = cust_led_list[i].config_data;
+
+                g_leds_data[i]-&gt;cdev.brightness_set = mt65xx_led_set;
+                g_leds_data[i]-&gt;cdev.blink_set = mt65xx_blink_set;
+
+                INIT_WORK(&amp;g_leds_data[i]-&gt;work, mt_mt65xx_led_work);
+
+                ret = led_classdev_register(&amp;pdev-&gt;dev, &amp;g_leds_data[i]-&gt;cdev);
+
+                if (ret)
+                        goto err;
+        &#125;
+        ...
+&#125;
+</code></pre>
+<p>接下来通过<code>led_classdev_register()</code>注册LED设备驱动，注册每个LED驱动所需要的同步锁、驱动节点。</p>
+<blockquote>
+<p>其中，每个LED是分别在for循环里面逐个单独地调用<code>led_classdev_register()</code>进行注册的。</p>
+</blockquote>
+<p>函数如下。这个函数较长，包含几个关键步骤。下面先展示这个函数后再分解分析。</p>
+<pre><code>#define led_classdev_register(parent, led_cdev)                         \
+        of_led_classdev_register(parent, NULL, led_cdev)
+
+
+
+/**
+ * of_led_classdev_register - register a new object of led_classdev class. 
+ *                                                       
+ * @parent: parent of LED device                                             
+ * @led_cdev: the led_classdev structure for this device.                 
+ * @np: DT node describing this LED       
+ */                                                     
+int of_led_classdev_register(struct device *parent, struct device_node *np,
+                            struct led_classdev *led_cdev)                    
+&#123;                                                          
+        char name[LED_MAX_NAME_SIZE];
+        int ret;           
+                                                            
+        ret = led_classdev_next_name(led_cdev-&gt;name, name, sizeof(name));     
+        if (ret &lt; 0)                                                          
+                return ret;               
+                                                         
+        led_cdev-&gt;dev = device_create_with_groups(leds_class, parent, 0,
+                                led_cdev, led_cdev-&gt;groups, &quot;%s&quot;, name);
+        if (IS_ERR(led_cdev-&gt;dev))
+                return PTR_ERR(led_cdev-&gt;dev);
+        led_cdev-&gt;dev-&gt;of_node = np;
+
+        if (ret)
+                dev_warn(parent, &quot;Led %s renamed to %s due to name collision&quot;,
+                                led_cdev-&gt;name, dev_name(led_cdev-&gt;dev));
+
+        if (led_cdev-&gt;flags &amp; LED_BRIGHT_HW_CHANGED) &#123;
+                ret = led_add_brightness_hw_changed(led_cdev);
+                if (ret) &#123;
+                        device_unregister(led_cdev-&gt;dev);
+                        return ret;
+                &#125;
+        &#125;
+
+        led_cdev-&gt;work_flags = 0;
+        #ifdef CONFIG_LEDS_TRIGGERS
+        init_rwsem(&amp;led_cdev-&gt;trigger_lock);
+#endif
+#ifdef CONFIG_LEDS_BRIGHTNESS_HW_CHANGED
+        led_cdev-&gt;brightness_hw_changed = -1;
+#endif
+        mutex_init(&amp;led_cdev-&gt;led_access);
+        /* add to the list of leds */
+        down_write(&amp;leds_list_lock);
+        list_add_tail(&amp;led_cdev-&gt;node, &amp;leds_list);
+        up_write(&amp;leds_list_lock);
+
+        if (!led_cdev-&gt;max_brightness)
+                led_cdev-&gt;max_brightness = LED_FULL;
+
+        led_update_brightness(led_cdev);
+
+        led_init_core(led_cdev);
+
+#ifdef CONFIG_LEDS_TRIGGERS
+        led_trigger_set_default(led_cdev);
+#endif
+
+        dev_dbg(parent, &quot;Registered led device: %s\n&quot;,
+                        led_cdev-&gt;name);
+
+        return 0;
+&#125;
+EXPORT_SYMBOL_GPL(of_led_classdev_register);
+</code></pre>
+<p><code>of_led_classdev_register()</code>可以分解为如下几个最主要的流程。</p>
+<h3 id="3-3-1-查找并移除重名LED节点"><a href="#3-3-1-查找并移除重名LED节点" class="headerlink" title="3.3.1. 查找并移除重名LED节点"></a>3.3.1. 查找并移除重名LED节点</h3><p><code>led_classdev_next_name()</code>查找LED class内重复注册同一个名称（函数参数里面的name）的节点。class中如果重复注册，第一个节点命名为LED名称（如”red”），其余重复的命名为”red_0”。这个函数<code>通过class_find_device()</code>查找到同名class节点后，通过<code>put_device()</code>将其从class节点集合中移除。</p>
+<blockquote>
+<p>这里传入的参数中len &#x3D;&#x3D; sizeof(name)，因此只会将直接重名的LED class移除（如”red”），而不会移除按序号再命名的class节点如（”red_0”）。</p>
+</blockquote>
+<p>函数返回小于0的时候，即枚举重名节点期间的缓冲区大小不够（注意缓冲区要有空间给字符串后面补’\0’才算满足大小；直接传入sizeof()大小是满足要求的。），此时没有可靠地检查并移除重名函数，因此提前退出，不创建节点。</p>
+<p>函数返回值大于等于0时表示发现并移除了对应数量的重名和再命名节点。</p>
+<pre><code>static int led_classdev_next_name(const char *init_name, char *name,
+                                  size_t len)
+&#123;
+        unsigned int i = 0;
+        int ret = 0;
+        struct device *dev;
+
+        strlcpy(name, init_name, len);
+
+        while ((ret &lt; len) &amp;&amp;
+               (dev = class_find_device(leds_class, NULL, name, match_name))) &#123;
+                put_device(dev);
+                ret = snprintf(name, len, &quot;%s_%u&quot;, init_name, ++i);
+        &#125;
+
+        if (ret &gt;= len)
+                return -ENOMEM;
+
+        return i;
+&#125;
+</code></pre>
+<h3 id="3-3-2-创建LED节点"><a href="#3-3-2-创建LED节点" class="headerlink" title="3.3.2. 创建LED节点"></a>3.3.2. 创建LED节点</h3><p>在移除同名节点后，通过<code>device_create_with_groups</code>创建sysfs LED class路径下的节点。它是Linux系统特地为创建sysfs class节点专用的函数。</p>
+<pre><code>/**
+ * device_create_with_groups - creates a device and registers it with sysfs
+ * @class: pointer to the struct class that this device should be registered to
+ * @parent: pointer to the parent struct device of this new device, if any
+ * @devt: the dev_t for the char device to be added
+ * @drvdata: the data to be added to the device for callbacks
+ * @groups: NULL-terminated list of attribute groups to be created
+ * @fmt: string for the device&#39;s name
+ *
+ * This function can be used by char device classes.  A struct device
+ * will be created in sysfs, registered to the specified class.
+ * Additional attributes specified in the groups parameter will also
+ * be created automatically.
+ *
+ * A &quot;dev&quot; file will be created, showing the dev_t for the device, if
+ * the dev_t is not 0,0.
+ * If a pointer to a parent struct device is passed in, the newly created
+ * struct device will be a child of that device in sysfs.
+ * The pointer to the struct device will be returned from the call.
+ * Any further sysfs files that might be required can be created using this
+ * pointer.
+ *
+ * Returns &amp;struct device pointer on success, or ERR_PTR() on error.
+ *
+ * Note: the struct class passed to this function must have previously
+ * been created with a call to class_create().
+ */
+struct device *device_create_with_groups(struct class *class,
+                                         struct device *parent, dev_t devt,
+                                         void *drvdata,
+                                         const struct attribute_group **groups,
+                                         const char *fmt, ...)
+&#123;
+    ...
+&#125;
+EXPORT_SYMBOL_GPL(device_create_with_groups);
+</code></pre>
+<p>LED创建它的sysfs LED class子节点的调用方式如下。创建的device指针存储在<code>mt65xx_led_data-&gt;led_classdev-&gt;dev</code>这一<code>struct device*</code>中。</p>
+<pre><code>led_cdev-&gt;dev = device_create_with_groups(leds_class, parent, 0,
+                    led_cdev, led_cdev-&gt;groups, &quot;%s&quot;, name);
+</code></pre>
+<p>至此，<code>mtk_leds_drv.o</code>就借助<code>mt65xx_leds_probe()</code>完成了MTK LED驱动的sysfs class注册和初始化了。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>MTK LED采用了Linux LED sysfs class，它通过dts进行配置，借助built-in module的方式加载。其中，LED class提供了各LED设备的attribute来实现brightness、trigger等节点的创建，并将store、show等读写函数挂接到<code>mtk_leds_drv.o</code>这一真正的LED class device中，实现了LED节点的创建、读写流程。</p>
+<h2 id="类图和流程图"><a href="#类图和流程图" class="headerlink" title="类图和流程图"></a>类图和流程图</h2><p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/MTK_LED_watermarked.png"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/">https://nasdaqgodzilla.github.io/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/%E9%A9%B1%E5%8A%A8/">驱动</a></div><div class="post_share"><div class="social-share" data-image="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2024/03/20/Android-Emulator%E8%BF%90%E8%A1%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84AOSP%E9%95%9C%E5%83%8F/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Android Emulator运行自定义的AOSP镜像</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 WindowContainer窗口模型详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-03</div><div class="title">Android 11 WindowContainer窗口模型详解</div></div></a></div><div><a href="/2023/01/25/Android-13-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 13 WindowContainer窗口模型详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-v93v73.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-01-25</div><div class="title">Android 13 WindowContainer窗口模型详解</div></div></a></div><div><a href="/2023/06/17/Android-BatteryStats%E6%9C%8D%E5%8A%A1%E5%8A%9F%E8%80%97%E7%BB%9F%E8%AE%A1%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android BatteryStats服务功耗统计流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-1klw71.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-06-17</div><div class="title">Android BatteryStats服务功耗统计流程详解</div></div></a></div><div><a href="/2024/03/20/Android-Emulator%E8%BF%90%E8%A1%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84AOSP%E9%95%9C%E5%83%8F/" title="Android Emulator运行自定义的AOSP镜像"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-20</div><div class="title">Android Emulator运行自定义的AOSP镜像</div></div></a></div><div><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/" title="Android 11 startActivity之ActivityStarter流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-05</div><div class="title">Android 11 startActivity之ActivityStarter流程</div></div></a></div><div><a href="/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-06</div><div class="title">Android 11 setRequestedOrientation流程详解</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">70</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">29</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">24</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#1-LED%E6%A8%A1%E5%BC%8F%E3%80%81%E9%A9%B1%E5%8A%A8%E6%96%B9%E5%BC%8F%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-number">2.</span> <span class="toc-text">1. LED模式、驱动方式和基本数据结构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E9%85%8D%E7%BD%AE"><span class="toc-number">3.</span> <span class="toc-text">2. 驱动节点配置</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%E5%88%97%E8%A1%A8%E9%85%8D%E7%BD%AE"><span class="toc-number">3.1.</span> <span class="toc-text">2.1. 列表配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-dts%E9%85%8D%E7%BD%AE"><span class="toc-number">3.2.</span> <span class="toc-text">2.2. dts配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-dts%E8%A7%A3%E6%9E%90"><span class="toc-number">3.3.</span> <span class="toc-text">2.3. dts解析</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-%E9%A9%B1%E5%8A%A8%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E5%92%8C%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA"><span class="toc-number">4.</span> <span class="toc-text">3. 驱动的初始化和驱动节点创建</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-sysfs-LED-Class%E9%A9%B1%E5%8A%A8"><span class="toc-number">4.1.</span> <span class="toc-text">3.1. sysfs LED Class驱动</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-1-%E5%88%9B%E5%BB%BAsysfs-LED-class"><span class="toc-number">4.1.1.</span> <span class="toc-text">3.1.1. 创建sysfs LED class</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-2-%E6%B3%A8%E5%86%8Csysfs-class-dev-pm-ops"><span class="toc-number">4.1.2.</span> <span class="toc-text">3.1.2. 注册sysfs class dev_pm_ops</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-3-%E6%B3%A8%E5%86%8Csysfs-class-dev-groups%EF%BC%8C%E4%B8%BA%E8%AE%BE%E5%A4%87%E6%B7%BB%E5%8A%A0%E5%B1%9E%E6%80%A7%E8%8A%82%E7%82%B9"><span class="toc-number">4.1.3.</span> <span class="toc-text">3.1.3. 注册sysfs class dev_groups，为设备添加属性节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-4-%E5%B0%8F%E7%BB%93"><span class="toc-number">4.1.4.</span> <span class="toc-text">3.1.4. 小结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-LED%E9%A9%B1%E5%8A%A8%E5%9F%BA%E7%A1%80%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-number">4.2.</span> <span class="toc-text">3.2. LED驱动基础数据结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3-LED%E9%A9%B1%E5%8A%A8%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">4.3.</span> <span class="toc-text">3.3. LED驱动初始化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-1-%E6%9F%A5%E6%89%BE%E5%B9%B6%E7%A7%BB%E9%99%A4%E9%87%8D%E5%90%8DLED%E8%8A%82%E7%82%B9"><span class="toc-number">4.3.1.</span> <span class="toc-text">3.3.1. 查找并移除重名LED节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-2-%E5%88%9B%E5%BB%BALED%E8%8A%82%E7%82%B9"><span class="toc-number">4.3.2.</span> <span class="toc-text">3.3.2. 创建LED节点</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB%E5%9B%BE%E5%92%8C%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="toc-number">5.1.</span> <span class="toc-text">类图和流程图</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/" title="MTK LED驱动节点创建和读写流程"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="MTK LED驱动节点创建和读写流程"/></a><div class="content"><a class="title" href="/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/" title="MTK LED驱动节点创建和读写流程">MTK LED驱动节点创建和读写流程</a><time datetime="2024-04-07T06:11:40.000Z" title="发表于 2024-04-07 14:11:40">2024-04-07</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/20/Android-Emulator%E8%BF%90%E8%A1%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84AOSP%E9%95%9C%E5%83%8F/" title="Android Emulator运行自定义的AOSP镜像"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android Emulator运行自定义的AOSP镜像"/></a><div class="content"><a class="title" href="/2024/03/20/Android-Emulator%E8%BF%90%E8%A1%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84AOSP%E9%95%9C%E5%83%8F/" title="Android Emulator运行自定义的AOSP镜像">Android Emulator运行自定义的AOSP镜像</a><time datetime="2024-03-20T10:11:01.000Z" title="发表于 2024-03-20 18:11:01">2024-03-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/20/%E5%9C%A8Apple-Mac-M1%E4%B8%8A%E7%BC%96%E8%AF%91AOSP-ARM-Android%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="在Apple Mac M1上编译AOSP ARM Android模拟器"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="在Apple Mac M1上编译AOSP ARM Android模拟器"/></a><div class="content"><a class="title" href="/2024/03/20/%E5%9C%A8Apple-Mac-M1%E4%B8%8A%E7%BC%96%E8%AF%91AOSP-ARM-Android%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="在Apple Mac M1上编译AOSP ARM Android模拟器">在Apple Mac M1上编译AOSP ARM Android模拟器</a><time datetime="2024-03-20T08:43:32.000Z" title="发表于 2024-03-20 16:43:32">2024-03-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/19/%E6%8B%89%E5%8F%96%E5%B9%B6%E7%BC%96%E8%AF%91AOSP-Android-14%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="拉取并编译AOSP Android 14模拟器"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3r1zl.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="拉取并编译AOSP Android 14模拟器"/></a><div class="content"><a class="title" href="/2024/03/19/%E6%8B%89%E5%8F%96%E5%B9%B6%E7%BC%96%E8%AF%91AOSP-Android-14%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="拉取并编译AOSP Android 14模拟器">拉取并编译AOSP Android 14模拟器</a><time datetime="2024-03-19T06:33:46.000Z" title="发表于 2024-03-19 14:33:46">2024-03-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/08/23/Android-bpf%E7%AE%80%E5%8D%95%E4%B8%8A%E6%89%8B%E6%95%99%E7%A8%8B/" title="Android bpf简单上手教程"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallpaper7.jpeg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android bpf简单上手教程"/></a><div class="content"><a class="title" href="/2023/08/23/Android-bpf%E7%AE%80%E5%8D%95%E4%B8%8A%E6%89%8B%E6%95%99%E7%A8%8B/" title="Android bpf简单上手教程">Android bpf简单上手教程</a><time datetime="2023-08-23T12:10:37.000Z" title="发表于 2023-08-23 20:10:37">2023-08-23</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2024 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/'
+    this.page.identifier = '2024/04/07/MTK-LED驱动节点创建和读写流程/'
+    this.page.title = 'MTK LED驱动节点创建和读写流程'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
