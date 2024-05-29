@@ -1,0 +1,398 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题 | PeaceMaker</title><meta name="keywords" content="Android,Android稳定性,Linux,BSP"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="背景研发一个机型的过程中出了点意料之外的问题。在关机状态下，进行电源适配器（DC）连续插拔测试时，在特定操作下会有概率性出现花屏现象，而且花屏现象不一致不统一。 现象如下图所示。图中无关紧要的位置打了马赛克，bug的问题现象是屏幕显示的内容花了。虽然都是关机充电界面花屏，但是花的内容款式有几种不同的。  Failed Rate：每7-8次出现1次；测试未发现与特定屏型号、特定屏单体、特定主板单体有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="背景研发一个机型的过程中出了点意料之外的问题。在关机状态下，进行电源适配器（DC）连续插拔测试时，在特定操作下会有概率性出现花屏现象，而且花屏现象不一致不统一。 现象如下图所示。图中无关紧要的位置打了马赛克，bug的问题现象是屏幕显示的内容花了。虽然都是关机充电界面花屏，但是花的内容款式有几种不同的。  Failed Rate：每7-8次出现1次；测试未发现与特定屏型号、特定屏单体、特定主板单体有">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nasdaqgodzilla.github.io/gallery/cover/57486f6369401b4681093aa1.jpg">
+<meta property="article:published_time" content="2024-05-29T13:15:58.000Z">
+<meta property="article:modified_time" content="2024-05-29T13:17:38.679Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Android稳定性">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="BSP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nasdaqgodzilla.github.io/gallery/cover/57486f6369401b4681093aa1.jpg"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-05-29 21:17:38'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">71</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">25</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://nasdaqgodzilla.github.io/gallery/cover/57486f6369401b4681093aa1.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-05-29T13:15:58.000Z" title="发表于 2024-05-29 21:15:58">2024-05-29</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-05-29T13:17:38.679Z" title="更新于 2024-05-29 21:17:38">2024-05-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Linux/">Linux</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/BSP/">BSP</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>研发一个机型的过程中出了点意料之外的问题。在关机状态下，进行电源适配器（DC）连续插拔测试时，在特定操作下会有概率性出现花屏现象，而且花屏现象不一致不统一。</p>
+<p>现象如下图所示。图中无关紧要的位置打了马赛克，bug的问题现象是屏幕显示的内容花了。虽然都是关机充电界面花屏，但是花的内容款式有几种不同的。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E6%A6%82%E7%8E%87%E6%80%A7%E8%8A%B1%E5%B1%8F%E7%8E%B0%E8%B1%A1.png"></p>
+<p>Failed Rate：每7-8次出现1次；测试未发现与特定屏型号、特定屏单体、特定主板单体有关。与特定操作和场景强相关。</p>
+<p>步骤：设备处于关机状态下 → 接入DC电源 →设备因关机充电而自动开机 → 显示开机logo → 显示充电动画 → 如果发现充电动画正常，则立刻拔出DC，然后尽快马上再次插入，再次循环；如果花屏，则问题复现。</p>
+<p>平台：CPU  →  mipi  →  IT6151  →  eDP  →  TCON→ SOURCE IC → LCD</p>
+<h1 id="异常分析"><a href="#异常分析" class="headerlink" title="异常分析"></a>异常分析</h1><h2 id="软件出图分析：动画无异常、软件出图无特殊逻辑"><a href="#软件出图分析：动画无异常、软件出图无特殊逻辑" class="headerlink" title="软件出图分析：动画无异常、软件出图无特殊逻辑"></a>软件出图分析：动画无异常、软件出图无特殊逻辑</h2><p>分析显示问题的时候，第一步可以先看看我们从CPU出来的画面本身是否正常的。一般花屏可以通过截图和投屏、录屏来确认图源的正常情况，但是我们是在关机充电画面，Android尚未启动，故无法进行这类操作。</p>
+<p>从现象上看，出问题的时候开机logo不花，充电动画花了。一般来说，花屏和屏的上下电时序、波形质量有关系，通常喜欢在亮屏就花。但是碰到的问题是亮屏的时候并不花，而是一段时间后才花，看来不能直接去找时序的锅。</p>
+<p>因此结合关机充电这个场景，不排除是充电动画解析和显示的异常，包括充电动画对屏和背光的操作有时序异常。因此首先在问题出现后借助串口日志分析动画和屏操作日志。</p>
+<p>此外，该机型有引入MTK AAL功能、上层PQ功能，因此SoC端的CABC功能或PQ模式可能有影响，也进行分析。</p>
+<blockquote>
+<p>AAL功能和PQ功能是芯片厂商提供的调节画质的接口。</p>
+</blockquote>
+<table><thead><tr><th>Action</th><th>小结</th><th>结论</th></tr></thead><tbody><tr><td>动画日志分析</td><td>正常</td><td rowspan="5">关机充电动画部分没有异常，软件出图没有明显异常，电信号操作没有差异</td></tr><tr><td>开关、背光日志分析</td><td>正常</td></tr><tr><td>正常、异常日志对比；<br>新、老版本日志对比；<br>与drvier only版本对比；</td><td>没有差异</td></tr><tr><td>PQ影响</td><td>确认PQ服务在该阶段不会生效</td></tr><tr><td>AAL影响</td><td>AAL没有源码，但根据文档确认在关机充电阶段不会生效。<br>此外，软件关闭ALL编译开关后，问题仍能复现</td></tr></tbody></table>
+
+<h2 id="做实验缩小范围：发现问题不在屏端、TCON端"><a href="#做实验缩小范围：发现问题不在屏端、TCON端" class="headerlink" title="做实验缩小范围：发现问题不在屏端、TCON端"></a>做实验缩小范围：发现问题不在屏端、TCON端</h2><p>前面的实验表面CPU出来的画面应该没有问题，而且花屏的时候每次花的内容基本不相同，和正常显示的内容看着也不相干，因此向更底层的方向去分析。</p>
+<table><thead><tr><th>Action</th><th>小结</th><th>结论</th></tr></thead><tbody><tr><td>同主板同软件搭配A型屏</td><td>复现</td><td rowspan="3">花屏问题和屏、TCON无关</td></tr><tr><td>同主板同软件搭配B型屏</td><td>复现</td></tr><tr><td>硬件飞线，将TCON Core 1V8接开关，在问题复现后，手动开关该开关，等价重启TCON</td><td>复现后拨动、拨回开关，现象还在</td></tr><tr><td>屏单体问题分析</td><td>测试资源不够、时间紧张，未测</td><td>结合上面的结论（和屏无关），因此和屏单体也无关</td></tr></tbody></table>
+
+<h2 id="6151信号稳定性、电源稳定性和软件逻辑分析：无异常（除eDP和MIPI信号无法分析）"><a href="#6151信号稳定性、电源稳定性和软件逻辑分析：无异常（除eDP和MIPI信号无法分析）" class="headerlink" title="6151信号稳定性、电源稳定性和软件逻辑分析：无异常（除eDP和MIPI信号无法分析）"></a>6151信号稳定性、电源稳定性和软件逻辑分析：无异常（除eDP和MIPI信号无法分析）</h2><blockquote>
+<p>6151是mipi to eDP芯片，CPU出来的画面发送给它，它处理后再发送给屏幕</p>
+</blockquote>
+<p>前面步骤分析认为CPU出图、TCON均没有异常，因此围绕6151进行分析。</p>
+<p>保障6151稳定运行的两个条件是：</p>
+<ol>
+<li>软件下的配置正确</li>
+<li>时序正确且各电信号稳定</li>
+</ol>
+<p>梳理6151几个关键监测点，准备挂示波器和逻辑分析仪：</p>
+<ol>
+<li>6151可以通过MIPI DSI下发指令、切换模式</li>
+<li>6151可以通过I2C下发指令、切换模式</li>
+<li>关键电信号包括几个GPIO、LDO、VDD（1V2、1V8、3V3、eDP使能、RST）的时序及波形</li>
+</ol>
+<p>此外，在eDP驱动中初始化完成后dump寄存器，在进入充电界面时再次dump，排查意外没发现的SoC对6151的配置、6151寄存器变化、或6151自己跑飞了。</p>
+<table><thead><tr><th>Action</th><th>小结</th><th>结论</th></tr></thead><tbody><tr><td>1V2、1V8、3V3使能、eDP使能、RST的时序、波形（从开机到花屏发生）</td><td>未见异常</td><td>关键电信号的时序和质量正常</td></tr><tr><td>review软件配置正确</td><td>未见异常</td><td>软件配置符合要求，不涉及屏参</td></tr><tr><td>开机logo后（屏亮起后）6151 I2C监测，有一次意料之外的Write和Read</td><td>没有挂逻辑分析仪，不能直接简单从示波器看到通信内容，不能排除软件这次通信是否让6151发生了变化，致使花屏</td><td rowspan="2">没有对6151有重新初始化、切换模式、修改参数等操作<br>i2c通信没有影响花屏，也不影响概率</td></tr><tr><td>出新软件，移除掉这个I2C通信<br>（分析驱动，发现6151驱动确实有个i2c读写，但是这个是状态dump，可以直接去掉不影响功能）</td><td>示波器体现，i2c通信已经去除<br>花屏现象仍然能保持复现<br>且少量手工验证下，复现概率没有变化</td></tr><tr><td>6151寄存器dump<br>（改动量较大，需要在关机动画那里进行dump。接下来问题有更明确的进展，没来得及做这个实验）</td><td>/</td><td>/</td></tr><tr><td>是否通过MIPI DSI向6151发出指令</td><td>软件排查没有走过MIPI DSI通道<br>无仪器分析</td><td>如果存在该情况，则问题不应该是概率性的</td></tr></tbody></table>
+
+<p>坑：回顾问题分析过程，这里有个漏掉的信号（V3P3A）没有分析到（而是只量取了使能）。因为这个信号，我们有惯性思维，会认为它是稳定常开的，因此没有量它的波形。</p>
+<blockquote>
+<p>我们分析到后面才发现是这个信号有异常掉0，它导致了花屏</p>
+</blockquote>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LCM3v3%E4%BE%9B%E7%94%B5.png"></p>
+<h2 id="花屏伴随着L-Sensor-通信异常；发现前级电源有短暂异常掉电；L-Sensor-通信异常导致前级掉电"><a href="#花屏伴随着L-Sensor-通信异常；发现前级电源有短暂异常掉电；L-Sensor-通信异常导致前级掉电" class="headerlink" title="花屏伴随着L-Sensor 通信异常；发现前级电源有短暂异常掉电；L-Sensor 通信异常导致前级掉电"></a>花屏伴随着L-Sensor 通信异常；发现前级电源有短暂异常掉电；L-Sensor 通信异常导致前级掉电</h2><p>截止目前我们并没有发现什么太异常的东西，没有线索去指引分析。但是在串口日志中发现一个奇怪的现象，花屏的时候，都伴随着光感传感器I2C通信异常。</p>
+<figure class="highlight inform7"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.362148]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c_dump_info: -----------------------</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.362969]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: last transfer info:</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.363699]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[00]</span> <span class="comment">[    4.343075]</span> SLAVE_ADDR=86,INTR_STAT=2,CONTROL=28,FIFO_STAT=1101,DEBUGSTAT=300, tmo=500</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.365236]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[01]</span> <span class="comment">[    3.710385]</span> SLAVE_ADDR=48,INTR_STAT=2,CONTROL=28,FIFO_STAT=1210,DEBUGSTAT=300, tmo=500</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.366781]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[02]</span> <span class="comment">[    0.000000]</span> SLAVE_ADDR=0,INTR_STAT=0,CONTROL=0,FIFO_STAT=0,DEBUGSTAT=0, tmo=0</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.368221]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[03]</span> <span class="comment">[    0.000000]</span> SLAVE_ADDR=0,INTR_STAT=0,CONTROL=0,FIFO_STAT=0,DEBUGSTAT=0, tmo=0</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.369661]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[04]</span> <span class="comment">[    0.000000]</span> SLAVE_ADDR=0,INTR_STAT=0,CONTROL=0,FIFO_STAT=0,DEBUGSTAT=0, tmo=0</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.371108]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[05]</span> <span class="comment">[    0.000000]</span> SLAVE_ADDR=0,INTR_STAT=0,CONTROL=0,FIFO_STAT=0,DEBUGSTAT=0, tmo=0</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.372549]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[06]</span> <span class="comment">[    0.000000]</span> SLAVE_ADDR=0,INTR_STAT=0,CONTROL=0,FIFO_STAT=0,DEBUGSTAT=0, tmo=0</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.373989]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[07]</span> <span class="comment">[    0.000000]</span> SLAVE_ADDR=0,INTR_STAT=0,CONTROL=0,FIFO_STAT=0,DEBUGSTAT=0, tmo=0</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.375436]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[08]</span> <span class="comment">[    0.000000]</span> SLAVE_ADDR=0,INTR_STAT=0,CONTROL=0,FIFO_STAT=0,DEBUGSTAT=0, tmo=0</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.376877]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: <span class="comment">[09]</span> <span class="comment">[    0.000000]</span> SLAVE_ADDR=0,INTR_STAT=0,CONTROL=0,FIFO_STAT=0,DEBUGSTAT=0, tmo=0</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.378323]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span>i2c i2c-1: addr:0x43,ACK error</span><br><span class="line"><span class="comment">[2024-05-16 10:13:58]</span>  <span class="comment">[    4.379064]</span> &lt;5&gt;.(5)<span class="comment">[1:swapper/0]</span><span class="comment">[ALS]</span> gt4421_i2c_read_reg 162 : read reg send res = -121</span><br></pre></td></tr></table></figure>
+
+<p>软件逻辑上光感传感器与显示无关，排查发现光感传感器与6151不在同一路I2C，但是会共用前级电源（V3P3A）。因此两者之间可能有关联，先来看看这个i2c通信失败和花屏有没有关联。</p>
+<p>电路图如下，LCM电源会使用V3P3A这路电。它和光感传感器是共用的电源。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LCM%E5%85%AC%E7%94%A8v3p3a.png"></p>
+<table><thead><tr><th>Action</th><th>小结</th><th>结论</th></tr></thead><tbody><tr><td>日志看花屏现象伴有L-Sensor的I2C通信异常</td><td>花屏和L-Sensor可能不是巧合，有相关性，要证明是否因果关系，需要用示波器确认时间点</td><td rowspan="2">L-Sensor通信失败，相关或因果地，使V3P3A短暂掉到底<br>V3P3A会给屏供电，供电的异常有导致花屏的重大嫌疑</td></tr><tr><td>示波器抓取V3P3A波形、I2C波形<br>（V3P3A电源来自VPA_PMU，给屏、TP、L-Sensor使用）</td><td>1. 花屏发生时，L-Sensor有三次连续i2c通信（Write，无ACK）后，V3P3A短暂掉电<br>2. 摄像头录像确认，花屏是紧接着随后发生的<br>3. 异常掉电波形见下图</td></tr><tr><td>查阅L-Sensor驱动，确定会通过Regulator关闭前级电源V3P3A</td><td>驱动代码如下展示</td><td>L-Sensor通信失败，会通过regulator关闭V3P3A的输出</td></tr><tr><td>拔掉光感后进行实验</td><td>花屏现象从概率性发生，变成必现</td><td rowspan="2">花屏现象与光感通信异常情况强相关<br></td></tr><tr><td>保持光感装好，软件关闭光感驱动</td><td>花屏现象不再复现</td></tr></tbody></table>
+
+<p>波形图如下所示，可以看到电源有短暂的异常掉到0。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E7%A4%BA%E6%B3%A2%E5%99%A8%E9%87%8F%E5%8F%96%E6%8E%89%E7%94%B5%E6%B3%A2%E5%BD%A2.png"></p>
+<p>由于这一路电源是PMIC输出的，驱动能力和稳定性都较强，而且每次复现的时候波形都是一致的，因此基本认定异常波形应该是来源于软件的异常逻辑。</p>
+<p>既然花屏的时候伴随着光感传感器的通信异常问题，那么直接定位到对应驱动代码的位置，如下。</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line"></span><br><span class="line">exit_create_attr_failed:</span><br><span class="line">exit_sensor_obj_attach_fail:</span><br><span class="line">exit_misc_device_register_failed:</span><br><span class="line">        misc_deregister(&amp;gt4421_device);</span><br><span class="line">exit_init_failed:</span><br><span class="line">        kfree(obj);</span><br><span class="line">        gt4421_obj = NULL;</span><br><span class="line">        <span class="keyword">if</span>(regulator_disable(rgb_3v3))&#123;</span><br><span class="line">                APS_ERR(<span class="string">&quot;gt4421 disable regulator failed.&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line"><span class="keyword">exit</span>:</span><br><span class="line">        gt4421_i2c_client = NULL;</span><br><span class="line">        APS_ERR(<span class="string">&quot;%s: err = %d\n&quot;</span>, __func__, err);</span><br><span class="line">        gt4421_init_flag = -<span class="number">1</span>;</span><br><span class="line">        return err;</span><br><span class="line">        </span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>这段代码是光感传感器初始化（probe）过程中，碰到i2c通信失败，即没有与传感器正常通信的情况下，走的失败逻辑。其中的关键代码是<code>regulator_disable(rgb_3v3)</code>，它通过regulator接口关闭了3.3V的电源供电，因此造成了供电电源的异常波形。</p>
+<p>由于这一路电源同时给屏供电，因此这一异常的电源波形使屏端的逻辑出现异常，进一步导致了花屏现象的发生。</p>
+<h2 id="L-Sensor概率性通信异常根因：SDA-x2F-SCL台阶问题"><a href="#L-Sensor概率性通信异常根因：SDA-x2F-SCL台阶问题" class="headerlink" title="L-Sensor概率性通信异常根因：SDA&#x2F;SCL台阶问题"></a>L-Sensor概率性通信异常根因：SDA&#x2F;SCL台阶问题</h2><p>从前面的分析可以确定，我们发现了事故的直接原因。即光感传感器初始化失败，其驱动代码关闭了前级电源，致使屏的电源异常，导致花屏。</p>
+<p>问题的“概率性”来源。实际上花屏不是“概率性”的，只要是V3P3A掉电了，必定会花屏。而“概率性”的来源是L-Sensor概率性的通信异常。因此问题转向为分析光感传感器概率性通信异常的原因。</p>
+<p>L-Sensor本身比较简单，其电信号总共只有使能、i2c两根线，加起来3个信号。</p>
+<table><thead><tr><th>Action</th><th>小结</th><th>结论</th></tr></thead><tbody><tr><td>示波器量取RGB_PWR_EN</td><td>未见异常</td><td>光感传感器概率性通信异常不是因为它自己的供电有问题</td></tr><tr><td>i2c影响（驱动能力）</td><td>检查该路i2c已经配置CPU内部上拉，且L-Sensor本身具备内部上拉</td><td rowspan="3">与i2c干扰无关，与同一路i2c上的重力传感器无关，i2c链路未见异常</td></tr><tr><td>i2c影响（其他client）</td><td>该路i2c还插着g-sensor，贴在板上无法拿下，软件关闭驱动后复测，可复现花屏</td></tr><tr><td>i2c影响（波形）</td><td>示波器体现，波形健康</td></tr><tr><td>示波器量取SDA波形</td><td>SDA进入工作状态前，有0.7V台阶，自CPU IO reset后就存在</td><td rowspan="2">i2c开始工作前有异常电平，有较大嫌疑（异常波形放在“异常根因”小结展示）</td></tr><tr><td>示波器量取SCL波形</td><td>SCL进入工作状态前，有0.7V台阶，自CPU IO reset后就存在</td></tr><tr><td>临时措施，将台阶压下去</td><td>i2c启用前，将SDA、SCL的电放掉，让台阶下来</td><td>异常电平压下去后，i2c不再复现异常通信的情况，花屏不再复现</td></tr></tbody></table>
+
+<p>到这里，问题不再复现了，我们从找到花屏的直接诱因，并顺藤摸瓜到找到了根本的原因。</p>
+<h1 id="异常根因"><a href="#异常根因" class="headerlink" title="异常根因"></a>异常根因</h1><p>在最前面先展示一下异常波形，如下图。</p>
+<p>其中，紫色、蓝色线分别代表L-Sensor（光感传感器）的i2c的SDA和SCL两根线。图上有相应标注，特别说明的，这个图是导入了解决措施后抓取的。在图的左半部分有标记出来的“异常的台阶”，它就是异常的电平。中部标记的“放电，压下台阶”是导入了措施后。未导入前的异常情况下，这个台阶没有放电过程，一直有不小的台阶存在。</p>
+<blockquote>
+<p>SDA和SCL一高一低，原因是示波器选取的0基准线的位置的差异，实际上它们电平相等</p>
+</blockquote>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/%E7%A4%BA%E6%B3%A2%E5%99%A8%E9%87%8F%E5%8F%96%E5%8F%B0%E9%98%B6%E6%94%BE%E6%8E%89%E7%94%B5%E5%90%8E%E7%9A%84%E6%B3%A2%E5%BD%A2_%E5%B8%A6%E6%88%AA%E5%9B%BE%E8%AF%B4%E6%98%8E.png"></p>
+<p>首先来解释一下在解决措施导入前，L-Sensor会概率性通信失败的原因。</p>
+<p>我们通过示波器看到，L-Sensor i2c线上有一些抬起来的电平（台阶）。由于这个台阶不算小，而且这一型号的L-Sensor本身器件设计、制造上带来的电气特性，使得台阶（即i2c线路上的电压），顺着i2c线及L-Sensor芯片内部的电路，对其灌入电流。灌入的电流相当于对芯片进行了半残废的供电，可能会导致其处于半工作状态。</p>
+<p>但由于不是正常的正确的供电，因此内部逻辑可能紊乱，就像程序引用空指针一样行为是未定义的，会出现概率性的通信异常。</p>
+<blockquote>
+<p>当然，平时i2c正常工作都是拉高的，这个时候为什么不怕灌电流呢？因为在正常情况下，L-Sensor是有正常电源供电的，i2c上的电流灌不进来，或者是L-Sensor已经正常启动了，不再像灌电流那样跑飞了</p>
+</blockquote>
+<p>至于i2c为什么会出现台阶，分析下电路图可以发现，i2c的两根线是从CPU的引脚上出来的，CPU初始化后，引脚处于悬空态，因此有台阶电平出来。</p>
+<figure class="highlight brainfuck"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">flowchart</span> <span class="comment">LR</span></span><br><span class="line">    <span class="comment">开机</span> --&gt; <span class="comment">GPIO初始化</span> --&gt; <span class="comment">i2c线所在引脚悬空</span> --&gt; <span class="comment">产生电平台阶</span> --&gt; <span class="comment">对光感传感器灌电</span> --&gt; <span class="comment">光感传感器i2c概率性通信异常</span></span><br></pre></td></tr></table></figure>
+
+<p>开机过程中，L-Sensor的驱动会尝试与L-Sensor进行i2c通信。当通信失败时，驱动代码逻辑将V3P3A下电了，影响了屏的电源稳定性，导致花屏。</p>
+<figure class="highlight brainfuck"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">flowchart</span> <span class="comment">LR</span></span><br><span class="line">    <span class="comment">光感传感器i2c概率性通信异常</span> --&gt; <span class="comment">regulator_disable</span> --&gt; <span class="comment">屏的电源有异常掉电</span> --&gt; <span class="comment">屏工作异常</span> --&gt; <span class="comment">花屏</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>对于L-Sensor而言，其器件特性决定了无法耐受住i2c上小台阶（0.7V作用）的灌电，使得L-Sensor ic处于半工作半死、没正常运行的阶段。</p>
+<p>从SDA&#x2F;SCL漏进去的电让内部ic错乱了，使得L-Sensor不再正常工作、不能正常启动。换句话说，即使器件没有上电，i2c漏进去的电使得器件实际上不是完全没电的，接下来的启动时序实际上不一定满足要求。</p>
+<p>因此，解决这个问题很简单，要么让这个台阶不出现，要么出现后让它消失。</p>
+<p>L-Sensor的电路图如下。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/RGB_i2c_.png"></p>
+<p>查看电路和规格书有如下几个重要的信息，用于决策我们的解决方案。</p>
+<ul>
+<li>L-Sensor有一个电源，用于供电。它是常开的，很前级的电，影响很大，不能想着用它来放电；且它内部连接是PMIC的一个LDO，用于放电可能有其他异常————不能切断漏电路径，也不能用于放电。</li>
+</ul>
+<blockquote>
+<p>就是这路电和屏共用的，被异常放掉了，出了花屏问题</p>
+</blockquote>
+<ul>
+<li>SCL1直接接CPU I2C1，在RGB_3V3上拉没有使能的情况下，显然SCL和SDA的台阶就是SCL1自己导致的————台阶是CPU输出的</li>
+<li>漏电路径看————SCL1可以放电下掉台阶</li>
+<li>漏电路径看————RGB_3V3可以放电下掉台阶，但是有电阻，且属于CPU的两个GPIO之间有电流灌入流出</li>
+</ul>
+<p>因此可以看到决策我们处理这个台阶的关键结论如下：</p>
+<ol>
+<li>台阶是CPU i2c引脚自己输出出来的，它可以想办法不输出出来，或者出来后卸掉</li>
+<li>漏电通路上，开关漏电路径的VIO18_PMU动不得，因此通过切断传输路径的方式来切断漏电的方案不可行</li>
+</ol>
+<p>因此我们尝试再CPU引脚即SDA&#x2F;SCL两根线上想办法。查看规格和代码配置有一个可行方案——把CPU引脚配置成下拉或输出0————这样可以避免输出台阶，并且就算输出了台阶也可以经CPU内部电路把台阶卸掉。</p>
+<p>SCL1内部支持下拉，本事是SCL驱动能力较强————可以灌入电流（请硬件确认过），用SCL1来放电可以达成目标。</p>
+<p>因此改法就很清晰了：借助dws将引脚配置为下拉，将台阶电放掉，在i2c使用之前，再切换到i2c模式，接入上拉。（实际上台阶无法完全去掉，因为CPU一旦完成初始化，这个引脚就是悬空的（芯片级默认模式），就会有台阶。CPU初始化完成后一段时间才跑到软件逻辑去下拉放电）</p>
+<p>修改如下，只需要把对应引脚拉下去即可。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">              <span class="tag">&lt;<span class="name">gpio84</span>&gt;</span></span><br><span class="line">                 <span class="tag">&lt;<span class="name">eint_mode</span>&gt;</span>false<span class="tag">&lt;/<span class="name">eint_mode</span>&gt;</span></span><br><span class="line">-                <span class="tag">&lt;<span class="name">def_mode</span>&gt;</span>1<span class="tag">&lt;/<span class="name">def_mode</span>&gt;</span></span><br><span class="line">+                <span class="tag">&lt;<span class="name">def_mode</span>&gt;</span>0<span class="tag">&lt;/<span class="name">def_mode</span>&gt;</span></span><br><span class="line">                 <span class="tag">&lt;<span class="name">inpull_en</span>&gt;</span>true<span class="tag">&lt;/<span class="name">inpull_en</span>&gt;</span></span><br><span class="line">                 <span class="tag">&lt;<span class="name">inpull_selhigh</span>&gt;</span>true<span class="tag">&lt;/<span class="name">inpull_selhigh</span>&gt;</span></span><br><span class="line">-                <span class="tag">&lt;<span class="name">def_dir</span>&gt;</span>IN<span class="tag">&lt;/<span class="name">def_dir</span>&gt;</span></span><br><span class="line">+                <span class="tag">&lt;<span class="name">def_dir</span>&gt;</span>OUT<span class="tag">&lt;/<span class="name">def_dir</span>&gt;</span></span><br><span class="line">                 <span class="tag">&lt;<span class="name">out_high</span>&gt;</span>false<span class="tag">&lt;/<span class="name">out_high</span>&gt;</span></span><br><span class="line">-                <span class="tag">&lt;<span class="name">varName0</span>&gt;</span>GPIO_I2C1_SCA_PIN<span class="tag">&lt;/<span class="name">varName0</span>&gt;</span></span><br><span class="line">                 <span class="tag">&lt;<span class="name">smt</span>&gt;</span>false<span class="tag">&lt;/<span class="name">smt</span>&gt;</span></span><br><span class="line">                 <span class="tag">&lt;<span class="name">ies</span>&gt;</span>true<span class="tag">&lt;/<span class="name">ies</span>&gt;</span></span><br><span class="line">             <span class="tag">&lt;/<span class="name">gpio84</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>这个修改导入后，量取波形（前面展示过修改后的波形图）。可以看到i2c线的台阶会有一小段拉下来，这个操作可以把i2c线上的电拉下来，把灌入L-Sersor的电放干净，使光感传感器处于正常的状态。</p>
+<p>经过压测后问题能成功修复，再也没有复现到L-Sensor i2c通信异常和花屏异常了。</p>
+<h1 id="优化措施：Regulator失效了？"><a href="#优化措施：Regulator失效了？" class="headerlink" title="优化措施：Regulator失效了？"></a>优化措施：Regulator失效了？</h1><p>熟悉驱动的朋友，应该能看到一个不合理的地方。通常情况下，一些公共使用的资源，在共用这些资源的模块之间，会以特定的协作方式来控制资源的开关，防止互相干扰。比如一个智能指针，会在一个对象的引用计数降低到0的时候再回收它。</p>
+<p>对于驱动来说，对共用电源的控制一般采用regulator。当regulator的引用计数降低到0后才真正关闭电源。</p>
+<p>那么，在L-Sensor驱动和屏驱动均规范使用了regulator的情况下，为何屏还在用的电，仍然被L-Sensor regulator_disable关掉了呢？</p>
+<p>经过分析，添加日志后发现，屏驱动的初始化居然在传感器后面，传感器先初始化，然后才是屏初始化。</p>
+<p>用一个表格来说明这个逻辑，以及它是怎么触发花屏问题的。</p>
+<blockquote>
+<p>这个问题中共用的电源来自于PMIC，下表用PMIC输出来表示这个电源，1表示打开，0表示关闭</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>开机过程顺序</th>
+<th>跑的逻辑</th>
+<th>PMIC输出状态</th>
+<th>Regulator计数</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PMIC初始化</td>
+<td>根据代码配置，将PMIC输出为高电平</td>
+<td>1</td>
+<td>0</td>
+<td>此时对使用该电的设备供电（屏和L-Sensor）</td>
+</tr>
+<tr>
+<td>初始化L-Sensor</td>
+<td>进入L-Sensor驱动，regulator +1</td>
+<td>1</td>
+<td>1</td>
+<td>PMIC本来就输出高电平，这里+1后仍然出高电平，供电正常</td>
+</tr>
+<tr>
+<td>L-Sensor通信失败</td>
+<td>L-Sensor做异常释放逻辑，将regulator计数-1</td>
+<td>0</td>
+<td>0</td>
+<td>Regulator计数掉为0，触发关闭电源的逻辑，使PMIC输出0</td>
+</tr>
+<tr>
+<td>初始化屏</td>
+<td>进入屏驱动，regulator +1</td>
+<td>1</td>
+<td>1</td>
+<td>regulator不为0，打开PMIC供电</td>
+</tr>
+</tbody></table>
+<p>regulator正确使用，供电也正常，逻辑没问题，为什么花屏了呢？</p>
+<p>原因在于第一步PMIC就已经是输出高电平，开始对L-Sensor和屏供电了。对于屏而言，过早的供电，不仅使屏芯片已经处于工作状态，后面的异常掉电的波形不仅不是让它重启，反而是让它变得紊乱、异常。此外，屏的初始化有时序要求，在屏驱动初始化时，本来上电时序是设计好的，谁曾想驱动逻辑想要控制的电源实际上早在L-Sensor初始化时就上好了电呢？</p>
+<blockquote>
+<p>换句话说，就是屏不一定想要这么早上电，而且上完电后就稳稳地给我电，中间突然来一下掉到零这叫什么？</p>
+</blockquote>
+<p>显而易见的，在屏驱动运行前，屏就已经上电了，这个时候开机亮屏都是正常的，可谓歪打正着，给屏的供电是意料之外的但是却一脸懵逼的。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/IMG_1816.jpg"></p>
+<p>因此看上去很离谱的“光感传感器通信异常居然能导致我花屏？？？”是有合理解释的。</p>
+<p>我们能看到这个模块初始化顺序不仅导致功能强大的Regulator失去了其作用，而且在体验上，用户觉得开机速度快不快很大程度上就是开机亮屏快不快，居然先给我在屏初始化之前去初始化了传感器这个用户无感的模块。</p>
+<p>最后，这个问题也很好处理，我们调整屏的初始化到前面即可。一般调节初始化阶段（initcall）会有效果。但是由于Linux各模块启动顺序有很大牵扯关联，这么改是有风险的。因此我们通过调节模块链接顺序即可实现在同一个initcall阶段内去调节模块的初始化顺序（调节链接顺序即可）。</p>
+<figure class="highlight diff"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">diff --git a/drivers/misc/mediatek/Makefile b/drivers/misc/mediatek/Makefile</span></span><br><span class="line"><span class="comment">index b8e611a48b1f..1544f7159cbe 100755</span></span><br><span class="line"><span class="comment">--- a/drivers/misc/mediatek/Makefile</span></span><br><span class="line"><span class="comment">+++ b/drivers/misc/mediatek/Makefile</span></span><br><span class="line"><span class="meta">@@ -84,7 +84,6 @@</span> obj-$(CONFIG_MTK_AUXADC)      += auxadc/</span><br><span class="line"> obj-$(CONFIG_MTK_GPT_SCHEME_SUPPORT)   += partition/</span><br><span class="line"> obj-$(CONFIG_MTK_PWM)      += pwm/</span><br><span class="line"> obj-$(CONFIG_MTK_IRTX_PWM_SUPPORT)         += irtx/</span><br><span class="line"><span class="deletion">-obj-$(CONFIG_MTK_SENSORS_1_0) += sensors-1.0/</span></span><br><span class="line"> obj-$(CONFIG_MTK_TINYSYS_SCP_SUPPORT) += scp/</span><br><span class="line"> obj-$(CONFIG_MTK_HIFIXDSP_SUPPORT) += hifi_dsp/</span><br><span class="line"> obj-$(CONFIG_MTK_HIFIXDSP_SUPPORT) += hifidsp_audio_ipi/</span><br><span class="line"><span class="meta">@@ -123,6 +122,7 @@</span> obj-$(CONFIG_MTK_CMDQ) += mdp/</span><br><span class="line"> obj-$(CONFIG_MTK_SMI_EXT) += smi/</span><br><span class="line"> obj-$(CONFIG_MTK_LCM) += lcm/</span><br><span class="line"> obj-$(CONFIG_MTK_LCM) += ext_disp/</span><br><span class="line"><span class="addition">+obj-$(CONFIG_MTK_SENSORS_1_0) += sensors-1.0/</span></span><br><span class="line"> obj-$(CONFIG_MTK_HDMI_SUPPORT) += hdmi/</span><br><span class="line"> obj-$(CONFIG_MTK_FB) += video/</span><br><span class="line"> obj-$(CONFIG_MTK_DYNAMIC_FPS_FRAMEWORK_SUPPORT) += dfrc/</span><br></pre></td></tr></table></figure>
+
+<h1 id="为什么其他项目没有这个问题"><a href="#为什么其他项目没有这个问题" class="headerlink" title="为什么其他项目没有这个问题"></a>为什么其他项目没有这个问题</h1><ol>
+<li>电路设计差异</li>
+</ol>
+<p>其他项目的板子，i2c SCL&#x2F;SDA那里不使用mos fet，而使用专门的转接芯片。区别是，mos管会被一定的电压打开（本案说的小台阶就是这个“一定的电压”），而转接芯片不会。</p>
+<p>一句话说，mos fet会因小台阶而导通，使电漏过去。</p>
+<ol start="2">
+<li>L-Sensor差异</li>
+</ol>
+<p>本案涉及的L-Sensor是1.8V的器件，且其内部电路设计和工艺制程会受到SDA&#x2F;SCL的灌电影响，处于不正常的工作状态和不正常的上电时序。</p>
+<ol start="3">
+<li>CPU IO配置</li>
+</ol>
+<p>在开机过程中IO没有配置下拉，会使SDA&#x2F;SCL存在台阶，产生了灌电流</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/">https://nasdaqgodzilla.github.io/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Android%E7%A8%B3%E5%AE%9A%E6%80%A7/">Android稳定性</a><a class="post-meta__tags" href="/tags/Linux/">Linux</a><a class="post-meta__tags" href="/tags/BSP/">BSP</a></div><div class="post_share"><div class="social-share" data-image="https://nasdaqgodzilla.github.io/gallery/cover/57486f6369401b4681093aa1.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3r1zl.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">MTK LED驱动节点创建和读写流程</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/04/22/GDB%E6%95%99%E7%A8%8B-%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5%E6%89%8B%E5%86%8C/" title="GDB教程: 命令速查手册"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.sourceware.org/gdb/images/archer.svg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-22</div><div class="title">GDB教程: 命令速查手册</div></div></a></div><div><a href="/2019/02/24/LLDB%E8%BF%9C%E7%A8%8B%E8%B0%83%E8%AF%95Android%EF%BC%9ALLDB%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5%E5%8F%82%E8%80%83%E6%89%8B%E5%86%8CHandbook/" title="LLDB远程调试Android：LLDB命令速查参考手册Handbook"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LLVM-Logo-Derivative-1.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-02-24</div><div class="title">LLDB远程调试Android：LLDB命令速查参考手册Handbook</div></div></a></div><div><a href="/2022/07/03/Android-11-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 WindowContainer窗口模型详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/android-versions-hero-2.webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-03</div><div class="title">Android 11 WindowContainer窗口模型详解</div></div></a></div><div><a href="/2022/07/06/Android-11-setRequestedOrientation%E6%B5%81%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="Android 11 setRequestedOrientation流程详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/Android_wallpaper13.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-06</div><div class="title">Android 11 setRequestedOrientation流程详解</div></div></a></div><div><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/" title="Android 11 startActivity之ActivityStarter流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-05</div><div class="title">Android 11 startActivity之ActivityStarter流程</div></div></a></div><div><a href="/2022/06/21/Android-WindowManager-continueSurfaceLayout%E6%B5%81%E7%A8%8B/" title="Android WindowManager continueSurfaceLayout流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.xda-developers.com/files/2013/12/Linux-Kernel-3-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-06-21</div><div class="title">Android WindowManager continueSurfaceLayout流程</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">71</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">25</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">异常分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AF%E4%BB%B6%E5%87%BA%E5%9B%BE%E5%88%86%E6%9E%90%EF%BC%9A%E5%8A%A8%E7%94%BB%E6%97%A0%E5%BC%82%E5%B8%B8%E3%80%81%E8%BD%AF%E4%BB%B6%E5%87%BA%E5%9B%BE%E6%97%A0%E7%89%B9%E6%AE%8A%E9%80%BB%E8%BE%91"><span class="toc-number">2.1.</span> <span class="toc-text">软件出图分析：动画无异常、软件出图无特殊逻辑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%9A%E5%AE%9E%E9%AA%8C%E7%BC%A9%E5%B0%8F%E8%8C%83%E5%9B%B4%EF%BC%9A%E5%8F%91%E7%8E%B0%E9%97%AE%E9%A2%98%E4%B8%8D%E5%9C%A8%E5%B1%8F%E7%AB%AF%E3%80%81TCON%E7%AB%AF"><span class="toc-number">2.2.</span> <span class="toc-text">做实验缩小范围：发现问题不在屏端、TCON端</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6151%E4%BF%A1%E5%8F%B7%E7%A8%B3%E5%AE%9A%E6%80%A7%E3%80%81%E7%94%B5%E6%BA%90%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%92%8C%E8%BD%AF%E4%BB%B6%E9%80%BB%E8%BE%91%E5%88%86%E6%9E%90%EF%BC%9A%E6%97%A0%E5%BC%82%E5%B8%B8%EF%BC%88%E9%99%A4eDP%E5%92%8CMIPI%E4%BF%A1%E5%8F%B7%E6%97%A0%E6%B3%95%E5%88%86%E6%9E%90%EF%BC%89"><span class="toc-number">2.3.</span> <span class="toc-text">6151信号稳定性、电源稳定性和软件逻辑分析：无异常（除eDP和MIPI信号无法分析）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8A%B1%E5%B1%8F%E4%BC%B4%E9%9A%8F%E7%9D%80L-Sensor-%E9%80%9A%E4%BF%A1%E5%BC%82%E5%B8%B8%EF%BC%9B%E5%8F%91%E7%8E%B0%E5%89%8D%E7%BA%A7%E7%94%B5%E6%BA%90%E6%9C%89%E7%9F%AD%E6%9A%82%E5%BC%82%E5%B8%B8%E6%8E%89%E7%94%B5%EF%BC%9BL-Sensor-%E9%80%9A%E4%BF%A1%E5%BC%82%E5%B8%B8%E5%AF%BC%E8%87%B4%E5%89%8D%E7%BA%A7%E6%8E%89%E7%94%B5"><span class="toc-number">2.4.</span> <span class="toc-text">花屏伴随着L-Sensor 通信异常；发现前级电源有短暂异常掉电；L-Sensor 通信异常导致前级掉电</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#L-Sensor%E6%A6%82%E7%8E%87%E6%80%A7%E9%80%9A%E4%BF%A1%E5%BC%82%E5%B8%B8%E6%A0%B9%E5%9B%A0%EF%BC%9ASDA-x2F-SCL%E5%8F%B0%E9%98%B6%E9%97%AE%E9%A2%98"><span class="toc-number">2.5.</span> <span class="toc-text">L-Sensor概率性通信异常根因：SDA&#x2F;SCL台阶问题</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8%E6%A0%B9%E5%9B%A0"><span class="toc-number">3.</span> <span class="toc-text">异常根因</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-number">4.</span> <span class="toc-text">解决方案</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%E6%8E%AA%E6%96%BD%EF%BC%9ARegulator%E5%A4%B1%E6%95%88%E4%BA%86%EF%BC%9F"><span class="toc-number">5.</span> <span class="toc-text">优化措施：Regulator失效了？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%B6%E4%BB%96%E9%A1%B9%E7%9B%AE%E6%B2%A1%E6%9C%89%E8%BF%99%E4%B8%AA%E9%97%AE%E9%A2%98"><span class="toc-number">6.</span> <span class="toc-text">为什么其他项目没有这个问题</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/" title="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/57486f6369401b4681093aa1.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题"/></a><div class="content"><a class="title" href="/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/" title="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题">显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题</a><time datetime="2024-05-29T13:15:58.000Z" title="发表于 2024-05-29 21:15:58">2024-05-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/" title="MTK LED驱动节点创建和读写流程"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3r1zl.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="MTK LED驱动节点创建和读写流程"/></a><div class="content"><a class="title" href="/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/" title="MTK LED驱动节点创建和读写流程">MTK LED驱动节点创建和读写流程</a><time datetime="2024-04-07T06:11:40.000Z" title="发表于 2024-04-07 14:11:40">2024-04-07</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/20/Android-Emulator%E8%BF%90%E8%A1%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84AOSP%E9%95%9C%E5%83%8F/" title="Android Emulator运行自定义的AOSP镜像"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/141575555790_.pic_hd.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android Emulator运行自定义的AOSP镜像"/></a><div class="content"><a class="title" href="/2024/03/20/Android-Emulator%E8%BF%90%E8%A1%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84AOSP%E9%95%9C%E5%83%8F/" title="Android Emulator运行自定义的AOSP镜像">Android Emulator运行自定义的AOSP镜像</a><time datetime="2024-03-20T10:11:01.000Z" title="发表于 2024-03-20 18:11:01">2024-03-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/20/%E5%9C%A8Apple-Mac-M1%E4%B8%8A%E7%BC%96%E8%AF%91AOSP-ARM-Android%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="在Apple Mac M1上编译AOSP ARM Android模拟器"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/Latern2022_ZH-CN0112710917_1920x1080.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="在Apple Mac M1上编译AOSP ARM Android模拟器"/></a><div class="content"><a class="title" href="/2024/03/20/%E5%9C%A8Apple-Mac-M1%E4%B8%8A%E7%BC%96%E8%AF%91AOSP-ARM-Android%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="在Apple Mac M1上编译AOSP ARM Android模拟器">在Apple Mac M1上编译AOSP ARM Android模拟器</a><time datetime="2024-03-20T08:43:32.000Z" title="发表于 2024-03-20 16:43:32">2024-03-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/19/%E6%8B%89%E5%8F%96%E5%B9%B6%E7%BC%96%E8%AF%91AOSP-Android-14%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="拉取并编译AOSP Android 14模拟器"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-47m1ly.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="拉取并编译AOSP Android 14模拟器"/></a><div class="content"><a class="title" href="/2024/03/19/%E6%8B%89%E5%8F%96%E5%B9%B6%E7%BC%96%E8%AF%91AOSP-Android-14%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="拉取并编译AOSP Android 14模拟器">拉取并编译AOSP Android 14模拟器</a><time datetime="2024-03-19T06:33:46.000Z" title="发表于 2024-03-19 14:33:46">2024-03-19</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2024 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/'
+    this.page.identifier = '2024/05/29/显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题/'
+    this.page.title = '显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
