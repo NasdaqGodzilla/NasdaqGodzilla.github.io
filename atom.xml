@@ -6,7 +6,7 @@
   <link href="https://nasdaqgodzilla.github.io/atom.xml" rel="self"/>
   
   <link href="https://nasdaqgodzilla.github.io/"/>
-  <updated>2024-05-29T13:21:39.860Z</updated>
+  <updated>2024-05-30T09:53:30.631Z</updated>
   <id>https://nasdaqgodzilla.github.io/</id>
   
   <author>
@@ -15,6 +15,38 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Linux container_of详解</title>
+    <link href="https://nasdaqgodzilla.github.io/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/"/>
+    <id>https://nasdaqgodzilla.github.io/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/</id>
+    <published>2024-05-30T09:51:54.000Z</published>
+    <updated>2024-05-30T09:53:30.631Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="container-of简介"><a href="#container-of简介" class="headerlink" title="container_of简介"></a>container_of简介</h1><p>container_of是很重要的一个功能宏，它可以基于一个成员来取得成员所在的结构体。</p><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/container_of%E5%8A%9F%E8%83%BD%E7%A4%BA%E6%84%8F%E5%9B%BE.png"></p><h1 id="container-of定义和使用"><a href="#container-of定义和使用" class="headerlink" title="container_of定义和使用"></a>container_of定义和使用</h1><figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * container_of - cast a member of a structure out to the containing structure</span></span><br><span class="line"><span class="comment"> * @ptr:        the pointer to the member.</span></span><br><span class="line"><span class="comment"> * @type:       the type of the container struct this is embedded in.</span></span><br><span class="line"><span class="comment"> * @member:     the name of the member within the struct.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="comment">#define container_of(ptr, type, member) (&#123;                              \</span></span><br><span class="line">        <span class="literal">void</span> *__mptr = (<span class="literal">void</span> *)(ptr);                                   <span class="string">\</span></span><br><span class="line">        BUILD_BUG_ON_MSG<span class="function"><span class="params">(!__same_type(*(ptr), ((type *)<span class="number">0</span>)-&gt;member) &amp;&amp;   <span class="string">\</span></span></span></span><br><span class="line"><span class="params"><span class="function">                         !__same_type(*(ptr), <span class="literal">void</span>),                    <span class="string">\</span></span></span></span><br><span class="line"><span class="params"><span class="function">                         <span class="string">&quot;pointer type mismatch in container_of()&quot;</span>)</span>;    \</span></span><br><span class="line"><span class="function">        <span class="params">((type *)(__mptr - offsetof(type, member)))</span>; &#125;)</span></span><br></pre></td></tr></table></figure><ul><li>参数1：成员的指针</li><li>参数2：成员所在的结构体名字</li><li>参数3：该成员在结构体里面的名字</li><li>返回值：返回所在结构体的指针，类型是参数2指定的</li></ul><p>使用示例：</p><figure class="highlight gauss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="type">a_dev</span> &#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="type">device</span>* dev;</span><br><span class="line">    int flag;</span><br><span class="line">    <span class="keyword">struct</span> <span class="type">cdev</span> c_dev;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="type">cdev</span> *my_cdev = ...;</span><br><span class="line"><span class="keyword">struct</span> <span class="type">a_dev</span> *res = <span class="built_in">container_of</span>(my_cdev, a_dev, c_dev);</span><br></pre></td></tr></table></figure><h1 id="container-of详解"><a href="#container-of详解" class="headerlink" title="container_of详解"></a>container_of详解</h1><p>container_of分为三个主要的组成部分，分别是小括号+花括号组成的赋值语句、offsetof语句、指针运算语句。</p><h2 id="整体赋值"><a href="#整体赋值" class="headerlink" title="整体赋值"></a>整体赋值</h2><p>container_of本身是通过一对小括号和一对花括号组成的复合赋值语句。可以看到宏定义里面有三个语句（分号分割），然后用小括号({})包起来返回给调用者。伪代码表示的逻辑如下。</p><figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">auto <span class="literal">result</span> = container_of(成员指针，结构体名称，成员在结构体中的名称);</span><br><span class="line"></span><br><span class="line"><span class="comment">#define container_of(成员指针，结构体名称，成员名称)</span></span><br><span class="line">    (&#123;</span><br><span class="line">        语句<span class="number">1</span>-成员指针类型转为万能指针;</span><br><span class="line">        语句<span class="number">2</span>-合法性判断;</span><br><span class="line">        语句<span class="number">3</span>-<span class="built_in">offset</span>计算和指针地址运算;</span><br><span class="line">    &#125;)</span><br></pre></td></tr></table></figure><p>从C语言的({})赋值方法知道，({})的返回值就是最后一个语句的值，因此container_of宏的整体意义就是把运算后的指针返回给调用者。</p><h2 id="offsetof计算成员到结构体头的偏移"><a href="#offsetof计算成员到结构体头的偏移" class="headerlink" title="offsetof计算成员到结构体头的偏移"></a>offsetof计算成员到结构体头的偏移</h2><p>offsetof的定义如下。</p><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">undef</span> offsetof</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> __compiler_offsetof</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> offsetof(TYPE, MEMBER)  __compiler_offsetof(TYPE, MEMBER)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> offsetof(TYPE, MEMBER)  ((size_t)&amp;((TYPE *)0)-&gt;MEMBER)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure><p>其核心定义是<code>((size_t)&amp;((TYPE *)0)-&gt;MEMBER)</code>。该语句分解如下。</p><ol><li>((TYPE *)0)：把地址0当作存储了一个TYPE，取为指针</li><li>((TYPE *)0)-&gt;MEMBER：struct结构体访问成员的编译原理实际上是指针偏移，这里利用<code>-&gt;</code>来“访问”MEMBER</li><li>加一个<code>&amp;</code>：前面已经访问到了MEMBER，对它加上&amp;，实际上等同于计算了地址0按struct TYPE头地址相对MEMBER的偏移，相当于假设地址0有一个TYPE数据，这一步就取到了MEMBER成员的地址，即MEMBER相对于TYPE头的偏移</li><li>(size_t)：进行强制类型转换，把偏移变成“大小”</li></ol><blockquote><p>选用0地址的原因是如果结构体头地址是0，那么其成员的地址就是偏移的大小</p></blockquote><blockquote><p>对0地址做了”-&gt;调用”，这里利用了编译器进行的地址加减偏移，实际上编译器编译后就是数值0的加减，并未发生调用，不会产生空指针问题。</p></blockquote><p><img src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/offsetof%E7%A4%BA%E6%84%8F.png"></p><h2 id="指针运算"><a href="#指针运算" class="headerlink" title="指针运算"></a>指针运算</h2><p>第二步我们已经获取到了MEMBER相对于TYPE的偏移大小，而我们本身就知道了MEMBER的地址，那么把MEMBER抵消掉这段偏移，得到的就是TYPE的地址。再做一个强制类型转换，就取得了MEMBER所在的TYPE了。</p><figure class="highlight clojure"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">((<span class="name"><span class="builtin-name">type</span></span> *)(<span class="name">__mptr</span> - offsetof(<span class="name"><span class="builtin-name">type</span></span>, member)))<span class="comment">;</span></span><br></pre></td></tr></table></figure>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h1 id=&quot;container-of简介&quot;&gt;&lt;a href=&quot;#container-of简介&quot; class=&quot;headerlink&quot; title=&quot;container_of简介&quot;&gt;&lt;/a&gt;container_of简介&lt;/h1&gt;&lt;p&gt;container_of是很重要的一个功能宏</summary>
+      
+    
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
+    
+    <category term="Linux" scheme="https://nasdaqgodzilla.github.io/categories/Linux/"/>
+    
+    <category term="BSP" scheme="https://nasdaqgodzilla.github.io/categories/BSP/"/>
+    
+    
+    <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
+    
+    <category term="Linux" scheme="https://nasdaqgodzilla.github.io/tags/Linux/"/>
+    
+    <category term="BSP" scheme="https://nasdaqgodzilla.github.io/tags/BSP/"/>
+    
+  </entry>
   
   <entry>
     <title>显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题</title>
@@ -591,31 +623,6 @@
     
     
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
-    
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Clash配置暴露代理服务</title>
-    <link href="https://nasdaqgodzilla.github.io/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/"/>
-    <id>https://nasdaqgodzilla.github.io/2022/08/15/Clash%E9%85%8D%E7%BD%AE%E6%9A%B4%E9%9C%B2%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1/</id>
-    <published>2022-08-15T05:16:03.000Z</published>
-    <updated>2022-08-29T11:29:39.200Z</updated>
-    
-    <content type="html"><![CDATA[<h1 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h1><p>通常在PC中启动了clash提供上网功能，需要将上网能力共享到WSL终端、Linux终端等不直接配置clash的场景中使用。</p><p>方案：使用clash内建的LAN mode、Linux&#x2F;WSL等提供的代理功能。</p><h1 id="1-clash启动代理服务"><a href="#1-clash启动代理服务" class="headerlink" title="1. clash启动代理服务"></a>1. clash启动代理服务</h1><p>clash启动lan服务，并且记录下IP和端口。</p><p><img src="https://s2.loli.net/2022/08/15/47GSyevF5TZVh2A.png"></p><h1 id="2-终端配置代理"><a href="#2-终端配置代理" class="headerlink" title="2. 终端配置代理"></a>2. 终端配置代理</h1><p>配置代理仅需一行命令（注意生效范围是本终端）：</p><p><img src="https://s2.loli.net/2022/08/15/l2GXUTkQEYVFoxJ.png"></p><h1 id="3-测试代理"><a href="#3-测试代理" class="headerlink" title="3. 测试代理"></a>3. 测试代理</h1><p>下面命令可以检测代理是否生效。</p><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl https:<span class="regexp">//myi</span>p.ipip.net/</span><br></pre></td></tr></table></figure>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;h1 id=&quot;目的&quot;&gt;&lt;a href=&quot;#目的&quot; class=&quot;headerlink&quot; title=&quot;目的&quot;&gt;&lt;/a&gt;目的&lt;/h1&gt;&lt;p&gt;通常在PC中启动了clash提供上网功能，需要将上网能力共享到WSL终端、Linux终端等不直接配置clash的场景中使用。&lt;/p&gt;
-&lt;p&gt;</summary>
-      
-    
-    
-    
-    <category term="工具" scheme="https://nasdaqgodzilla.github.io/categories/%E5%B7%A5%E5%85%B7/"/>
-    
     
     <category term="工具" scheme="https://nasdaqgodzilla.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
     

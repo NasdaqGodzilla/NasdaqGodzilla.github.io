@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Linux container_of详解 | PeaceMaker</title><meta name="keywords" content="Android,Linux,BSP"><meta name="author" content="Niko aug3073911@outlook.com"><meta name="copyright" content="Niko aug3073911@outlook.com"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="container_of简介container_of是很重要的一个功能宏，它可以基于一个成员来取得成员所在的结构体。  container_of定义和使用12345678910111213&#x2F;** * container_of - cast a member of a structure out to the containing structure * @ptr:        the point">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux container_of详解">
+<meta property="og:url" content="https://nasdaqgodzilla.github.io/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="PeaceMaker">
+<meta property="og:description" content="container_of简介container_of是很重要的一个功能宏，它可以基于一个成员来取得成员所在的结构体。  container_of定义和使用12345678910111213&#x2F;** * container_of - cast a member of a structure out to the containing structure * @ptr:        the point">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-0w2qz6.jpg">
+<meta property="article:published_time" content="2024-05-30T09:51:54.000Z">
+<meta property="article:modified_time" content="2024-05-30T09:53:30.631Z">
+<meta property="article:author" content="Niko aug3073911@outlook.com">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="BSP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-0w2qz6.jpg"><link rel="shortcut icon" href="https://avatars.githubusercontent.com/u/26323326"><link rel="canonical" href="https://nasdaqgodzilla.github.io/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-5123678908234997',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-8ZK4BE9Z7G"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-8ZK4BE9Z7G');
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "alyn9iqnls");</script><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery@2/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Linux container_of详解',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-05-30 17:53:30'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="PeaceMaker" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data is-center"><div class="data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">72</div></a></div><div class="data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div><div class="data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">25</div></a></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-0w2qz6.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">PeaceMaker</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 目录</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 文化走廊</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></li><li><a class="site-page child" href="/talking/"><i class="fa-fw fas fa-cubes"></i><span> 喃喃自语</span></a></li><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/messageboard/"><i class="fa-fw fas fa-comment-dots"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/sitemap.xml"><i class="fa-fw fa fa-sitemap"></i><span> sitemap</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Linux container_of详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-05-30T09:51:54.000Z" title="发表于 2024-05-30 17:51:54">2024-05-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-05-30T09:53:30.631Z" title="更新于 2024-05-30 17:53:30">2024-05-30</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android/">Android</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Linux/">Linux</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/BSP/">BSP</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Linux container_of详解"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="container-of简介"><a href="#container-of简介" class="headerlink" title="container_of简介"></a>container_of简介</h1><p>container_of是很重要的一个功能宏，它可以基于一个成员来取得成员所在的结构体。</p>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/container_of%E5%8A%9F%E8%83%BD%E7%A4%BA%E6%84%8F%E5%9B%BE.png"></p>
+<h1 id="container-of定义和使用"><a href="#container-of定义和使用" class="headerlink" title="container_of定义和使用"></a>container_of定义和使用</h1><figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * container_of - cast a member of a structure out to the containing structure</span></span><br><span class="line"><span class="comment"> * @ptr:        the pointer to the member.</span></span><br><span class="line"><span class="comment"> * @type:       the type of the container struct this is embedded in.</span></span><br><span class="line"><span class="comment"> * @member:     the name of the member within the struct.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="comment">#define container_of(ptr, type, member) (&#123;                              \</span></span><br><span class="line">        <span class="literal">void</span> *__mptr = (<span class="literal">void</span> *)(ptr);                                   <span class="string">\</span></span><br><span class="line">        BUILD_BUG_ON_MSG<span class="function"><span class="params">(!__same_type(*(ptr), ((type *)<span class="number">0</span>)-&gt;member) &amp;&amp;   <span class="string">\</span></span></span></span><br><span class="line"><span class="params"><span class="function">                         !__same_type(*(ptr), <span class="literal">void</span>),                    <span class="string">\</span></span></span></span><br><span class="line"><span class="params"><span class="function">                         <span class="string">&quot;pointer type mismatch in container_of()&quot;</span>)</span>;    \</span></span><br><span class="line"><span class="function">        <span class="params">((type *)(__mptr - offsetof(type, member)))</span>; &#125;)</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>参数1：成员的指针</li>
+<li>参数2：成员所在的结构体名字</li>
+<li>参数3：该成员在结构体里面的名字</li>
+<li>返回值：返回所在结构体的指针，类型是参数2指定的</li>
+</ul>
+<p>使用示例：</p>
+<figure class="highlight gauss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="type">a_dev</span> &#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="type">device</span>* dev;</span><br><span class="line">    int flag;</span><br><span class="line">    <span class="keyword">struct</span> <span class="type">cdev</span> c_dev;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="type">cdev</span> *my_cdev = ...;</span><br><span class="line"><span class="keyword">struct</span> <span class="type">a_dev</span> *res = <span class="built_in">container_of</span>(my_cdev, a_dev, c_dev);</span><br></pre></td></tr></table></figure>
+
+<h1 id="container-of详解"><a href="#container-of详解" class="headerlink" title="container_of详解"></a>container_of详解</h1><p>container_of分为三个主要的组成部分，分别是小括号+花括号组成的赋值语句、offsetof语句、指针运算语句。</p>
+<h2 id="整体赋值"><a href="#整体赋值" class="headerlink" title="整体赋值"></a>整体赋值</h2><p>container_of本身是通过一对小括号和一对花括号组成的复合赋值语句。可以看到宏定义里面有三个语句（分号分割），然后用小括号({})包起来返回给调用者。伪代码表示的逻辑如下。</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">auto <span class="literal">result</span> = container_of(成员指针，结构体名称，成员在结构体中的名称);</span><br><span class="line"></span><br><span class="line"><span class="comment">#define container_of(成员指针，结构体名称，成员名称)</span></span><br><span class="line">    (&#123;</span><br><span class="line">        语句<span class="number">1</span>-成员指针类型转为万能指针;</span><br><span class="line">        语句<span class="number">2</span>-合法性判断;</span><br><span class="line">        语句<span class="number">3</span>-<span class="built_in">offset</span>计算和指针地址运算;</span><br><span class="line">    &#125;)</span><br></pre></td></tr></table></figure>
+
+<p>从C语言的({})赋值方法知道，({})的返回值就是最后一个语句的值，因此container_of宏的整体意义就是把运算后的指针返回给调用者。</p>
+<h2 id="offsetof计算成员到结构体头的偏移"><a href="#offsetof计算成员到结构体头的偏移" class="headerlink" title="offsetof计算成员到结构体头的偏移"></a>offsetof计算成员到结构体头的偏移</h2><p>offsetof的定义如下。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">undef</span> offsetof</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> __compiler_offsetof</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> offsetof(TYPE, MEMBER)  __compiler_offsetof(TYPE, MEMBER)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> offsetof(TYPE, MEMBER)  ((size_t)&amp;((TYPE *)0)-&gt;MEMBER)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>其核心定义是<code>((size_t)&amp;((TYPE *)0)-&gt;MEMBER)</code>。该语句分解如下。</p>
+<ol>
+<li>((TYPE *)0)：把地址0当作存储了一个TYPE，取为指针</li>
+<li>((TYPE *)0)-&gt;MEMBER：struct结构体访问成员的编译原理实际上是指针偏移，这里利用<code>-&gt;</code>来“访问”MEMBER</li>
+<li>加一个<code>&amp;</code>：前面已经访问到了MEMBER，对它加上&amp;，实际上等同于计算了地址0按struct TYPE头地址相对MEMBER的偏移，相当于假设地址0有一个TYPE数据，这一步就取到了MEMBER成员的地址，即MEMBER相对于TYPE头的偏移</li>
+<li>(size_t)：进行强制类型转换，把偏移变成“大小”</li>
+</ol>
+<blockquote>
+<p>选用0地址的原因是如果结构体头地址是0，那么其成员的地址就是偏移的大小</p>
+</blockquote>
+<blockquote>
+<p>对0地址做了”-&gt;调用”，这里利用了编译器进行的地址加减偏移，实际上编译器编译后就是数值0的加减，并未发生调用，不会产生空指针问题。</p>
+</blockquote>
+<p><img src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/offsetof%E7%A4%BA%E6%84%8F.png"></p>
+<h2 id="指针运算"><a href="#指针运算" class="headerlink" title="指针运算"></a>指针运算</h2><p>第二步我们已经获取到了MEMBER相对于TYPE的偏移大小，而我们本身就知道了MEMBER的地址，那么把MEMBER抵消掉这段偏移，得到的就是TYPE的地址。再做一个强制类型转换，就取得了MEMBER所在的TYPE了。</p>
+<figure class="highlight clojure"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">((<span class="name"><span class="builtin-name">type</span></span> *)(<span class="name">__mptr</span> - offsetof(<span class="name"><span class="builtin-name">type</span></span>, member)))<span class="comment">;</span></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Niko aug3073911@outlook.com</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://nasdaqgodzilla.github.io/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/">https://nasdaqgodzilla.github.io/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://nasdaqgodzilla.github.io" target="_blank">PeaceMaker</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/Linux/">Linux</a><a class="post-meta__tags" href="/tags/BSP/">BSP</a></div><div class="post_share"><div class="social-share" data-image="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-0w2qz6.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/wechatpay.jpg" alt="微信(请点击图片获取大图）"/></a><div class="post-qr-code-desc">微信(请点击图片获取大图）</div></li><li class="reward-item"><a href="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" target="_blank"><img class="post-qr-code-img" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/alipay.png" alt="支付宝(请点击图片获取大图）"/></a><div class="post-qr-code-desc">支付宝(请点击图片获取大图）</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/"><img class="next-cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/" title="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-05-29</div><div class="title">显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题</div></div></a></div><div><a href="/2018/11/24/ChromiumOS%E9%80%9A%E8%BF%87Linux%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8CAndroid/" title="ChromiumOS通过Linux容器运行Android"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4groz3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2018-11-24</div><div class="title">ChromiumOS通过Linux容器运行Android</div></div></a></div><div><a href="/2022/04/22/GDB%E6%95%99%E7%A8%8B-%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5%E6%89%8B%E5%86%8C/" title="GDB教程: 命令速查手册"><img class="cover" src= "/loading.gif" data-lazy-src="https://www.sourceware.org/gdb/images/archer.svg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-22</div><div class="title">GDB教程: 命令速查手册</div></div></a></div><div><a href="/2019/02/24/LLDB%E8%BF%9C%E7%A8%8B%E8%B0%83%E8%AF%95Android%EF%BC%9ALLDB%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5%E5%8F%82%E8%80%83%E6%89%8B%E5%86%8CHandbook/" title="LLDB远程调试Android：LLDB命令速查参考手册Handbook"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/LLVM-Logo-Derivative-1.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-02-24</div><div class="title">LLDB远程调试Android：LLDB命令速查参考手册Handbook</div></div></a></div><div><a href="/2023/01/25/Android-13-WindowContainer%E7%AA%97%E5%8F%A3%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3/" title="Android 13 WindowContainer窗口模型详解"><img class="cover" src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/56a77a4e69401b756c748b33.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-01-25</div><div class="title">Android 13 WindowContainer窗口模型详解</div></div></a></div><div><a href="/2022/07/05/Android-11-startActivity%E4%B9%8BActivityStarter%E6%B5%81%E7%A8%8B/" title="Android 11 startActivity之ActivityStarter流程"><img class="cover" src= "/loading.gif" data-lazy-src="https://cdn.jsdelivr.net/gh/NasdaqGodzilla/PeacePicture/img/jetpack.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-05</div><div class="title">Android 11 startActivity之ActivityStarter流程</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Disqus</span><span class="switch-btn"></span><span class="second-comment">Waline</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "/loading.gif" data-lazy-src="https://avatars.githubusercontent.com/u/26323326" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Niko aug3073911@outlook.com</div><div class="author-info__description">Android System Developer</div></div><div class="card-info-data is-center"><div class="card-info-data-item"><a href="/archives/"><div class="headline">文章</div><div class="length-num">72</div></a></div><div class="card-info-data-item"><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a></div><div class="card-info-data-item"><a href="/categories/"><div class="headline">分类</div><div class="length-num">25</div></a></div></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/NasdaqGodzilla"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/NasdaqGodzilla" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:aug3073911@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="Rss"><i class="fas fa-rss"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#container-of%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">container_of简介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#container-of%E5%AE%9A%E4%B9%89%E5%92%8C%E4%BD%BF%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">container_of定义和使用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#container-of%E8%AF%A6%E8%A7%A3"><span class="toc-number">3.</span> <span class="toc-text">container_of详解</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E8%B5%8B%E5%80%BC"><span class="toc-number">3.1.</span> <span class="toc-text">整体赋值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#offsetof%E8%AE%A1%E7%AE%97%E6%88%90%E5%91%98%E5%88%B0%E7%BB%93%E6%9E%84%E4%BD%93%E5%A4%B4%E7%9A%84%E5%81%8F%E7%A7%BB"><span class="toc-number">3.2.</span> <span class="toc-text">offsetof计算成员到结构体头的偏移</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%87%E9%92%88%E8%BF%90%E7%AE%97"><span class="toc-number">3.3.</span> <span class="toc-text">指针运算</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/" title="Linux container_of详解"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-0w2qz6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Linux container_of详解"/></a><div class="content"><a class="title" href="/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/" title="Linux container_of详解">Linux container_of详解</a><time datetime="2024-05-30T09:51:54.000Z" title="发表于 2024-05-30 17:51:54">2024-05-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/" title="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-4lllel.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题"/></a><div class="content"><a class="title" href="/2024/05/29/%E6%98%BE%E7%A4%BA%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7%EF%BC%9AKernel%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F%E5%92%8Ci2c%E6%BC%8F%E7%94%B5%E5%AF%BC%E8%87%B4%E7%9A%84%E8%8A%B1%E5%B1%8F%E9%97%AE%E9%A2%98/" title="显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题">显示系统稳定性：Kernel模块加载顺序和i2c漏电导致的花屏问题</a><time datetime="2024-05-29T13:15:58.000Z" title="发表于 2024-05-29 21:15:58">2024-05-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/" title="MTK LED驱动节点创建和读写流程"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/31575555637_.pic_hd.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="MTK LED驱动节点创建和读写流程"/></a><div class="content"><a class="title" href="/2024/04/07/MTK-LED%E9%A9%B1%E5%8A%A8%E8%8A%82%E7%82%B9%E5%88%9B%E5%BB%BA%E5%92%8C%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/" title="MTK LED驱动节点创建和读写流程">MTK LED驱动节点创建和读写流程</a><time datetime="2024-04-07T06:11:40.000Z" title="发表于 2024-04-07 14:11:40">2024-04-07</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/20/Android-Emulator%E8%BF%90%E8%A1%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84AOSP%E9%95%9C%E5%83%8F/" title="Android Emulator运行自定义的AOSP镜像"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-3zg13v.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android Emulator运行自定义的AOSP镜像"/></a><div class="content"><a class="title" href="/2024/03/20/Android-Emulator%E8%BF%90%E8%A1%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84AOSP%E9%95%9C%E5%83%8F/" title="Android Emulator运行自定义的AOSP镜像">Android Emulator运行自定义的AOSP镜像</a><time datetime="2024-03-20T10:11:01.000Z" title="发表于 2024-03-20 18:11:01">2024-03-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/20/%E5%9C%A8Apple-Mac-M1%E4%B8%8A%E7%BC%96%E8%AF%91AOSP-ARM-Android%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="在Apple Mac M1上编译AOSP ARM Android模拟器"><img src= "/loading.gif" data-lazy-src="https://nasdaqgodzilla.github.io/gallery/cover/wallhaven-l3r1zl.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="在Apple Mac M1上编译AOSP ARM Android模拟器"/></a><div class="content"><a class="title" href="/2024/03/20/%E5%9C%A8Apple-Mac-M1%E4%B8%8A%E7%BC%96%E8%AF%91AOSP-ARM-Android%E6%A8%A1%E6%8B%9F%E5%99%A8/" title="在Apple Mac M1上编译AOSP ARM Android模拟器">在Apple Mac M1上编译AOSP ARM Android模拟器</a><time datetime="2024-03-20T08:43:32.000Z" title="发表于 2024-03-20 16:43:32">2024-03-20</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2017 - 2024 By Niko aug3073911@outlook.com</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">保留一切权利</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://nasdaqgodzilla.github.io/2024/05/30/Linux-container-of%E8%AF%A6%E8%A7%A3/'
+    this.page.identifier = '2024/05/30/Linux-container-of详解/'
+    this.page.title = 'Linux container_of详解'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://nasdaqgodzilla.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+}
+
+if ('Disqus' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script><script>function loadWaline () {
+  function initWaline () {
+    const waline = new Waline(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://zjg5bdl0.api.lncldglobal.com',
+      path: location.pathname,
+      visitor: true,
+      dark: 'html[data-theme="dark"]'
+    }, null))
+  }
+
+  if (typeof Waline === 'function') initWaline()
+  else getScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js').then(initWaline)
+}
+
+if ('Disqus' === 'Waline' || !true) {
+  if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+  else setTimeout(loadWaline, 0)
+} else {
+  function loadOtherComment () {
+    loadWaline()
+  }
+}</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
