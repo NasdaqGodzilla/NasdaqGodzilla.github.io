@@ -212,9 +212,9 @@
     
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/categories/Android/"/>
     
-    <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
-    
     <category term="稳定性" scheme="https://nasdaqgodzilla.github.io/categories/%E7%A8%B3%E5%AE%9A%E6%80%A7/"/>
+    
+    <category term="性能优化" scheme="https://nasdaqgodzilla.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"/>
     
     
     <category term="Android" scheme="https://nasdaqgodzilla.github.io/tags/Android/"/>
